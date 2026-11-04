@@ -7,7 +7,7 @@ import os
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from wiiforge.__main__ import evidence, inspect, normalize, plan, profile, read, resume
+from wiiforge.__main__ import demo, evidence, inspect, normalize, plan, profile, read, resume
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -24,6 +24,28 @@ class SafetyTests(unittest.TestCase):
                        'FilesystemType': 'msdos', 'TotalSize': 1999000000,
                        'VolumeAllocationBlockSize': 32768}]
         self.d = normalize(self.info, self.parts)
+
+    @patch('wiiforge.__main__.diskutil', side_effect=AssertionError('Demo accessed hardware'))
+    def test_demo_is_synthetic_and_has_no_completed_checkpoints(self, diskutil):
+        result = demo()
+        self.assertTrue(result['demo'])
+        self.assertEqual(result['manual_plan']['status'], 'manual-review-only')
+        self.assertFalse(result['manual_plan']['execution_supported'])
+        self.assertEqual(result['unknown_model_plan']['status'], 'blocked')
+        self.assertEqual(result['unknown_model_plan']['steps'], [])
+        self.assertEqual(result['initial_state']['completed'], [])
+        diskutil.assert_not_called()
+
+    def test_demo_cli_and_help(self):
+        env = dict(os.environ, PYTHONPATH=str(ROOT / 'src'))
+        result = subprocess.run([sys.executable, '-m', 'wiiforge', 'demo'],
+                                capture_output=True, text=True, env=env)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(json.loads(result.stdout)['demo'])
+        result = subprocess.run([sys.executable, '-m', 'wiiforge', '--help'],
+                                capture_output=True, text=True, env=env)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn('Try synthetic plans', result.stdout)
 
     def test_valid_plan_is_never_executable(self):
         p = plan(self.p, self.e, self.d)

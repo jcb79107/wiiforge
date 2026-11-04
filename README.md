@@ -1,63 +1,127 @@
-# WiiForge
+<p align="center">
+  <img src="docs/assets/wiiforge.svg" alt="WiiForge — Know your hardware. Plan with evidence." width="100%">
+</p>
 
-An agent-agnostic, read-only assistant toolkit for planning a Wii homebrew setup centered on USB Loader GX. Python performs deterministic checks; your agent explains the evidence and guides manual checkpoints.
+<p align="center">
+  <strong>Read-only Wii homebrew planning, built for people and their agents.</strong><br>
+  Python 3.10+ · Zero runtime dependencies · MIT licensed · Early MVP
+</p>
 
-**MVP: inspect → validate a manual plan → resume evidence tracking.** There is no installer executor, downloader, formatter, repair tool or console writer. No packages, keys, NAND data, games or Nintendo IOS/WAD content are included. A validated plan is not permission to modify anything.
+<p align="center">
+  <a href="#try-it-in-a-minute">Quickstart</a> ·
+  <a href="docs/usage.md">Usage</a> ·
+  <a href="#support-status">Support</a> ·
+  <a href="docs/roadmap.md">Roadmap</a> ·
+  <a href="CONTRIBUTING.md">Contribute</a>
+</p>
 
-## Quick start
+---
 
-Python 3.10+, standard library only. From this checkout:
+WiiForge turns hardware observations into a checked, resumable **manual setup plan** centered on USB Loader GX. It keeps unknowns visible, separates historical observations from new test results, and gives any coding agent the same deterministic tools and safety rules.
+
+> **Current scope:** read-only inspection and manual planning. WiiForge does not install homebrew, download packages, format drives, repair filesystems or write to a console. Live hardware validation is still pending.
+
+## Why WiiForge?
+
+- **Evidence before instructions.** Unknown or conflicting console details block model-sensitive plans. An SD card cannot tell us which Wii you own.
+- **Opinionated, adjustable defaults.** USB Loader GX is the starting point. Video settings are preserved; autoboot and GameCube support require separate review.
+- **Resume with context.** Checkpoints are bound to the profile, observations and disk report. Changed inputs invalidate previous progress.
+- **Bring your own agent.** A small Python CLI, readable JSON output and [AGENTS.md](AGENTS.md). No agent framework, account or service required.
+
+## Try it in a minute
+
+You need Git and Python 3.10+ already installed. These commands use a POSIX shell on macOS or Linux. No Wii, SD card, USB drive, package installation or elevated privileges needed.
 
 ```sh
+git clone https://github.com/jcb79107/wiiforge.git
+cd wiiforge
 export PYTHONPATH="$PWD/src"
+python3 -m wiiforge demo
+```
+
+The demo runs the real planner against **invented data**, showing an allowed manual plan, an unknown-model rejection and an empty resume state. It never inspects hardware or records a successful console test.
+
+Selected output fields:
+
+```json
+{
+  "demo": true,
+  "manual_plan": {"status": "manual-review-only", "execution_supported": false},
+  "unknown_model_plan": {"status": "blocked", "steps": []},
+  "initial_state": {"completed": []}
+}
+```
+
+Explore the commands or run the synthetic tests:
+
+```sh
 python3 -m wiiforge --help
 python3 -m unittest discover -s tests -v
 ```
 
-Live inspection currently targets macOS `diskutil`. Identify the intended whole disk yourself using macOS Disk Utility; never guess a disk number. Save reports in a private directory **outside this repository**. The command executes only `diskutil list -plist` and `diskutil info -plist`; it does not mount, read game files or alter media.
+**Ready to gather real evidence?** Follow [the usage guide](docs/usage.md). Live inspection is macOS-only. Choose the physical disk yourself, keep reports outside the checkout, and leave unknown evidence unknown. Do not use demo data for a real console.
 
-```sh
-python3 -m wiiforge inspect --device disk4 > /your/private/folder/inspection.json
-python3 -m wiiforge plan --profile profiles/original-wii.yaml \
-  --evidence /your/private/folder/evidence.yaml \
-  --inspection /your/private/folder/inspection.json
+## How it works
+
+```text
+Read disk metadata + collect console observations
+                       │
+                       ▼
+              Validate profile and evidence
+                       │
+          ┌────────────┴────────────┐
+          ▼                         ▼
+     Missing/conflicting       Manual review plan
+     evidence → blocked             │
+                                    ▼
+                          Human-confirmed checkpoints
+                          (no automatic execution)
 ```
 
-The paths above are placeholders. Copy `profiles/evidence.example.yaml` privately and replace unknowns only with actual observations. A console model comes from the console label/physical inspection or a reviewed diagnostic, never from an SD card. Family Edition, mini, vWii, conflicts, unknowns and anything outside the initial original-Wii 4.3U reference block the installation plan. Menu version alone does not prove a model.
-
-Profiles use **JSON syntax, a strict subset of YAML 1.2** to avoid parser dependencies and executable YAML tags. Unknown/missing/duplicate fields fail. Customize display, cable, aspect, output, optional autoboot review and optional GameCube review. Defaults preserve video configuration: CRT/HD, adapters and regional capabilities need explicit review; never apply universal 480p or deflicker overrides. Only USB Loader GX is currently implemented as a loader choice.
-
-The conservative USB media check requires a single FAT32 partition, MBR, 32 KiB clusters, known capacity, external physical whole disk and a persistent identifier. Missing diskutil metadata deliberately blocks planning; this may reject otherwise suitable media. It is a candidate assessment, **not filesystem integrity verification, free-space verification, write authorization or proof of Wii compatibility**. No SD preparation capability exists yet.
-
-## Resume manual checkpoints
-
-Use the same profile, evidence and freshly generated inspection with `resume`. With no state argument, it emits an empty state. Record the next checkpoint using `--checkpoint review --level user-confirmed`; pass previous output through `--state /private/state.json` on later invocations. Recovery/loader/game/autoboot tests require `--level console-tested`. Save each output to a new private filename and replace old state only after exit code 0; never redirect onto an input file.
-
-```sh
-python3 -m wiiforge resume --profile profiles/original-wii.yaml \
-  --evidence /your/private/folder/evidence.yaml \
-  --inspection /your/private/folder/inspection.json \
-  --checkpoint review --level user-confirmed
-```
-
-State is bound to all inputs and ordered steps. Changed disk identity, capacity, device number, profile or evidence invalidates it. Reinspect after every reconnect; identical metadata cannot prove the same physical medium or unchanged file contents. Inputs/state are local user attestations, not signed proof. The tool never marks anything tested automatically, and never accepts “files exist” as console success. All CLI output is JSON except errors on stderr; blocked/invalid operations exit 2.
-
-## Scope and evidence
-
-| Area | Current status |
+| Command | What it does |
 | --- | --- |
-| Original Wii, 4.3U | Manual planning reference only; no new hardware installation tested |
-| Family Edition / Wii mini / vWii | Recognized, installation planning blocked |
-| macOS inspection | Implemented with mocked diskutil tests; live hardware validation pending |
-| Linux / Windows inspection | Not implemented; fails closed |
-| Wii / GameCube gameplay | No compatibility claim; individual console tests required |
-| Package staging / SD preparation / copying | Deferred until reviewed origins, pinned hashes and failure tests exist |
-| Formatting / filesystem repair | Not implemented; requires separate explicit approval in any future implementation |
+| `demo` | Shows deterministic synthetic planning and rejection examples |
+| `inspect --device diskN` | Reads macOS disk metadata; rejects ambiguous/internal targets |
+| `plan --profile … --evidence … --inspection …` | Validates inputs and produces linked manual checkpoints |
+| `resume --profile … --evidence … --inspection …` | Validates saved progress or records the next explicit acknowledgment |
 
-See [sanitized evidence](docs/evidence.md) and [safety workflow](AGENTS.md). Historical setup results do not verify this implementation. The authoritative procedural source is [Wii Hacks Guide](https://wii.hacks.guide/), with separate [cIOS guidance](https://wii.hacks.guide/cios) and [USB loader guidance](https://wii.hacks.guide/wii-loaders). Recheck these and primary upstream releases before every real installation; this project does not mirror installation payloads or pin historical versions as current recommendations.
+JSON goes to stdout; errors go to stderr. Exit `0` means the requested operation succeeded, **not** that a console works. Exit `2` means blocked or invalid. Profiles use JSON syntax, a strict YAML 1.2 subset; arbitrary YAML is not supported.
 
-## Contributing
+## Support status
 
-Keep changes small and synthetic tests deterministic. Add a platform/model only after targeted review and recorded tests. Before any future preparation feature, implement pinned package manifests, archive traversal defenses, expected size/hash checks, free-space/FAT32 limits, preservation of existing files, interruption recovery, fresh target validation and explicit approval boundaries. Do not execute unrecognized downloads without separate per-action approval. Do not publish private reports or submit them in issues.
+| Area | Implemented today | Validation / limit |
+| --- | --- | --- |
+| Original Wii, 4.3U | Manual planning reference | Historical setup evidence; this tool has no live installation validation |
+| Other original-Wii menus/regions | Input recognized | Installation planning blocked |
+| Family Edition | Model recognized | Installation planning blocked; no recipe |
+| Wii mini | Model recognized | Installation planning blocked; no recipe |
+| Wii U vWii | Model recognized | Installation planning blocked; no recipe |
+| macOS storage inspection | Read-only `diskutil` adapter | Mocked tests only; real-device validation pending |
+| Linux / Windows inspection | Not implemented | Fails closed; Linux can run the synthetic demo/tests |
+| CRT / HD / regional video | Explicit profile fields; preserve by default | No tested display compatibility matrix |
+| Wii / GameCube gameplay | Manual checkpoints | No gameplay compatibility claims |
+| Staging / SD preparation / formatting | Not implemented | Separate future work and approval boundaries |
 
-Code is MIT licensed. No affiliation with Nintendo or Wii Hacks Guide. Third-party projects retain their own licenses.
+Storage checks conservatively require an external physical whole disk, persistent identifier, known capacity and a single MBR/FAT32 partition with 32 KiB clusters. Missing metadata blocks planning even if a drive might otherwise work. This is **not a filesystem integrity check or a guarantee of compatibility**.
+
+## Safety is part of the interface
+
+WiiForge never infers BootMii eligibility, installed cIOS or display capabilities from drive contents. It does not authorize changes, execute downloaded software, distribute games/keys/NAND/IOS files, or treat loader launch as proof that a game runs. Future destructive operations require separate explicit approval and fresh target checks.
+
+Keep real reports, device identifiers and recovery material private. Checkpoints are user attestations, not signed evidence. Read the [evidence notes](docs/evidence.md), [agent rules](AGENTS.md) and [reporting guidance](SECURITY.md).
+
+## What comes next
+
+1. **Validate read-only inspection on real macOS hardware** using opt-in observations and sanitized regression fixtures.
+2. **Review package provenance**: upstream origins, licenses, model constraints, pinned versions and verified hashes.
+3. **Build non-destructive staging** with archive safety, capacity checks, preservation and interruption recovery before any real-media preparation.
+
+Each step has an explicit acceptance gate in the [roadmap](docs/roadmap.md). Wider console support follows evidence, not a release date.
+
+## Contribute
+
+Small, reproducible improvements are welcome: synthetic regression cases, clearer blocker explanations and documentation fixes. Start with [CONTRIBUTING.md](CONTRIBUTING.md). Hardware reports need explicit consent and redaction; never attach a raw recovery archive.
+
+[Wii Hacks Guide](https://wii.hacks.guide/) is the authoritative procedural reference. [USB Loader GX](https://github.com/wiidev/usbloadergx) is the upstream loader. WiiForge is an independent project, not endorsed by either project or Nintendo.
+
+[MIT license](LICENSE) · Third-party projects retain their own licenses.

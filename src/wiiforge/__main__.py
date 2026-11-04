@@ -171,12 +171,34 @@ def resume(current, state=None, checkpoint=None, level=None):
     return state
 
 
+def demo():
+    """Exercise real validation using invented data, without device access."""
+    p = {'schema': 1, 'model': 'original', 'region': 'U', 'display': 'unknown',
+         'cable': 'unknown', 'output': 'preserve', 'aspect': 'preserve',
+         'loader': 'usb-loader-gx', 'autoboot': 'review', 'gamecube': 'off'}
+    e = {'schema': 1, 'model': 'original', 'model_source': 'user-observation',
+         'region': 'U', 'region_source': 'user-observation', 'menu': '4.3U'}
+    d = normalize({'DeviceIdentifier': 'disk99', 'DiskUUID': 'synthetic-demo-only',
+                   'TotalSize': 2000000000, 'Internal': False, 'Whole': True,
+                   'VirtualOrPhysical': 'Physical', 'Content': 'FDisk_partition_scheme'},
+                  [{'DeviceIdentifier': 'disk99s1', 'PartitionType': 'DOS_FAT_32',
+                    'FilesystemType': 'msdos', 'TotalSize': 1999000000,
+                    'VolumeAllocationBlockSize': 32768}])
+    current = plan(p, e, d)
+    blocked = plan(p, dict(e, model='unknown', model_source='unknown'), d)
+    return {'demo': True, 'notice': 'Synthetic data only. No hardware was inspected or tested.',
+            'manual_plan': current, 'unknown_model_plan': blocked,
+            'initial_state': resume(current)}
+
+
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(prog='wiiforge', description='Read-only Wii homebrew inspection and manual planning.')
     sub = parser.add_subparsers(dest='command', required=True)
-    sub.add_parser('inspect').add_argument('--device', required=True)
+    sub.add_parser('demo', help='Try synthetic plans; no media or network access')
+    sub.add_parser('inspect', help='Read macOS whole-disk metadata').add_argument('--device', required=True)
     for name in ['plan', 'resume']:
-        p = sub.add_parser(name)
+        p = sub.add_parser(name, help={'plan': 'Validate evidence and produce manual checkpoints',
+                                      'resume': 'Validate or acknowledge ordered checkpoints'}[name])
         for arg in ['profile', 'evidence', 'inspection']:
             p.add_argument('--' + arg, required=True)
         if name == 'resume':
@@ -185,7 +207,9 @@ def main():
             p.add_argument('--level', choices=['user-confirmed', 'console-tested'])
     args = parser.parse_args()
     try:
-        if args.command == 'inspect':
+        if args.command == 'demo':
+            result = demo()
+        elif args.command == 'inspect':
             result = inspect(args.device)
         else:
             result = plan(read(args.profile), read(args.evidence), read(args.inspection))
