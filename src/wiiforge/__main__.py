@@ -1,12 +1,14 @@
 import argparse
 import hashlib
 import json
+import math
+import os
+import stat
 import platform
 import plistlib
 import re
 import subprocess
 import sys
-from pathlib import Path
 
 GUIDE = 'https://wii.hacks.guide/'
 
@@ -28,8 +30,30 @@ def read(path):
             require(key not in out, 'Duplicate key: ' + key)
             out[key] = value
         return out
-    require(Path(path).stat().st_size <= 1048576, 'Input exceeds 1 MiB')
-    return json.loads(Path(path).read_text(), object_pairs_hook=unique)
+    # Reject devices/FIFOs and final-component symlinks before reading bytes.
+    flags = os.O_RDONLY | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_NOFOLLOW', 0)
+    fd = os.open(path, flags)
+    with os.fdopen(fd, 'rb') as stream:
+        require(stat.S_ISREG(os.fstat(stream.fileno()).st_mode), 'Input must be a regular file')
+        raw = stream.read(1048577)
+    require(len(raw) <= 1048576, 'Input exceeds 1 MiB')
+    def constant(value):
+        raise ValueError('Non-finite JSON numbers are not supported')
+    try:
+        value = json.loads(raw.decode('utf-8'), object_pairs_hook=unique, parse_constant=constant)
+        pending = [(value, 0)]
+        while pending:
+            item, depth = pending.pop()
+            require(depth <= 32, 'JSON nesting exceeds 32 levels')
+            if isinstance(item, float):
+                require(math.isfinite(item), 'Non-finite JSON numbers are not supported')
+            elif isinstance(item, dict):
+                pending.extend((child, depth + 1) for child in item.values())
+            elif isinstance(item, list):
+                pending.extend((child, depth + 1) for child in item)
+        return value
+    except (UnicodeError, RecursionError) as exc:
+        raise ValueError('Input must be bounded UTF-8 JSON without excessive nesting') from exc
 
 
 def keys(obj, expected):
@@ -72,9 +96,11 @@ def diskutil(*args):
 
 
 def normalize(info, parts):
+    require(isinstance(info, dict) and isinstance(parts, list) and all(isinstance(p, dict) for p in parts),
+            'Invalid disk metadata')
     # Never expose labels, serials, UUIDs or mount paths in reports.
     identity = {k: info.get(k) for k in ['DeviceIdentifier', 'DiskUUID', 'MediaUUID', 'TotalSize', 'Internal', 'Whole']}
-    partitions = [{k: p.get(k) for k in ['DeviceIdentifier', 'PartitionType', 'FilesystemType', 'TotalSize', 'VolumeAllocationBlockSize']} for p in parts]
+    partitions = [{k: p.get(k) for k in ['DeviceIdentifier', 'PartitionType', 'FilesystemType', 'TotalSize', 'VolumeAllocationBlockSize', 'DiskUUID', 'VolumeUUID']} for p in parts]
     blockers = []
     if info.get('Internal') is not False:
         blockers.append('internal-or-unknown-device')
@@ -84,7 +110,7 @@ def normalize(info, parts):
         blockers.append('virtual-or-unknown-device')
     if type(info.get('TotalSize')) is not int or info['TotalSize'] <= 0:
         blockers.append('unknown-capacity')
-    if not info.get('DiskUUID') and not info.get('MediaUUID'):
+    if not any(isinstance(info.get(k), str) and info[k].strip() for k in ['DiskUUID', 'MediaUUID']):
         blockers.append('no-stable-identity')
     if info.get('Content') != 'FDisk_partition_scheme':
         blockers.append('mbr-not-confirmed')
@@ -94,6 +120,11 @@ def normalize(info, parts):
         blockers.append('fat32-not-confirmed')
     if len(partitions) == 1 and partitions[0]['VolumeAllocationBlockSize'] != 32768:
         blockers.append('32k-clusters-not-confirmed')
+    if len(partitions) == 1:
+        part = partitions[0]
+        if (type(part['TotalSize']) is not int or part['TotalSize'] <= 0
+                or type(info.get('TotalSize')) is not int or part['TotalSize'] > info['TotalSize']):
+            blockers.append('invalid-partition-capacity')
     return {'schema': 1, 'kind': 'macos-diskutil', 'device': info.get('DeviceIdentifier'),
             'fingerprint': digest({'identity': identity, 'partitions': partitions}),
             'capacity': info.get('TotalSize'), 'blockers': blockers,
@@ -103,14 +134,33 @@ def normalize(info, parts):
 def inspect(device):
     require(platform.system() == 'Darwin', 'Live inspection currently requires macOS; no other OS is hardware-tested')
     require(re.fullmatch(r'disk[0-9]+', device), 'Select an exact whole-disk identifier, e.g. disk4')
-    listing = diskutil('list', '-plist')
-    matches = [d for d in listing.get('AllDisksAndPartitions', []) if d.get('DeviceIdentifier') == device]
-    require(len(matches) == 1, 'Device missing or ambiguous')
-    before = diskutil('info', '-plist', device)
-    parts = [diskutil('info', '-plist', p['DeviceIdentifier']) for p in matches[0].get('Partitions', [])]
-    after = diskutil('info', '-plist', device)
-    require(before == after, 'Device changed during inspection; reconnect and reinspect')
-    return normalize(before, parts)
+    def snapshot():
+        listing = diskutil('list', '-plist')
+        require(isinstance(listing, dict), 'Invalid disk listing')
+        rows = listing.get('AllDisksAndPartitions')
+        require(isinstance(rows, list) and all(isinstance(d, dict) for d in rows), 'Invalid disk listing')
+        matches = [d for d in rows if d.get('DeviceIdentifier') == device]
+        require(len(matches) == 1, 'Device missing or ambiguous')
+        partitions = matches[0].get('Partitions')
+        require(isinstance(partitions, list) and all(isinstance(p, dict) for p in partitions),
+                'Missing or invalid partition listing')
+        ids = [p.get('DeviceIdentifier') for p in partitions]
+        require(all(isinstance(i, str) and re.fullmatch(re.escape(device) + r's[0-9]+', i) for i in ids),
+                'Partition does not belong to selected disk')
+        require(len(ids) == len(set(ids)), 'Duplicate partition identifiers')
+        info = diskutil('info', '-plist', device)
+        require(isinstance(info, dict) and info.get('DeviceIdentifier') == device,
+                'Whole-disk identity mismatch')
+        parts = []
+        for identifier in ids:
+            part = diskutil('info', '-plist', identifier)
+            require(isinstance(part, dict) and part.get('DeviceIdentifier') == identifier,
+                    'Partition identity mismatch')
+            parts.append(part)
+        return normalize(info, parts)
+    before, after = snapshot(), snapshot()
+    require(before == after, 'Device or partitions changed during inspection; reconnect and reinspect')
+    return after
 
 
 def plan(p, e, d):
@@ -151,7 +201,13 @@ def plan(p, e, d):
 
 
 def resume(current, state=None, checkpoint=None, level=None):
+    keys(current, 'schema inputs blockers status steps execution_supported digest')
+    body = {key: value for key, value in current.items() if key != 'digest'}
+    require(current['digest'] == digest(body), 'Plan content changed; regenerate the plan')
+    require(current['execution_supported'] is False and current['status'] == 'manual-review-only'
+            and current['schema'] == 1, 'Invalid manual plan')
     require(not current['blockers'], 'Blocked plans cannot record completion')
+    require((checkpoint is None) == (level is None), 'Provide --checkpoint and --level together')
     expected = {'schema': 1, 'plan_digest': current['digest'], 'completed': []}
     state = expected if state is None else state
     keys(state, 'schema plan_digest completed')
@@ -166,8 +222,8 @@ def resume(current, state=None, checkpoint=None, level=None):
     if checkpoint:
         n = len(state['completed'])
         require(n < len(ids) and checkpoint == ids[n], 'Only the next checkpoint can be acknowledged')
-        state['completed'].append({'id': checkpoint, 'evidence': level})
-        return resume(current, state)
+        updated = dict(state, completed=[*state['completed'], {'id': checkpoint, 'evidence': level}])
+        return resume(current, updated)
     return state
 
 

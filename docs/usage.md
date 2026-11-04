@@ -32,7 +32,7 @@ python3 -m wiiforge inspect --device diskN > /your/private/folder/inspection.jso
 
 The command only runs `diskutil list -plist` and `diskutil info -plist`. It does not mount, inspect game contents or write media. Missing metadata, internal/virtual targets and ambiguous layouts are rejected. Reports omit raw labels, UUIDs, serials and mount paths but contain a device number and fingerprint: keep them private.
 
-Exit `2` means blocked or invalid. Do not edit an inspection report to remove blockers. Reinspect after every reconnect. No filesystem integrity, free-space, SD preparation or gameplay check is performed.
+Exit `2` means blocked or invalid. Do not edit an inspection report to remove blockers. Inspection compares two disk and partition snapshots and rejects changed identity or geometry. Reinspect after every reconnect. No filesystem integrity, free-space, SD preparation or gameplay check is performed.
 
 ## Choose a profile and plan
 
@@ -44,7 +44,7 @@ python3 -m wiiforge plan --profile profiles/original-wii.yaml \
   --inspection /your/private/folder/inspection.json
 ```
 
-Profiles use **JSON syntax, a strict YAML 1.2 subset**. Unknown, missing and duplicate fields fail validation. Current choices:
+Profiles use **JSON syntax, a strict YAML 1.2 subset**. Unknown, missing and duplicate fields fail validation. Inputs must be regular UTF-8 JSON files no larger than 1 MiB with at most 32 nesting levels. Non-finite numbers are rejected. Final-component symlinks are rejected on hosts supporting no-follow opens. Current choices:
 
 | Field | Values / default behavior |
 | --- | --- |
@@ -74,4 +74,4 @@ Save successful JSON output privately. On later calls add `--state /your/private
 
 Write output to a **new** private filename and replace prior state only after exit `0`. Never redirect onto an input file: shell redirection truncates it before Python runs.
 
-Changed profile, evidence, disk identity, device number or capacity invalidates old state. Identical metadata cannot prove the same physical medium or unchanged content. All checkpoints are local user attestations, not signed proof. Loader launch does not prove gameplay.
+Changed profile, evidence, disk identity, device number or capacity invalidates old state. Identical metadata cannot prove the same physical medium or unchanged content. Supply `--checkpoint` and `--level` together; failed acknowledgments leave the previous state unchanged. Plans generated before a fingerprint change must be regenerated. All checkpoints are local user attestations, not signed proof. Loader launch does not prove gameplay.

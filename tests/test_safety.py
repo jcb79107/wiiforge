@@ -126,9 +126,9 @@ class SafetyTests(unittest.TestCase):
     @patch('wiiforge.__main__.diskutil')
     def test_live_inspection_only_calls_list_and_info(self, diskutil, system):
         listing = {'AllDisksAndPartitions': [{'DeviceIdentifier': 'disk9', 'Partitions': [{'DeviceIdentifier': 'disk9s1'}]}]}
-        diskutil.side_effect = [listing, self.info, self.parts[0], self.info]
+        diskutil.side_effect = [listing, self.info, self.parts[0]] * 2
         self.assertEqual(inspect('disk9'), self.d)
-        self.assertEqual([c.args for c in diskutil.call_args_list], [('list', '-plist'), ('info', '-plist', 'disk9'), ('info', '-plist', 'disk9s1'), ('info', '-plist', 'disk9')])
+        self.assertEqual([c.args for c in diskutil.call_args_list], [('list', '-plist'), ('info', '-plist', 'disk9'), ('info', '-plist', 'disk9s1')] * 2)
 
     @patch('wiiforge.__main__.platform.system', return_value='Darwin')
     @patch('wiiforge.__main__.diskutil')
@@ -137,7 +137,7 @@ class SafetyTests(unittest.TestCase):
         diskutil.return_value = {'AllDisksAndPartitions': [row, row]}
         with self.assertRaises(ValueError):
             inspect('disk9')
-        diskutil.side_effect = [{'AllDisksAndPartitions': [row]}, self.info, dict(self.info, DiskUUID='changed')]
+        diskutil.side_effect = [{'AllDisksAndPartitions': [row]}, self.info, {'AllDisksAndPartitions': [row]}, dict(self.info, DiskUUID='changed')]
         with self.assertRaises(ValueError):
             inspect('disk9')
         for device in ['disk9s1', '/dev/disk9', 'disk9;touch x']:
@@ -161,6 +161,119 @@ class SafetyTests(unittest.TestCase):
             self.assertEqual(result.returncode, 2)
             self.assertIn('WiiForge:', result.stderr)
             self.assertNotIn('Traceback', result.stderr)
+
+    def test_rejected_resume_does_not_mutate_input(self):
+        p = plan(self.p, self.e, self.d)
+        state = resume(p)
+        original = copy.deepcopy(state)
+        with self.assertRaises(ValueError):
+            resume(p, state, 'review', 'console-tested')
+        self.assertEqual(state, original)
+        updated = resume(p, state, 'review', 'user-confirmed')
+        self.assertEqual(state, original)
+        self.assertEqual(len(updated['completed']), 1)
+
+    def test_resume_requires_paired_arguments_and_unchanged_plan(self):
+        p = plan(self.p, self.e, self.d)
+        for checkpoint, level in [(None, 'user-confirmed'), ('review', None)]:
+            with self.assertRaises(ValueError):
+                resume(p, checkpoint=checkpoint, level=level)
+        changed = copy.deepcopy(p)
+        changed['steps'][0]['instruction'] = 'changed'
+        with self.assertRaises(ValueError):
+            resume(changed)
+
+    def test_bounded_strict_json_input(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / 'input.json'
+            for raw in [b'x' * 1048577, b'\xff', b'[' * 2000 + b']' * 2000,
+                        b'{"value": NaN}', b'{"value": Infinity}', b'{"value": -Infinity}', b'{"value": 1e999}']:
+                f.write_bytes(raw)
+                with self.subTest(size=len(raw)), self.assertRaises(ValueError):
+                    read(f)
+            f.write_text('{"ok": true}', encoding='utf-8')
+            self.assertEqual(read(f), {'ok': True})
+
+    @unittest.skipUnless(hasattr(os, 'mkfifo'), 'POSIX special file check')
+    def test_fifo_rejected_without_waiting_for_writer(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / 'pipe'
+            os.mkfifo(f)
+            with self.assertRaises(ValueError):
+                read(f)
+
+    @unittest.skipUnless(hasattr(os, 'O_NOFOLLOW'), 'Host supports no-follow opens')
+    def test_symlink_input_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / 'data'
+            f.write_text('{}')
+            link = Path(tmp) / 'link'
+            link.symlink_to(f)
+            with self.assertRaises(OSError):
+                read(link)
+
+    def test_partition_identity_changes_invalidate_resume(self):
+        first = normalize(self.info, [dict(self.parts[0], VolumeUUID='synthetic-a')])
+        second = normalize(self.info, [dict(self.parts[0], VolumeUUID='synthetic-b')])
+        self.assertNotEqual(first['fingerprint'], second['fingerprint'])
+        state = resume(plan(self.p, self.e, first))
+        with self.assertRaises(ValueError):
+            resume(plan(self.p, self.e, second), state)
+
+    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
+    @patch('wiiforge.__main__.diskutil')
+    def test_disk_info_identity_mismatch_blocks(self, diskutil, system):
+        listing = {'AllDisksAndPartitions': [{'DeviceIdentifier': 'disk9', 'Partitions': [{'DeviceIdentifier': 'disk9s1'}]}]}
+        for responses in [[listing, dict(self.info, DeviceIdentifier='disk8')],
+                          [listing, self.info, dict(self.parts[0], DeviceIdentifier='disk8s1')]]:
+            diskutil.side_effect = responses
+            with self.assertRaisesRegex(ValueError, 'identity mismatch'):
+                inspect('disk9')
+
+    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
+    @patch('wiiforge.__main__.diskutil')
+    def test_volatile_metadata_does_not_break_identity(self, diskutil, system):
+        listing = {'AllDisksAndPartitions': [{'DeviceIdentifier': 'disk9', 'Partitions': [{'DeviceIdentifier': 'disk9s1'}]}]}
+        diskutil.side_effect = [listing, dict(self.info, FreeSpace=100), self.parts[0],
+                               listing, dict(self.info, FreeSpace=90), self.parts[0]]
+        self.assertEqual(inspect('disk9'), self.d)
+
+    def test_partition_capacity_and_identity_types_fail_closed(self):
+        for size in [None, True, 0, -1, 3000000000]:
+            self.assertIn('invalid-partition-capacity',
+                          normalize(self.info, [dict(self.parts[0], TotalSize=size)])['blockers'])
+        for identity in [True, 1, [], '   ']:
+            self.assertIn('no-stable-identity',
+                          normalize(dict(self.info, DiskUUID=identity), self.parts)['blockers'])
+
+    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
+    @patch('wiiforge.__main__.diskutil')
+    def test_partition_changes_during_inspection_block(self, diskutil, system):
+        listing = {'AllDisksAndPartitions': [{'DeviceIdentifier': 'disk9', 'Partitions': [{'DeviceIdentifier': 'disk9s1'}]}]}
+        diskutil.side_effect = [listing, self.info, self.parts[0], listing, self.info,
+                               dict(self.parts[0], TotalSize=1000000000)]
+        with self.assertRaisesRegex(ValueError, 'changed'):
+            inspect('disk9')
+
+    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
+    @patch('wiiforge.__main__.diskutil')
+    def test_untrusted_partition_identifiers_not_queried(self, diskutil, system):
+        for ids in [['disk8s1'], ['-plist'], ['disk9s1', 'disk9s1'], [None]]:
+            diskutil.reset_mock()
+            diskutil.return_value = {'AllDisksAndPartitions': [
+                {'DeviceIdentifier': 'disk9', 'Partitions': [{'DeviceIdentifier': i} for i in ids]}]}
+            with self.assertRaises(ValueError):
+                inspect('disk9')
+            self.assertEqual(diskutil.call_count, 1)
+
+    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
+    @patch('wiiforge.__main__.diskutil')
+    def test_malformed_disk_listing_fails_cleanly(self, diskutil, system):
+        for value in [None, [], {}, {'AllDisksAndPartitions': [None]},
+                      {'AllDisksAndPartitions': [{'DeviceIdentifier': 'disk9'}]}]:
+            diskutil.return_value = value
+            with self.assertRaises(ValueError):
+                inspect('disk9')
 
     @patch('wiiforge.__main__.platform.system', return_value='Linux')
     def test_unsupported_host_fails_closed(self, system):
