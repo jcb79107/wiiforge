@@ -1,0 +1,150 @@
+import copy
+import json
+import tempfile
+import subprocess
+import sys
+import os
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+from wiiforge.__main__ import evidence, inspect, normalize, plan, profile, read, resume
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class SafetyTests(unittest.TestCase):
+    def setUp(self):
+        self.p = read(ROOT / 'profiles/original-wii.yaml')
+        self.e = {'schema': 1, 'model': 'original', 'model_source': 'user-observation',
+                  'region': 'U', 'region_source': 'user-observation', 'menu': '4.3U'}
+        self.info = {'DeviceIdentifier': 'disk9', 'DiskUUID': 'synthetic-id', 'TotalSize': 2000000000,
+                     'Internal': False, 'Whole': True, 'VirtualOrPhysical': 'Physical',
+                     'Content': 'FDisk_partition_scheme'}
+        self.parts = [{'DeviceIdentifier': 'disk9s1', 'PartitionType': 'DOS_FAT_32',
+                       'FilesystemType': 'msdos', 'TotalSize': 1999000000,
+                       'VolumeAllocationBlockSize': 32768}]
+        self.d = normalize(self.info, self.parts)
+
+    def test_valid_plan_is_never_executable(self):
+        p = plan(self.p, self.e, self.d)
+        self.assertEqual(p['status'], 'manual-review-only')
+        self.assertFalse(p['execution_supported'])
+        self.assertEqual(p, plan(self.p, self.e, self.d))
+
+    def test_internal_unknown_virtual_and_partition_rejected(self):
+        for key, value in [('Internal', True), ('Internal', None), ('Whole', False),
+                           ('VirtualOrPhysical', 'Virtual'), ('DiskUUID', None), ('TotalSize', 0),
+                           ('Content', 'GUID_partition_scheme')]:
+            with self.subTest(key=key, value=value):
+                info = dict(self.info, **{key: value})
+                self.assertTrue(normalize(info, self.parts)['blockers'])
+        for parts in [[], self.parts * 2, [dict(self.parts[0], FilesystemType='exfat')],
+                      [dict(self.parts[0], VolumeAllocationBlockSize=None)]]:
+            self.assertTrue(normalize(self.info, parts)['blockers'])
+
+    def test_private_device_metadata_not_emitted(self):
+        info = dict(self.info, VolumeName='PRIVATE', SerialNumber='SECRET', MountPoint='/private')
+        output = json.dumps(normalize(info, self.parts))
+        for secret in ['PRIVATE', 'SECRET', '/private', 'synthetic-id']:
+            self.assertNotIn(secret, output)
+
+    def test_model_and_region_unknown_conflicts_block(self):
+        for model in ['unknown', 'family', 'mini', 'vwii']:
+            p, e = dict(self.p, model=model), dict(self.e, model=model)
+            self.assertEqual(plan(p, e, self.d)['steps'], [])
+        for change in [{'model': 'family'}, {'model_source': 'unknown'}, {'region': 'E'},
+                       {'menu': '4.2U'}, {'menu': 'unknown'}, {'region_source': 'unknown'}]:
+            self.assertTrue(plan(self.p, dict(self.e, **change), self.d)['blockers'])
+
+    def test_strict_profiles_and_video(self):
+        for change in [{'surprise': True}, {'output': '480p'}, {'output': '576i'},
+                       {'schema': True}, {'loader': 'arbitrary'}, {'display': 'crt', 'output': '480p'}]:
+            with self.assertRaises(ValueError):
+                profile(dict(self.p, **change))
+        profile(dict(self.p, output='480p', display='hd', cable='component'))
+        for key in self.p:
+            p = dict(self.p)
+            del p[key]
+            with self.assertRaises(ValueError):
+                profile(p)
+
+    def test_duplicate_keys_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / 'profile.yaml'
+            f.write_text('{"schema":1,"schema":1}')
+            with self.assertRaises(ValueError):
+                read(f)
+
+    def test_resume_order_evidence_and_changed_inputs(self):
+        p = plan(self.p, self.e, self.d)
+        state = resume(p, checkpoint='review', level='user-confirmed')
+        self.assertEqual(resume(p, copy.deepcopy(state)), state)
+        for checkpoint, level in [('review', 'user-confirmed'), ('loader', 'console-tested'), ('backup', 'console-tested')]:
+            with self.assertRaises(ValueError):
+                resume(p, copy.deepcopy(state), checkpoint, level)
+        for d in [dict(self.d, fingerprint='a' * 64), dict(self.d, capacity=3000000000), dict(self.d, device='disk8')]:
+            with self.assertRaises(ValueError):
+                resume(plan(self.p, self.e, d), copy.deepcopy(state))
+        with self.assertRaises(ValueError):
+            resume(plan(dict(self.p, autoboot='off'), self.e, self.d), state)
+
+    def test_console_launch_needs_console_evidence(self):
+        p = plan(self.p, self.e, self.d)
+        s = resume(p, checkpoint='review', level='user-confirmed')
+        s = resume(p, s, 'backup', 'user-confirmed')
+        with self.assertRaises(ValueError):
+            resume(p, copy.deepcopy(s), 'recovery', 'user-confirmed')
+        resume(p, s, 'recovery', 'console-tested')
+
+    def test_blocked_plan_cannot_resume(self):
+        with self.assertRaises(ValueError):
+            resume(plan(self.p, dict(self.e, model='unknown'), self.d))
+
+    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
+    @patch('wiiforge.__main__.diskutil')
+    def test_live_inspection_only_calls_list_and_info(self, diskutil, system):
+        listing = {'AllDisksAndPartitions': [{'DeviceIdentifier': 'disk9', 'Partitions': [{'DeviceIdentifier': 'disk9s1'}]}]}
+        diskutil.side_effect = [listing, self.info, self.parts[0], self.info]
+        self.assertEqual(inspect('disk9'), self.d)
+        self.assertEqual([c.args for c in diskutil.call_args_list], [('list', '-plist'), ('info', '-plist', 'disk9'), ('info', '-plist', 'disk9s1'), ('info', '-plist', 'disk9')])
+
+    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
+    @patch('wiiforge.__main__.diskutil')
+    def test_ambiguous_and_changed_devices(self, diskutil, system):
+        row = {'DeviceIdentifier': 'disk9', 'Partitions': []}
+        diskutil.return_value = {'AllDisksAndPartitions': [row, row]}
+        with self.assertRaises(ValueError):
+            inspect('disk9')
+        diskutil.side_effect = [{'AllDisksAndPartitions': [row]}, self.info, dict(self.info, DiskUUID='changed')]
+        with self.assertRaises(ValueError):
+            inspect('disk9')
+        for device in ['disk9s1', '/dev/disk9', 'disk9;touch x']:
+            with self.assertRaises(ValueError):
+                inspect(device)
+
+    def test_cli_invalid_and_blocked_exit_nonzero(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name, value in [('profile', self.p), ('evidence', dict(self.e, model='unknown')), ('inspection', self.d)]:
+                (root / name).write_text(json.dumps(value))
+            cmd = [sys.executable, '-m', 'wiiforge', 'plan']
+            for name in ['profile', 'evidence', 'inspection']:
+                cmd += ['--' + name, str(root / name)]
+            env = dict(os.environ, PYTHONPATH=str(ROOT / 'src'))
+            result = subprocess.run(cmd, capture_output=True, text=True, env=env)
+            self.assertEqual(result.returncode, 2)
+            self.assertEqual(json.loads(result.stdout)['steps'], [])
+            (root / 'profile').write_text('invalid')
+            result = subprocess.run(cmd, capture_output=True, text=True, env=env)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn('WiiForge:', result.stderr)
+            self.assertNotIn('Traceback', result.stderr)
+
+    @patch('wiiforge.__main__.platform.system', return_value='Linux')
+    def test_unsupported_host_fails_closed(self, system):
+        with self.assertRaises(ValueError):
+            inspect('disk9')
+
+
+if __name__ == '__main__':
+    unittest.main()

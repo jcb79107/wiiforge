@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "model": "original",
+  "region": "U",
+  "display": "unknown",
+  "cable": "unknown",
+  "output": "preserve",
+  "aspect": "preserve",
+  "loader": "usb-loader-gx",
+  "autoboot": "review",
+  "gamecube": "off"
+}

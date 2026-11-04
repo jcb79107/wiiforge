@@ -1,0 +1,202 @@
+import argparse
+import hashlib
+import json
+import platform
+import plistlib
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+GUIDE = 'https://wii.hacks.guide/'
+
+
+def require(ok, message):
+    if not ok:
+        raise ValueError(message)
+
+
+def digest(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+
+def read(path):
+    # JSON is a strict YAML 1.2 subset. No YAML tags, constructors or dependencies.
+    def unique(pairs):
+        out = {}
+        for key, value in pairs:
+            require(key not in out, 'Duplicate key: ' + key)
+            out[key] = value
+        return out
+    require(Path(path).stat().st_size <= 1048576, 'Input exceeds 1 MiB')
+    return json.loads(Path(path).read_text(), object_pairs_hook=unique)
+
+
+def keys(obj, expected):
+    require(isinstance(obj, dict) and set(obj) == set(expected.split()), 'Unexpected or missing fields')
+
+
+def profile(p):
+    keys(p, 'schema model region display cable output aspect loader autoboot gamecube')
+    require(type(p['schema']) is int and p['schema'] == 1, 'Unsupported profile schema')
+    choices = {'model': ['original', 'family', 'mini', 'vwii', 'unknown'],
+               'region': ['U', 'E', 'J', 'K', 'unknown'],
+               'display': ['crt', 'hd', 'unknown'],
+               'cable': ['composite', 'rgb', 'component', 'adapter', 'unknown'],
+               'output': ['preserve', '480i', '576i', '480p'],
+               'aspect': ['preserve', '4:3', '16:9'],
+               'loader': ['usb-loader-gx'],
+               'autoboot': ['off', 'review'], 'gamecube': ['off', 'review']}
+    for key, options in choices.items():
+        require(p[key] in options, 'Invalid profile ' + key)
+    require(p['output'] != '480p' or (p['display'] == 'hd' and p['cable'] == 'component'),
+            '480p requires explicit compatible display/cable evidence; adapters need separate review')
+    require(p['output'] != '576i' or p['region'] == 'E', '576i requires PAL region')
+    return p
+
+
+def evidence(e):
+    keys(e, 'schema model model_source region region_source menu')
+    require(type(e['schema']) is int and e['schema'] == 1, 'Unsupported evidence schema')
+    require(e['model'] in ['original', 'family', 'mini', 'vwii', 'unknown'], 'Invalid model evidence')
+    require(e['region'] in ['U', 'E', 'J', 'K', 'unknown'], 'Invalid region evidence')
+    for key in ['model_source', 'region_source']:
+        require(e[key] in ['unknown', 'user-observation', 'diagnostic'], 'Invalid evidence source')
+    require(isinstance(e['menu'], str) and re.fullmatch(r'(unknown|[1-4]\.[0-3][UEJK])', e['menu']), 'Invalid menu')
+    return e
+
+
+def diskutil(*args):
+    r = subprocess.run(['/usr/sbin/diskutil', *args], check=True, capture_output=True, timeout=20)
+    return plistlib.loads(r.stdout)
+
+
+def normalize(info, parts):
+    # Never expose labels, serials, UUIDs or mount paths in reports.
+    identity = {k: info.get(k) for k in ['DeviceIdentifier', 'DiskUUID', 'MediaUUID', 'TotalSize', 'Internal', 'Whole']}
+    partitions = [{k: p.get(k) for k in ['DeviceIdentifier', 'PartitionType', 'FilesystemType', 'TotalSize', 'VolumeAllocationBlockSize']} for p in parts]
+    blockers = []
+    if info.get('Internal') is not False:
+        blockers.append('internal-or-unknown-device')
+    if info.get('Whole') is not True:
+        blockers.append('not-a-whole-physical-disk')
+    if info.get('VirtualOrPhysical') != 'Physical':
+        blockers.append('virtual-or-unknown-device')
+    if type(info.get('TotalSize')) is not int or info['TotalSize'] <= 0:
+        blockers.append('unknown-capacity')
+    if not info.get('DiskUUID') and not info.get('MediaUUID'):
+        blockers.append('no-stable-identity')
+    if info.get('Content') != 'FDisk_partition_scheme':
+        blockers.append('mbr-not-confirmed')
+    if len(partitions) != 1:
+        blockers.append('ambiguous-partition-layout')
+    elif partitions[0]['FilesystemType'] != 'msdos' or partitions[0]['PartitionType'] != 'DOS_FAT_32':
+        blockers.append('fat32-not-confirmed')
+    if len(partitions) == 1 and partitions[0]['VolumeAllocationBlockSize'] != 32768:
+        blockers.append('32k-clusters-not-confirmed')
+    return {'schema': 1, 'kind': 'macos-diskutil', 'device': info.get('DeviceIdentifier'),
+            'fingerprint': digest({'identity': identity, 'partitions': partitions}),
+            'capacity': info.get('TotalSize'), 'blockers': blockers,
+            'write_authorized': False}
+
+
+def inspect(device):
+    require(platform.system() == 'Darwin', 'Live inspection currently requires macOS; no other OS is hardware-tested')
+    require(re.fullmatch(r'disk[0-9]+', device), 'Select an exact whole-disk identifier, e.g. disk4')
+    listing = diskutil('list', '-plist')
+    matches = [d for d in listing.get('AllDisksAndPartitions', []) if d.get('DeviceIdentifier') == device]
+    require(len(matches) == 1, 'Device missing or ambiguous')
+    before = diskutil('info', '-plist', device)
+    parts = [diskutil('info', '-plist', p['DeviceIdentifier']) for p in matches[0].get('Partitions', [])]
+    after = diskutil('info', '-plist', device)
+    require(before == after, 'Device changed during inspection; reconnect and reinspect')
+    return normalize(before, parts)
+
+
+def plan(p, e, d):
+    profile(p)
+    evidence(e)
+    keys(d, 'schema kind device fingerprint capacity blockers write_authorized')
+    require(type(d['schema']) is int and d['schema'] == 1 and d['kind'] == 'macos-diskutil', 'Invalid inspection')
+    require(isinstance(d['fingerprint'], str) and re.fullmatch('[0-9a-f]{64}', d['fingerprint']), 'Invalid fingerprint')
+    require(isinstance(d['device'], str) and re.fullmatch('disk[0-9]+', d['device']), 'Invalid device')
+    require(type(d['capacity']) is int and d['capacity'] > 0, 'Invalid capacity')
+    require(d['write_authorized'] is False, 'Inspection cannot authorize writes')
+    require(isinstance(d['blockers'], list) and all(isinstance(x, str) for x in d['blockers']), 'Invalid blockers')
+    blocked = list(d['blockers'])
+    if p['model'] != 'original' or e['model'] != p['model'] or e['model_source'] == 'unknown':
+        blocked.append('original-Wii-model-not-confirmed; family/mini/vWii recipes are not implemented')
+    if p['region'] != e['region'] or e['region_source'] == 'unknown' or p['region'] == 'unknown':
+        blocked.append('region-not-confirmed')
+    if e['menu'] == 'unknown' or e['menu'][-1:] != e['region']:
+        blocked.append('menu-or-region-conflict')
+    if e['menu'] != '4.3U':
+        blocked.append('outside-initial-4.3U-reference-scope')
+    steps = [
+        ('review', 'Review current model-specific guide and inspect media after every reconnect', GUIDE),
+        ('backup', 'Manually establish Homebrew Channel and model-appropriate recovery; verify private NAND backup', GUIDE),
+        ('recovery', 'Manually verify Priiloader recovery before optional autoboot', GUIDE + 'priiloader'),
+        ('cios', 'Review current original-Wii cIOS instructions; separately approve console changes', GUIDE + 'cios'),
+        ('loader', 'Review upstream USB Loader GX package/version/hash before any staging; manually test loader launch', GUIDE + 'wii-loaders'),
+        ('wii-test', 'Manually test a lawfully dumped Wii game; loader launch alone is insufficient', GUIDE + 'wii-loaders')]
+    if p['gamecube'] == 'review':
+        steps.append(('gamecube-test', 'Separately review Nintendont and manually test GameCube launch; unverified', GUIDE))
+    if p['autoboot'] == 'review':
+        steps.append(('autoboot-test', 'Separately review Wii forwarder/autoboot and retest Priiloader recovery', GUIDE + 'priiloader'))
+    body = {'schema': 1, 'inputs': digest([p, e, d]), 'blockers': blocked,
+            'status': 'blocked' if blocked else 'manual-review-only',
+            'steps': [] if blocked else [{'id': i, 'instruction': t, 'source': u} for i, t, u in steps],
+            'execution_supported': False}
+    return dict(body, digest=digest(body))
+
+
+def resume(current, state=None, checkpoint=None, level=None):
+    require(not current['blockers'], 'Blocked plans cannot record completion')
+    expected = {'schema': 1, 'plan_digest': current['digest'], 'completed': []}
+    state = expected if state is None else state
+    keys(state, 'schema plan_digest completed')
+    require(type(state['schema']) is int and state['schema'] == 1, 'Invalid state schema')
+    require(state['plan_digest'] == current['digest'], 'Inputs changed; start new state and reverify checkpoints')
+    require(isinstance(state['completed'], list), 'Invalid completion list')
+    ids = [s['id'] for s in current['steps']]
+    for index, item in enumerate(state['completed']):
+        keys(item, 'id evidence')
+        require(index < len(ids) and item['id'] == ids[index], 'Invalid checkpoint order')
+        require(item['evidence'] == ('console-tested' if item['id'] in ['recovery', 'loader', 'wii-test', 'gamecube-test', 'autoboot-test'] else 'user-confirmed'), 'Insufficient checkpoint evidence')
+    if checkpoint:
+        n = len(state['completed'])
+        require(n < len(ids) and checkpoint == ids[n], 'Only the next checkpoint can be acknowledged')
+        state['completed'].append({'id': checkpoint, 'evidence': level})
+        return resume(current, state)
+    return state
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest='command', required=True)
+    sub.add_parser('inspect').add_argument('--device', required=True)
+    for name in ['plan', 'resume']:
+        p = sub.add_parser(name)
+        for arg in ['profile', 'evidence', 'inspection']:
+            p.add_argument('--' + arg, required=True)
+        if name == 'resume':
+            p.add_argument('--state')
+            p.add_argument('--checkpoint')
+            p.add_argument('--level', choices=['user-confirmed', 'console-tested'])
+    args = parser.parse_args()
+    try:
+        if args.command == 'inspect':
+            result = inspect(args.device)
+        else:
+            result = plan(read(args.profile), read(args.evidence), read(args.inspection))
+            if args.command == 'resume':
+                result = resume(result, read(args.state) if args.state else None, args.checkpoint, args.level)
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 2 if result.get('blockers') else 0
+    except (ValueError, OSError, subprocess.SubprocessError, plistlib.InvalidFileException) as exc:
+        print('WiiForge: ' + str(exc), file=sys.stderr)
+        return 2
+
+
+if __name__ == '__main__':
+    sys.exit(main())
