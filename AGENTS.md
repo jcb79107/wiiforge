@@ -5,8 +5,13 @@ Never infer console model, region, cIOS, BootMii eligibility or TV capability fr
 Unknown, conflicting or ambiguous evidence blocks model-sensitive planning. Recognize original,
 Family Edition, mini and vWii separately. Do not reuse original-Wii payloads across them.
 
-The current CLI never writes media, downloads packages, executes downloaded code, formats, repairs,
-or performs console operations. Preserve that boundary. Proposed future destructive operations need
+Inspection, planning and default package verification are read-only. `rehearse` and opt-in
+`verify-package --experimental-stage` write files inside newly created private OS temporary directories.
+The backing device is not classified: TMPDIR (or the host equivalent) can point to removable media.
+Before running either write-capable command, confirm the host temporary directory is appropriate scratch
+storage. Do not describe these commands as media-write-free. No destination argument is accepted.
+The CLI does not download packages, execute downloaded code, format, repair or perform console operations.
+Preserve those boundaries. Proposed future destructive operations need
 separate explicit approval naming the physical target and data loss, plus fresh device validation.
 Do not treat a plan, checkpoint, historical success or GitHub publication approval as write permission.
 Never run unrecognized tools/scripts/binaries without per-action approval. No production services.

@@ -1,6 +1,6 @@
 # Safety and private reporting
 
-WiiForge is an early read-only planning tool. Its test suite does not certify console safety or hardware compatibility. Do not use a generated plan as approval to write to storage or a console.
+WiiForge provides read-only inspection/planning and opt-in temporary file preparation experiments. Its test suite does not certify console safety or hardware compatibility. Do not use a generated plan as approval to write to storage or a console.
 
 ## Reporting a problem
 
@@ -12,4 +12,10 @@ If private material is accidentally published, stop sharing it and notify the re
 
 ## Boundaries
 
-The CLI has no media-write, package execution, formatting, filesystem-repair or console-write path. Future changes that introduce these capabilities require a separate safety review and explicit target-specific approval. Unsupported or uncertain model paths must stay blocked.
+`rehearse` and `verify-package --experimental-stage` write into private OS temporary directories and
+normally remove them on completion or failure. The tool does not verify the backing device of TMPDIR
+(or its host equivalent); it could be removable storage. Confirm appropriate scratch storage before
+running either command. Forced termination or cleanup failure can leave files behind. Neither command
+accepts a destination argument. Default package verification and inspection remain read-only.
+
+The CLI has no package execution, formatting, filesystem-repair or console-write path. Future changes that introduce these capabilities require a separate safety review and explicit target-specific approval. Unsupported or uncertain model paths must stay blocked.

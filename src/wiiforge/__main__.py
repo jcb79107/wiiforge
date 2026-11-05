@@ -306,9 +306,9 @@ def main():
     sub.add_parser('rehearse', help='Copy synthetic fixtures into a temporary host directory, verify, then remove')
     sub.add_parser('demo', help='Try synthetic plans; no media or network access')
     sub.add_parser('inspect', help='Read macOS whole-disk metadata').add_argument('--device', required=True)
-    package_parser = sub.add_parser('verify-package', help='Verify local package bytes without extraction or execution')
+    package_parser = sub.add_parser('verify-package', help='Verify package bytes read-only by default; optional temporary staging; never execute')
     package_parser.add_argument('--experimental-stage', action='store_true',
-                                help='Stage hash-verified bytes only in private temporary host storage, verify, then delete; installation stays blocked')
+                                help='Write hash-verified files to OS temporary storage, verify, then delete; backing device is not verified; installation stays blocked')
     package_parser.add_argument('--check-archive', action='store_true', help='Check ZIP metadata after hash verification; never extract')
     for arg in ['manifest', 'artifact', 'model']:
         package_parser.add_argument('--' + arg, required=True)

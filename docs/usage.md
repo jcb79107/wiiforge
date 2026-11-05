@@ -90,4 +90,4 @@ performs no network access, and never calls the installation planner or changes 
 On an ordinary exception or keyboard interrupt, partial temporary work is removed. A new invocation starts
 fresh; this is not persistent copy/resume support. Forced process termination or host failure can leave the
 OS temporary directory behind. No general cleanup command is provided. Use a host whose OS temporary
-directory is on local scratch storage. No package licensing, archive compatibility or hardware support is implied.
+directory is on appropriate scratch storage; the tool does not verify its backing device and TMPDIR can point to removable media. No package licensing, archive compatibility or hardware support is implied.
