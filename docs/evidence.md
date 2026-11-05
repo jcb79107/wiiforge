@@ -11,6 +11,8 @@ Two supplied blueprint copies were byte-identical, as were two recovery copies. 
 - SD FAT32 and USB MBR/FAT32/32 KiB geometry were historical inspection reports, not checks of currently attached hardware.
 - A private backup was checksum-checked in the recovery process; that does not establish restore viability. WiiForge neither imports nor distributes it.
 
+The user also reports completing manual setup on two different Wiis. This is process experience, not evidence that WiiForge ran on either console; model-specific and display compatibility remain unverified.
+
 ## Provisional settings
 
 Display type, cable, adapter, aspect and output mode were not established. Update-blocking and deflicker settings were part of combined acknowledgments, not an independently verified settings dump. Return To, memory-card emulation and controller preferences were suggestions. Optional themes, online services, emulators and save tools were aspirations. GameCube files were staged, but Wii/GameCube gameplay tests were not confirmed.
@@ -24,4 +26,4 @@ Reviewed 2026-11-04:
 - https://wii.hacks.guide/cios — explicit model separation; do not mix Wii, mini and vWii IOS/System Menu payloads.
 - https://wii.hacks.guide/wii-loaders — USB Loader GX prerequisites, upstream links and storage considerations.
 
-The MVP links to these procedures rather than reproducing a fixed console-write recipe. No packages have been downloaded, executed, staged or verified by WiiForge. A future package lock must be reviewed before enabling preparation; an empty lock pretending packages are validated is deliberately omitted.
+The MVP links to these procedures rather than reproducing a fixed console-write recipe. The pinned USB Loader GX package has since passed host-side integrity checks and disposable experimental staging; see [package evidence](../packages/README.md). No package has been executed or tested on a console by WiiForge. Licensing and installation remain blocked.

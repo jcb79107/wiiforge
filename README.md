@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>Read-only Wii homebrew planning, built for people and their agents.</strong><br>
-  Python 3.10+ · Zero runtime dependencies · MIT licensed · Early MVP
+  Python 3.10+ · Zero runtime dependencies · MIT licensed · Planning MVP
 </p>
 
 <p align="center">
@@ -115,9 +115,9 @@ Keep real reports, device identifiers and recovery material private. Checkpoints
 
 ## What comes next
 
-1. **Validate read-only inspection on real macOS hardware** using opt-in observations and sanitized regression fixtures.
-2. **Review package provenance**: upstream origins, licenses, model constraints, pinned versions and verified hashes.
-3. **Build non-destructive staging** with archive safety, capacity checks, preservation and interruption recovery before any real-media preparation.
+1. **Validate read-only inspection on real macOS hardware**, including reconnects and real diskutil metadata.
+2. **Complete the upstream license review** before enabling distribution or installation. The pinned ZIP has passed host-side integrity and disposable-staging checks.
+3. **Design separately approved media preparation** with target identification, preservation and persistent interruption recovery. No command currently writes to a selected drive.
 
 Each step has an explicit acceptance gate in the [roadmap](docs/roadmap.md). Wider console support follows evidence, not a release date.
 

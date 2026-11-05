@@ -301,7 +301,7 @@ def verify_package(manifest, artifact, model, check_archive=False, experimental_
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='wiiforge', description='Read-only Wii homebrew inspection and manual planning.')
+    parser = argparse.ArgumentParser(prog='wiiforge', description='Wii homebrew inspection, manual planning and optional temporary staging.')
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('rehearse', help='Copy synthetic fixtures into a temporary host directory, verify, then remove')
     sub.add_parser('demo', help='Try synthetic plans; no media or network access')

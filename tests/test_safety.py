@@ -53,6 +53,26 @@ class SafetyTests(unittest.TestCase):
         self.assertFalse(p['execution_supported'])
         self.assertEqual(p, plan(self.p, self.e, self.d))
 
+    def test_complete_manual_workflow_survives_save_and_reload(self):
+        current = plan(dict(self.p, gamecube='review'), self.e, self.d)
+        expected = [('review', 'user-confirmed'), ('backup', 'user-confirmed'),
+                    ('recovery', 'console-tested'), ('cios', 'user-confirmed'),
+                    ('loader', 'console-tested'), ('wii-test', 'console-tested'),
+                    ('gamecube-test', 'console-tested'), ('autoboot-test', 'console-tested')]
+        self.assertEqual([step['id'] for step in current['steps']], [i for i, _ in expected])
+        state = resume(current)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'state.json'
+            for checkpoint, level in expected:
+                path.write_text(json.dumps(state))
+                state = resume(current, read(path), checkpoint, level)
+            path.write_text(json.dumps(state))
+            self.assertEqual(resume(current, read(path)), state)
+        self.assertEqual(len(state['completed']), len(expected))
+        self.assertFalse(current['execution_supported'])
+        with self.assertRaises(ValueError):
+            resume(current, state, 'autoboot-test', 'console-tested')
+
     def test_internal_unknown_virtual_and_partition_rejected(self):
         for key, value in [('Internal', True), ('Internal', None), ('Whole', False),
                            ('VirtualOrPhysical', 'Virtual'), ('DiskUUID', None), ('TotalSize', 0),
