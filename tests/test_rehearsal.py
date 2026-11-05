@@ -7,8 +7,8 @@ import sys
 import tempfile
 import unittest
 import zipfile
-from unittest.mock import patch
-from wiiforge.rehearsal import _copy_member, _rehearse_zip, rehearse
+from unittest.mock import Mock, patch
+from wiiforge.rehearsal import _copy_member, _stage_zip, rehearse
 
 
 def fixture(name='apps/demo/a.txt'):
@@ -60,14 +60,34 @@ class RehearsalTests(unittest.TestCase):
         info.external_attr = (stat.S_IFLNK | 0o777) << 16
         for name in ['../outside', '/absolute', 'COM¹.txt', info]:
             with self.subTest(name=str(name)), self.assertRaises(ValueError):
-                _rehearse_zip(fixture(name))
+                _stage_zip(fixture(name))
             self.assert_clean()
+
+    def test_experimental_stage_failure_cleans_partial_work(self):
+        def interrupted(source, target, expected):
+            target.write_bytes(b'partial')
+            raise KeyboardInterrupt()
+        with patch('wiiforge.rehearsal._copy_member', interrupted):
+            with self.assertRaises(KeyboardInterrupt):
+                _stage_zip(fixture(), synthetic=False)
+        self.assert_clean()
+        with self.assertRaises(ValueError):
+            _stage_zip(fixture('../escape'), synthetic=False)
+        self.assert_clean()
+
+    def test_capacity_rejection_writes_no_payload_and_cleans_directory(self):
+        with patch('wiiforge.rehearsal.shutil.disk_usage', return_value=Mock(free=0)):
+            with patch('wiiforge.rehearsal._copy_member') as copy:
+                with self.assertRaisesRegex(ValueError, 'Insufficient'):
+                    _stage_zip(fixture(), synthetic=False)
+                copy.assert_not_called()
+        self.assert_clean()
 
     def test_crc_failure_cleans_partial_copy(self):
         data = fixture()
         data = data.replace(b'synthetic', b'corrupted', 1)
         with self.assertRaises(zipfile.BadZipFile):
-            _rehearse_zip(data)
+            _stage_zip(data)
         self.assert_clean()
 
     def test_copy_rejects_truncation_growth_and_existing_file(self):

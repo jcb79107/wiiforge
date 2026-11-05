@@ -45,6 +45,28 @@ class PackageTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'SHA-256'):
                 verify_package(self.manifest, self.artifact, 'original', check_archive=True)
 
+    def test_experimental_stage_uses_verified_snapshot_and_keeps_blockers(self):
+        with zipfile.ZipFile(self.artifact, 'w') as output:
+            output.writestr('apps/demo/readme.txt', b'synthetic')
+        original = self.artifact.read_bytes()
+        self.manifest.update(size=len(original), sha256=hashlib.sha256(original).hexdigest())
+        result = verify_package(self.manifest, self.artifact, 'original', experimental_stage=True)
+        self.assertFalse(result['staging']['synthetic'])
+        self.assertEqual(result['staging']['status'], 'experimental-stage-verified')
+        self.assertTrue(result['staging']['temporary_files_removed'])
+        self.assertFalse(result['execution_supported'])
+        self.assertIn('license-review-pending', result['blockers'])
+        self.assertIn('hardware-untested', result['blockers'])
+        self.assertEqual(self.artifact.read_bytes(), original)
+        with patch('wiiforge.__main__._stage_zip', return_value={}) as stage:
+            verify_package(self.manifest, self.artifact, 'original', experimental_stage=True)
+            stage.assert_called_once_with(original, synthetic=False)
+        self.manifest['sha256'] = 'a' * 64
+        with patch('wiiforge.__main__._stage_zip') as stage:
+            with self.assertRaisesRegex(ValueError, 'SHA-256'):
+                verify_package(self.manifest, self.artifact, 'original', experimental_stage=True)
+            stage.assert_not_called()
+
     def test_wrong_size_and_hash_rejected(self):
         for change in [{'size': 1}, {'sha256': 'a' * 64}]:
             with self.assertRaises(ValueError):

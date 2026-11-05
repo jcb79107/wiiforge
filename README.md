@@ -80,7 +80,7 @@ Read disk metadata + collect console observations
 
 | Command | What it does |
 | --- | --- |
-| `verify-package --manifest … --artifact … --model original` | Checks local package size/hash; installation remains blocked ([provenance](packages/README.md)) |
+| `verify-package --manifest … --artifact … --model original` | Checks local package size/hash; optional experimental temporary staging; installation remains blocked ([provenance](packages/README.md)) |
 | `rehearse` | Copies built-in synthetic files into a private temporary host directory, verifies and removes them; accepts no package or destination |
 | `demo` | Shows deterministic synthetic planning and rejection examples |
 | `inspect --device diskN` | Reads macOS disk metadata; rejects ambiguous/internal targets |
@@ -102,7 +102,8 @@ JSON goes to stdout; errors go to stderr. Exit `0` means the requested operation
 | Linux / Windows inspection | Not implemented | Fails closed; Linux can run the synthetic demo/tests |
 | CRT / HD / regional video | Explicit profile fields; preserve by default | No tested display compatibility matrix |
 | Wii / GameCube gameplay | Manual checkpoints | No gameplay compatibility claims |
-| Staging / SD preparation / formatting | Not implemented | Separate future work and approval boundaries |
+| Package staging | Opt-in disposable host staging | Experimental; licensing/installation blocked; no destination accepted |
+| SD preparation / formatting | Not implemented | Separate future work and approval boundaries |
 
 Storage checks conservatively require an external physical whole disk, persistent identifier, known capacity and a single MBR/FAT32 partition with 32 KiB clusters. Missing metadata blocks planning even if a drive might otherwise work. This is **not a filesystem integrity check or a guarantee of compatibility**.
 

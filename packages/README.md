@@ -65,3 +65,26 @@ component and distribution-obligation review is still outstanding.
 
 CRC/size checks establish readable archive members, not trustworthy executable behavior, license clearance
 or console compatibility. No physical media or console was accessed. Installation remains blocked.
+
+## Experimental disposable staging
+
+Add `--experimental-stage` to `verify-package` to rehearse preparation of a local, pinned package.
+This is opt-in host-only scratch work: it accepts no destination, never writes removable media or console
+storage, and never runs any staged program. Use a host with its OS temporary directory on local scratch storage.
+The manifest remains a trusted reviewed input, not proof of publisher authenticity.
+
+The verifier captures a bounded snapshot while hashing the open regular file, checks its size/hash and
+metadata stability, then passes those same immutable bytes to staging. ZIP metadata validation runs before
+creating the private temporary directory. A free-space preflight reserves declared contents plus 1 MiB;
+this is not a reservation against concurrent disk usage, so I/O failures still abort and clean up.
+Files are created exclusively, streamed with size/CRC checks and verified again using bounded read-back
+hashes. All staged files are deleted before a success result is returned. Ordinary exceptions and keyboard
+interrupts also clean up; forced termination can leave scratch files behind. Persistent resume is not implemented.
+
+`staging.status` becomes `experimental-stage-verified`, while the top-level result still has blockers and
+exit code 2. Licensing, installation safety and real hardware behavior remain unapproved. The package's
+metadata-only `archive` field is null in this mode; staging performs its own required ZIP check on the snapshot.
+
+On 2026-11-05, the pinned release completed this temporary rehearsal with 27 files verified and removed.
+No package bytes were committed, published or executed. This does not establish that its executable is safe
+or that redistribution obligations have been satisfied.
