@@ -103,3 +103,50 @@ directory is on appropriate scratch storage; the tool does not verify its backin
 | Interrupted experimental staging | Ordinary failures clean up; rerun from the verified source. There is no persistent staging resume or console rollback. |
 
 If a bug remains, use a synthetic reproducer in an issue. Never attach raw disk reports or recovery artifacts.
+
+## Controlled file preparation
+
+`prepare-plan` and `prepare` support a caller-selected **existing, dedicated directory** on POSIX hosts.
+They are tested only against isolated temporary fixtures, not SD/USB hardware. No formatting, package execution,
+console write or overwrite operation exists. The model must be explicitly `original`; other paths remain blocked.
+Package licensing and console-installation blockers remain in every result. Preparing files does not clear them.
+
+Use an already downloaded pinned ZIP and a trusted reviewed manifest. Choose the destination yourself;
+WiiForge does not automatically choose a disk or certify its suitability. Paths below are placeholders.
+Keep the plan outside the destination and repository: it includes private path/device metadata.
+
+```sh
+python3 -m wiiforge prepare-plan --manifest packages/usb-loader-gx.yaml \
+  --artifact /private/usbloadergx_r1283.zip --model original \
+  --destination /chosen/existing/directory > /private/preparation-plan.json
+```
+
+Inspect the JSON: every file has a path, byte size, SHA-256 and `create` or `keep` action; directories are
+listed too. `required_bytes` is the payload size to create, with an additional 1 MiB free-space safety check.
+A missing or conflicting target, unsupported model, invalid archive or insufficient space stops the operation.
+Preflight reads and hashes all package members; it writes nothing. Do not approve a plan you have not reviewed.
+
+After explicit approval for that destination and those writes, copy its `digest` into the command:
+
+```sh
+python3 -m wiiforge prepare --manifest packages/usb-loader-gx.yaml \
+  --artifact /private/usbloadergx_r1283.zip --model original \
+  --destination /chosen/existing/directory --plan /private/preparation-plan.json \
+  --approve-plan DIGEST_FROM_REVIEWED_PLAN
+```
+
+Approval binds the exact package bytes, original-Wii model, file inventory and destination directory identity.
+The tool rechecks these and all existing target files before writes. Missing files are created exclusively;
+unrelated files remain untouched. Files are flushed and read-back verified. Exit 0 means preparation completed,
+not installation approval: inspect `installation_supported: false` and `installation_blockers`.
+
+Run the same approved command to resume: already complete files are rehashed and skipped. Normal errors or
+keyboard interruption remove only the newly created in-progress file; completed files and created directories
+remain. Forced termination, disconnect or power loss can leave a partial file. A conflicting partial file is
+**never overwritten or automatically deleted on resume**: separately review and authorize cleanup, then retry.
+No completion ledger is trusted in place of content verification. This is not an atomic multi-file transaction
+or a guarantee of durability through power failure.
+
+Do not modify, rename, reconnect or concurrently access the destination during preparation. Directory descriptors
+and no-follow opens constrain paths, but cannot secure a destination against another process with your privileges.
+Free-space checks are not reservations. Reconnection or changed identity requires a newly reviewed plan.

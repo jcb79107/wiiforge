@@ -13,6 +13,7 @@ import zipfile
 
 from .archive import check_zip
 from .rehearsal import rehearse, _stage_zip
+from .prepare import plan_preparation, execute_preparation
 
 GUIDE = 'https://wii.hacks.guide/'
 
@@ -300,8 +301,19 @@ def verify_package(manifest, artifact, model, check_archive=False, experimental_
             'execution_supported': False}
 
 
+def package_bytes(manifest, artifact, model):
+    verify_package(manifest, artifact, model)
+    fd = os.open(artifact, os.O_RDONLY | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_NOFOLLOW', 0))
+    with os.fdopen(fd, 'rb') as source:
+        require(stat.S_ISREG(os.fstat(source.fileno()).st_mode), 'Package must be a regular file')
+        data = source.read(manifest['size'] + 1)
+    require(len(data) == manifest['size'] and hashlib.sha256(data).hexdigest() == manifest['sha256'],
+            'Package changed after verification')
+    return data
+
+
 def main():
-    parser = argparse.ArgumentParser(prog='wiiforge', description='Wii homebrew inspection, manual planning and optional temporary staging.')
+    parser = argparse.ArgumentParser(prog='wiiforge', description='Wii homebrew inspection, planning and explicitly approved file preparation.')
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('rehearse', help='Copy synthetic fixtures into a temporary host directory, verify, then remove')
     sub.add_parser('demo', help='Try synthetic plans; no media or network access')
@@ -312,6 +324,13 @@ def main():
     package_parser.add_argument('--check-archive', action='store_true', help='Check ZIP metadata after hash verification; never extract')
     for arg in ['manifest', 'artifact', 'model']:
         package_parser.add_argument('--' + arg, required=True)
+    for name in ['prepare-plan', 'prepare']:
+        preparation = sub.add_parser(name, help='Review exact destination writes' if name == 'prepare-plan' else 'Apply an explicitly approved no-overwrite file plan')
+        for arg in ['manifest', 'artifact', 'model', 'destination']:
+            preparation.add_argument('--' + arg, required=True)
+        if name == 'prepare':
+            preparation.add_argument('--plan', required=True)
+            preparation.add_argument('--approve-plan', required=True)
     for name in ['plan', 'resume']:
         p = sub.add_parser(name, help={'plan': 'Validate evidence and produce manual checkpoints',
                                       'resume': 'Validate or acknowledge ordered checkpoints'}[name])
@@ -329,6 +348,12 @@ def main():
             result = rehearse()
         elif args.command == 'verify-package':
             result = verify_package(read(args.manifest), args.artifact, args.model, args.check_archive, args.experimental_stage)
+        elif args.command in ('prepare-plan', 'prepare'):
+            data = package_bytes(read(args.manifest), args.artifact, args.model)
+            if args.command == 'prepare-plan':
+                result = plan_preparation(data, args.destination, args.model)
+            else:
+                result = execute_preparation(data, args.destination, args.model, read(args.plan), args.approve_plan)
         elif args.command == 'inspect':
             result = inspect(args.device)
         else:

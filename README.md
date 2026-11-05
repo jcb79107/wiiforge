@@ -19,7 +19,7 @@
 
 WiiForge turns hardware observations into a checked, resumable **manual setup plan** centered on USB Loader GX. It keeps unknowns visible, separates historical observations from new test results, and gives any coding agent the same deterministic tools and safety rules.
 
-> **Current scope:** read-only inspection and manual planning, plus opt-in disposable staging. Staging writes to OS temporary storage; its backing device is not verified. WiiForge does not install homebrew, download packages, format drives, repair filesystems or write to a console. Live hardware validation is still pending.
+> **Current scope:** read-only inspection and manual planning, plus controlled file preparation and opt-in disposable staging. Staging writes to OS temporary storage; its backing device is not verified. WiiForge does not install homebrew, download packages, format drives, repair filesystems or write to a console. Live hardware validation is still pending.
 
 ## Why WiiForge?
 
@@ -90,6 +90,7 @@ Read disk metadata + collect console observations
 | Command | What it does |
 | --- | --- |
 | `verify-package --manifest … --artifact … --model original` | Checks local package size/hash; optional experimental temporary staging; installation remains blocked ([provenance](packages/README.md)) |
+| `prepare-plan` / `prepare` | Review exact destination writes, then approve the saved plan; no overwrites ([usage](docs/usage.md#controlled-file-preparation)) |
 | `rehearse` | Copies built-in synthetic files into a private temporary host directory, verifies and removes them; accepts no package or destination |
 | `demo` | Shows deterministic synthetic planning and rejection examples |
 | `inspect --device diskN` | Reads macOS disk metadata; rejects ambiguous/internal targets |
@@ -112,7 +113,8 @@ JSON goes to stdout; errors go to stderr. Exit `0` means the requested operation
 | CRT / HD / regional video | Explicit profile fields; preserve by default | No tested display compatibility matrix |
 | Wii / GameCube gameplay | Manual checkpoints | No gameplay compatibility claims |
 | Package staging | Opt-in disposable host staging | Experimental; licensing/installation blocked; no destination accepted |
-| SD preparation / formatting | Not implemented | Separate future work and approval boundaries |
+| Controlled file preparation | Explicit destination, reviewed plan and digest approval; no overwrites | Tested with isolated fixtures only; real-media validation pending |
+| Formatting / console installation | Not implemented | Separate approval and model-specific validation required |
 
 Storage checks conservatively require an external physical whole disk, persistent identifier, known capacity and a single MBR/FAT32 partition with 32 KiB clusters. Missing metadata blocks planning even if a drive might otherwise work. This is **not a filesystem integrity check or a guarantee of compatibility**.
 
@@ -126,7 +128,7 @@ Keep real reports, device identifiers and recovery material private. Checkpoints
 
 1. **Validate read-only inspection on real macOS hardware**, including reconnects and real diskutil metadata.
 2. **Complete the upstream license review** before enabling distribution or installation. The pinned ZIP has passed host-side integrity and disposable-staging checks.
-3. **Design separately approved media preparation** with target identification, preservation and persistent interruption recovery. No command currently writes to a selected drive.
+3. **Validate controlled preparation on disposable media** after specific approval. Completed files can resume by verification; forced termination during a file leaves a conflict requiring separate cleanup approval.
 
 Each step has an explicit acceptance gate in the [roadmap](docs/roadmap.md). Wider console support follows evidence, not a release date.
 

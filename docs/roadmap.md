@@ -18,7 +18,7 @@ Review current official guidance and primary upstream releases. Record per-artif
 
 ## In progress — non-destructive staging
 
-A synthetic-only `rehearse` command now exercises bounded copies, read-back verification and cleanup in a private temporary host directory. It cannot accept release packages or a destination. Separately, `verify-package --experimental-stage` can verify a pinned snapshot in disposable host storage, with exclusive writes, bounded read-back and capacity checks. Persistent staging/resume and licensing approval are still outstanding.
+A synthetic-only `rehearse` command now exercises bounded copies, read-back verification and cleanup in a private temporary host directory. It cannot accept release packages or a destination. Separately, `verify-package --experimental-stage` can verify a pinned snapshot in disposable host storage, with exclusive writes, bounded read-back and capacity checks. Controlled `prepare-plan` / `prepare` now support explicitly approved destinations with no overwrites and content-verified resume. Only temporary fixtures have been tested; physical-media validation and licensing approval remain outstanding.
 
 Start in a temporary host directory. Reject archive traversal and symlinks, check capacity and FAT32 file-size limits, preserve unrelated files and stop on I/O errors. Track partial work with source identity and expected content, not file presence.
 

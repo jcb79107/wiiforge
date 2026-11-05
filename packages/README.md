@@ -89,3 +89,7 @@ metadata-only `archive` field is null in this mode; staging performs its own req
 On 2026-11-05, the pinned release completed this temporary rehearsal with 27 files verified and removed.
 No package bytes were committed, published or executed. This does not establish that its executable is safe
 or that redistribution obligations have been satisfied.
+
+For explicitly approved, persistent file preparation, see [controlled preparation](../docs/usage.md#controlled-file-preparation).
+It uses the same package pin and original-Wii restriction, preserves installation blockers, and refuses overwrites.
+Only isolated synthetic destination fixtures have been tested for that path; the real ZIP was tested only in disposable staging.

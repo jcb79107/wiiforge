@@ -5,11 +5,14 @@ Never infer console model, region, cIOS, BootMii eligibility or TV capability fr
 Unknown, conflicting or ambiguous evidence blocks model-sensitive planning. Recognize original,
 Family Edition, mini and vWii separately. Do not reuse original-Wii payloads across them.
 
-Inspection, planning and default package verification are read-only. `rehearse` and opt-in
+Inspection, planning, `prepare-plan` and default package verification are read-only.
+`prepare` writes only files/directories listed by a reviewed preparation plan, after explicit digest approval.
+It refuses overwrites and verifies completed files when resumed. Never run it against actual user media
+without authorization for that specific destination and exact plan; our tests use temporary fixtures only. `rehearse` and opt-in
 `verify-package --experimental-stage` write files inside newly created private OS temporary directories.
 The backing device is not classified: TMPDIR (or the host equivalent) can point to removable media.
 Before running either write-capable command, confirm the host temporary directory is appropriate scratch
-storage. Do not describe these commands as media-write-free. No destination argument is accepted.
+storage. Do not describe these commands as media-write-free. The temporary rehearsal/staging commands accept no destination; controlled `prepare` does.
 The CLI does not download packages, execute downloaded code, format, repair or perform console operations.
 Preserve those boundaries. Proposed future destructive operations need
 separate explicit approval naming the physical target and data loss, plus fresh device validation.

@@ -18,4 +18,10 @@ normally remove them on completion or failure. The tool does not verify the back
 running either command. Forced termination or cleanup failure can leave files behind. Neither command
 accepts a destination argument. Default package verification and inspection remain read-only.
 
+`prepare` is a separate write-capable command with an explicit destination and saved plan approval.
+It never overwrites an existing file: matching content is verified and skipped; mismatches block preparation.
+Run it only after reviewing every planned path and authorizing that destination. Keep exclusive access to
+the destination while it runs; directory descriptors and no-follow opens do not protect against an adversary
+with the same account or physical device removal. No physical-media compatibility testing has been completed.
+
 The CLI has no package execution, formatting, filesystem-repair or console-write path. Future changes that introduce these capabilities require a separate safety review and explicit target-specific approval. Unsupported or uncertain model paths must stay blocked.
