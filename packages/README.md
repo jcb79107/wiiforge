@@ -69,8 +69,9 @@ or console compatibility. No physical media or console was accessed. Installatio
 ## Experimental disposable staging
 
 Add `--experimental-stage` to `verify-package` to rehearse preparation of a local, pinned package.
-This is opt-in host-only scratch work: it accepts no destination, never writes removable media or console
-storage, and never runs any staged program. Use a host with its OS temporary directory on local scratch storage.
+This is opt-in host-only scratch work: it accepts no destination, does not select drives or console storage, and never runs any staged program.
+It follows the host OS temporary-directory configuration; it does not classify that backing device.
+Use a host with its OS temporary directory on local scratch storage, never a removable-media mount.
 The manifest remains a trusted reviewed input, not proof of publisher authenticity.
 
 The verifier captures a bounded snapshot while hashing the open regular file, checks its size/hash and
