@@ -130,6 +130,23 @@ class PackageTests(unittest.TestCase):
         self.assertNotIn('Traceback', result.stderr)
         self.assertEqual(result.stdout, '')
 
+    def test_cli_staging_crc_error_is_clean(self):
+        with zipfile.ZipFile(self.artifact, 'w') as output:
+            output.writestr('a.txt', b'synthetic')
+        data = self.artifact.read_bytes().replace(b'synthetic', b'corrupted', 1)
+        self.artifact.write_bytes(data)
+        self.manifest.update(size=len(data), sha256=hashlib.sha256(data).hexdigest())
+        manifest = Path(self.tmp.name) / 'manifest.json'
+        manifest.write_text(json.dumps(self.manifest))
+        result = subprocess.run([sys.executable, '-m', 'wiiforge', 'verify-package',
+                                 '--manifest', str(manifest), '--artifact', str(self.artifact),
+                                 '--model', 'original', '--experimental-stage'], capture_output=True, text=True,
+                                env=dict(os.environ, PYTHONPATH=str(ROOT / 'src')))
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('CRC', result.stderr)
+        self.assertNotIn('Traceback', result.stderr)
+        self.assertEqual(result.stdout, '')
+
     def test_cli_reports_verified_but_blocked(self):
         manifest = Path(self.tmp.name) / 'manifest.json'
         manifest.write_text(json.dumps(self.manifest))

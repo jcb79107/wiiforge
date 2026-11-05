@@ -9,6 +9,7 @@ import plistlib
 import re
 import subprocess
 import sys
+import zipfile
 
 from .archive import check_zip
 from .rehearsal import rehearse, _stage_zip
@@ -336,7 +337,7 @@ def main():
                 result = resume(result, read(args.state) if args.state else None, args.checkpoint, args.level)
         print(json.dumps(result, indent=2, sort_keys=True))
         return 2 if result.get('blockers') else 0
-    except (ValueError, OSError, subprocess.SubprocessError, plistlib.InvalidFileException) as exc:
+    except (ValueError, OSError, zipfile.BadZipFile, subprocess.SubprocessError, plistlib.InvalidFileException) as exc:
         print('WiiForge: ' + str(exc), file=sys.stderr)
         return 2
 
