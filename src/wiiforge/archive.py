@@ -14,7 +14,7 @@ def check_zip(stream):
         with zipfile.ZipFile(stream) as archive:
             entries = archive.infolist()
             require(0 < len(entries) <= 4096, 'ZIP entry count outside review limits')
-            paths, total = {}, 0
+            paths, spellings, total = {}, {}, 0
             for entry in entries:
                 name = entry.orig_filename
                 require(name == entry.filename and len(name) <= 240, 'Ambiguous ZIP name')
@@ -26,6 +26,11 @@ def check_zip(stream):
                         'Unsafe ZIP path')
                 require(all(not re.fullmatch(r'(CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])',
                                              p.split('.')[0], re.I) for p in parts), 'Reserved ZIP path')
+                for i in range(1, len(parts) + 1):
+                    prefix = '/'.join(parts[:i])
+                    folded = prefix.casefold()
+                    require(spellings.setdefault(folded, prefix) == prefix,
+                            'Case-colliding ZIP path component')
                 canonical = '/'.join(parts).casefold()
                 require(canonical not in paths, 'Duplicate or case-colliding ZIP path')
                 is_dir = entry.is_dir()

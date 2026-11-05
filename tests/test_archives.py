@@ -40,6 +40,22 @@ class ArchiveTests(unittest.TestCase):
             with self.subTest(names=names), self.assertRaises(ValueError):
                 check_zip(archive([(n, b'' if n.endswith('/') else b'x') for n in names]))
 
+    def test_parent_component_case_collisions(self):
+        for names in [['Apps/a', 'apps/b'], ['apps/A/a', 'apps/a/b'],
+                      ['Apps/', 'apps/b'], ['apps/b', 'Apps/'],
+                      ['Straße/a', 'STRASSE/b']]:
+            for order in [names, list(reversed(names))]:
+                with self.subTest(names=order), self.assertRaisesRegex(ValueError, 'Case-colliding'):
+                    check_zip(archive([(n, b'' if n.endswith('/') else b'x') for n in order]))
+
+    def test_consistent_shared_parents_are_allowed(self):
+        for names in [['apps/a', 'apps/b'], ['apps/a', 'apps/', 'apps/b'],
+                      ['apps/A/a', 'apps/B/b']]:
+            with self.subTest(names=names):
+                result = check_zip(archive([(n, b'' if n.endswith('/') else b'x') for n in names]))
+                self.assertEqual(result['status'], 'metadata-checked')
+                self.assertFalse(result['content_verified'])
+
     def test_links_and_special_files(self):
         for mode in [stat.S_IFLNK, stat.S_IFIFO, stat.S_IFCHR, stat.S_IFSOCK]:
             info = zipfile.ZipInfo('link')
