@@ -29,6 +29,19 @@ class ArchiveTests(unittest.TestCase):
         self.assertFalse(result['content_verified'])
         self.assertEqual(result['entries'], 2)
 
+    def test_zip_without_unix_file_type_bits(self):
+        data = bytearray(archive([('apps/', b''), ('apps/boot.dol', b'synthetic')]).getvalue())
+        offset = 0
+        while True:
+            offset = data.find(b'PK\x01\x02', offset)
+            if offset < 0:
+                break
+            struct.pack_into('<I', data, offset + 38, 0)
+            offset += 4
+        result = check_zip(io.BytesIO(data))
+        self.assertEqual(result['entries'], 2)
+        self.assertFalse(result['content_verified'])
+
     def test_unsafe_names(self):
         for name in ['../boot.dol', '/absolute', 'a/../b', 'a//b', 'a//', 'a\\b', 'C:/boot',
                      'a:stream', 'CON.txt', 'a/aux', 'a.', 'a ', './a', 'a\nb', 'e\u0301']:

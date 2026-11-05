@@ -13,7 +13,7 @@ Pinned source review found component-specific notices:
 - [libpng header](https://github.com/wiidev/usbloadergx/blob/v4.0-r1283/portlibs/include/png.h): identifies the libpng license.
 
 These observations do not establish licensing for the complete release or all bundled components.
-`license_review` therefore remains `pending`. No binary has been downloaded, extracted, executed or redistributed here.
+`license_review` therefore remains `pending`. The pinned ZIP was downloaded to a temporary host directory for the read-only review below; no payload was extracted, executed, committed or redistributed.
 
 If you already have the exact release ZIP in a private host folder:
 
@@ -39,8 +39,7 @@ Reserved-name checks include Windows' superscript COM/LPT device names and their
 [Microsoft's naming rules](https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file).
 
 The [pinned build workflow](https://github.com/wiidev/usbloadergx/blob/v4.0-r1283/.github/workflows/main.yml)
-stages `boot.dol`, `icon.png` and `meta.xml` under `apps/usbloader_gx`. This is build-layout evidence, not proof
-of the unexamined release ZIP's members. Synthetic tests do not validate that release's archive.
+stages `boot.dol`, `icon.png` and `meta.xml` under `apps/usbloader_gx`. The read-only release inspection below confirms that layout for this exact ZIP. Synthetic tests alone do not validate a release archive.
 
 A match returns `content-verified` **and exit 2**, because license review, archive content and hardware validation
 still block installation. A mismatch also exits 2 with an error. The manifest itself must be trusted/reviewed;
@@ -48,3 +47,21 @@ editing its hash can make arbitrary bytes match. This checker is not a signature
 The model list is WiiForge's limited review scope, not an upstream compatibility claim.
 
 Before staging: review licensing, recheck release metadata, verify archive content/layout and capacity, then test preservation and interrupted copies in temporary directories. Media writes remain separate.
+
+## Exact-release inspection — 2026-11-05
+
+The official pinned ZIP was retrieved into a temporary host directory. Its 11,160,243-byte size and
+SHA-256 matched the manifest before any ZIP parsing. The existing validator passed without relaxing checks.
+It reports 30 entries and 37,811,633 declared uncompressed bytes. All 27 file members were then streamed
+in bounded chunks through Python's ZIP reader with matching lengths and successful CRC checks; nothing
+was extracted to disk or executed. This one-off review is separate from the CLI's metadata-only check.
+
+The member list contains three directories, `boot.dol` (4,483,840 bytes), `icon.png`, `meta.xml`,
+23 language files and `wiitdb.xml`, all under `apps/usbloader_gx`. The ZIP carries no Unix file-type
+bits; the validator accepts this normal ZIP representation. `meta.xml` identifies version `4.0 r1283`.
+No member name identifies a LICENSE, COPYING, NOTICE or README file, and `meta.xml` has no license terms.
+That is not proof that binaries contain no notices or that distribution rights are absent: complete
+component and distribution-obligation review is still outstanding.
+
+CRC/size checks establish readable archive members, not trustworthy executable behavior, license clearance
+or console compatibility. No physical media or console was accessed. Installation remains blocked.
