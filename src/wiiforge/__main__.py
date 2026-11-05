@@ -247,11 +247,55 @@ def demo():
             'initial_state': resume(current)}
 
 
+def verify_package(manifest, artifact, model):
+    """Compare local bytes with a reviewed pin; never extract or execute them."""
+    keys(manifest, 'schema package version asset url size sha256 digest_source models license_review')
+    require(type(manifest['schema']) is int and manifest['schema'] == 1, 'Invalid package schema')
+    require(manifest['package'] == 'usb-loader-gx', 'Unreviewed package')
+    require(isinstance(manifest['version'], str) and re.fullmatch(r'v[0-9]+\.[0-9]+-r[0-9]+', manifest['version']),
+            'Package requires an exact release version')
+    require(isinstance(manifest['asset'], str) and re.fullmatch(r'usbloadergx_r[0-9]+\.zip', manifest['asset']),
+            'Invalid package asset')
+    expected = 'https://github.com/wiidev/usbloadergx/releases/download/' + manifest['version'] + '/' + manifest['asset']
+    require(manifest['url'] == expected, 'Package origin does not match reviewed upstream')
+    require(manifest['digest_source'] == 'github-release-api', 'Unreviewed digest source')
+    require(isinstance(manifest['sha256'], str) and re.fullmatch('[0-9a-f]{64}', manifest['sha256']),
+            'Missing or invalid SHA-256 pin')
+    require(type(manifest['size']) is int and 0 < manifest['size'] <= 64 * 1024 * 1024,
+            'Package size must be pinned and at most 64 MiB')
+    require(manifest['models'] == ['original'] and model == 'original', 'Package model path is not reviewed')
+    require(manifest['license_review'] == 'pending', 'License approval is not implemented')
+    flags = os.O_RDONLY | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_NOFOLLOW', 0)
+    fd = os.open(artifact, flags)
+    with os.fdopen(fd, 'rb') as stream:
+        before = os.fstat(stream.fileno())
+        require(stat.S_ISREG(before.st_mode), 'Package must be a regular file')
+        require(before.st_size == manifest['size'], 'Package size mismatch')
+        remaining, checksum = manifest['size'], hashlib.sha256()
+        while remaining:
+            chunk = stream.read(min(remaining, 1024 * 1024))
+            require(chunk, 'Package was truncated during verification')
+            checksum.update(chunk)
+            remaining -= len(chunk)
+        require(not stream.read(1), 'Package grew during verification')
+        after = os.fstat(stream.fileno())
+        require((before.st_size, before.st_mtime_ns, before.st_ctime_ns) ==
+                (after.st_size, after.st_mtime_ns, after.st_ctime_ns), 'Package changed during verification')
+    require(checksum.hexdigest() == manifest['sha256'], 'Package SHA-256 mismatch')
+    return {'package': manifest['package'], 'version': manifest['version'],
+            'status': 'content-verified', 'sha256': checksum.hexdigest(),
+            'blockers': ['license-review-pending', 'archive-safety-unverified', 'hardware-untested'],
+            'execution_supported': False}
+
+
 def main():
     parser = argparse.ArgumentParser(prog='wiiforge', description='Read-only Wii homebrew inspection and manual planning.')
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('demo', help='Try synthetic plans; no media or network access')
     sub.add_parser('inspect', help='Read macOS whole-disk metadata').add_argument('--device', required=True)
+    package_parser = sub.add_parser('verify-package', help='Verify local package bytes without extraction or execution')
+    for arg in ['manifest', 'artifact', 'model']:
+        package_parser.add_argument('--' + arg, required=True)
     for name in ['plan', 'resume']:
         p = sub.add_parser(name, help={'plan': 'Validate evidence and produce manual checkpoints',
                                       'resume': 'Validate or acknowledge ordered checkpoints'}[name])
@@ -265,6 +309,8 @@ def main():
     try:
         if args.command == 'demo':
             result = demo()
+        elif args.command == 'verify-package':
+            result = verify_package(read(args.manifest), args.artifact, args.model)
         elif args.command == 'inspect':
             result = inspect(args.device)
         else:

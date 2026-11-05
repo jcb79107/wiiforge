@@ -80,6 +80,7 @@ Read disk metadata + collect console observations
 
 | Command | What it does |
 | --- | --- |
+| `verify-package --manifest … --artifact … --model original` | Checks local package size/hash; installation remains blocked ([provenance](packages/README.md)) |
 | `demo` | Shows deterministic synthetic planning and rejection examples |
 | `inspect --device diskN` | Reads macOS disk metadata; rejects ambiguous/internal targets |
 | `plan --profile … --evidence … --inspection …` | Validates inputs and produces linked manual checkpoints |

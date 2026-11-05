@@ -1,0 +1,23 @@
+name: Synthetic tests
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Test with runner Python (no dependency installation)
+        env:
+          PYTHONPATH: src
+        run: |
+          python3 --version
+          python3 -m unittest discover -s tests -v
+          python3 -m wiiforge demo
+          python3 -m compileall -q src

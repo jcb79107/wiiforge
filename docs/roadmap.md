@@ -8,7 +8,9 @@ Implemented: strict profiles, conservative macOS metadata inspection, original-W
 
 **Next acceptance gate:** an opt-in macOS inspection session with no writes to media. Verify the actual diskutil field names and behavior for suitable FAT32/MBR media, internal disks, missing identity and reconnects. Keep raw observations private; add only redacted, synthetic-equivalent fixtures. Document false rejections rather than silently weakening checks. Test the supported Python/host matrix before claiming it.
 
-## Then — reviewed package manifests
+## In progress — reviewed package manifests
+
+An initial USB Loader GX metadata pin and offline byte checker are available in [packages](../packages/README.md). License approval, archive validation and staging remain blocked.
 
 Review current official guidance and primary upstream releases. Record per-artifact origin, version, license, model constraints, expected size and hash. Distinguish upstream authenticity from a locally computed checksum. Do not execute downloads, bundle proprietary console content or reuse historical metadata as a current pin.
 

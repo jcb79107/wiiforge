@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "package": "usb-loader-gx",
+  "version": "v4.0-r1283",
+  "asset": "usbloadergx_r1283.zip",
+  "url": "https://github.com/wiidev/usbloadergx/releases/download/v4.0-r1283/usbloadergx_r1283.zip",
+  "size": 11160243,
+  "sha256": "83e3fa9e18fd715c9617125d674b4b965eddff2ee8c54f11394c0bbc04a421a2",
+  "digest_source": "github-release-api",
+  "models": ["original"],
+  "license_review": "pending"
+}
