@@ -21,6 +21,8 @@ Never run unrecognized tools/scripts/binaries without per-action approval. No pr
 
 Keep recovery reports, personal logs, device identifiers, console keys, NAND dumps, games and Nintendo
 IOS/WADs out of source, fixtures, issues and releases. Use only synthetic tests and sanitized findings.
+Keep package preparation limited to user-supplied local files. Do not publish bundled GameTDB records,
+serve prepared database files on a website, or redistribute upstream packages; complete licensing remains unresolved.
 No automatic game-ID changes, no broad cleanup, no repair of a failing source, no game/key distribution.
 Consult current https://wii.hacks.guide/ and primary upstream releases for each added procedure.
 Historical versions are evidence, not package pins. Record hashes, origin and model constraints before

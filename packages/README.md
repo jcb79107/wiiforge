@@ -63,6 +63,14 @@ No member name identifies a LICENSE, COPYING, NOTICE or README file, and `meta.x
 That is not proof that binaries contain no notices or that distribution rights are absent: complete
 component and distribution-obligation review is still outstanding.
 
+The hash-verified ZIP’s `wiitdb.xml` header identifies GameTDB and describes Wii-related project use,
+but requires permission for website use. This component notice does not resolve the complete package’s
+license. WiiForge does not bundle this database, publish its records or provide a web viewer. Package
+commands operate on user-supplied local files and report paths, sizes and hashes rather than database
+contents. Keep prepared files private; do not use this workflow to redistribute the package or place
+the database in a website’s served directory. The destination checker cannot determine whether another
+application serves a directory. Local preparation is not a legal clearance or redistribution approval.
+
 CRC/size checks establish readable archive members, not trustworthy executable behavior, license clearance
 or console compatibility. No physical media or console was accessed. Installation remains blocked.
 
