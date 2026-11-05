@@ -10,6 +10,8 @@ import re
 import subprocess
 import sys
 
+from .archive import check_zip
+
 GUIDE = 'https://wii.hacks.guide/'
 
 
@@ -247,7 +249,7 @@ def demo():
             'initial_state': resume(current)}
 
 
-def verify_package(manifest, artifact, model):
+def verify_package(manifest, artifact, model, check_archive=False):
     """Compare local bytes with a reviewed pin; never extract or execute them."""
     keys(manifest, 'schema package version asset url size sha256 digest_source models license_review')
     require(type(manifest['schema']) is int and manifest['schema'] == 1, 'Invalid package schema')
@@ -278,13 +280,17 @@ def verify_package(manifest, artifact, model):
             checksum.update(chunk)
             remaining -= len(chunk)
         require(not stream.read(1), 'Package grew during verification')
+        require(checksum.hexdigest() == manifest['sha256'], 'Package SHA-256 mismatch')
+        archive_result = None
+        if check_archive:
+            stream.seek(0)
+            archive_result = check_zip(stream)
         after = os.fstat(stream.fileno())
         require((before.st_size, before.st_mtime_ns, before.st_ctime_ns) ==
                 (after.st_size, after.st_mtime_ns, after.st_ctime_ns), 'Package changed during verification')
-    require(checksum.hexdigest() == manifest['sha256'], 'Package SHA-256 mismatch')
-    return {'package': manifest['package'], 'version': manifest['version'],
+    return {'archive': archive_result, 'package': manifest['package'], 'version': manifest['version'],
             'status': 'content-verified', 'sha256': checksum.hexdigest(),
-            'blockers': ['license-review-pending', 'archive-safety-unverified', 'hardware-untested'],
+            'blockers': ['license-review-pending', 'archive-content-unverified' if check_archive else 'archive-safety-unverified', 'hardware-untested'],
             'execution_supported': False}
 
 
@@ -294,6 +300,7 @@ def main():
     sub.add_parser('demo', help='Try synthetic plans; no media or network access')
     sub.add_parser('inspect', help='Read macOS whole-disk metadata').add_argument('--device', required=True)
     package_parser = sub.add_parser('verify-package', help='Verify local package bytes without extraction or execution')
+    package_parser.add_argument('--check-archive', action='store_true', help='Check ZIP metadata after hash verification; never extract')
     for arg in ['manifest', 'artifact', 'model']:
         package_parser.add_argument('--' + arg, required=True)
     for name in ['plan', 'resume']:
@@ -310,7 +317,7 @@ def main():
         if args.command == 'demo':
             result = demo()
         elif args.command == 'verify-package':
-            result = verify_package(read(args.manifest), args.artifact, args.model)
+            result = verify_package(read(args.manifest), args.artifact, args.model, args.check_archive)
         elif args.command == 'inspect':
             result = inspect(args.device)
         else:

@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import patch
 from wiiforge.__main__ import read, verify_package
 
@@ -28,6 +29,21 @@ class PackageTests(unittest.TestCase):
         self.assertIn('license-review-pending', result['blockers'])
         self.assertIn('archive-safety-unverified', result['blockers'])
         self.assertFalse(result['execution_supported'])
+
+    def test_optional_archive_check_remains_blocked(self):
+        with zipfile.ZipFile(self.artifact, 'w') as output:
+            output.writestr('apps/usbloader_gx/boot.dol', b'synthetic')
+        self.manifest.update(size=self.artifact.stat().st_size,
+                             sha256=hashlib.sha256(self.artifact.read_bytes()).hexdigest())
+        result = verify_package(self.manifest, self.artifact, 'original', check_archive=True)
+        self.assertEqual(result['archive']['status'], 'metadata-checked')
+        self.assertIn('archive-content-unverified', result['blockers'])
+        self.assertIn('license-review-pending', result['blockers'])
+        self.assertFalse(result['execution_supported'])
+        self.manifest['sha256'] = 'a' * 64
+        with patch('wiiforge.__main__.check_zip', side_effect=AssertionError('Unverified bytes parsed')):
+            with self.assertRaisesRegex(ValueError, 'SHA-256'):
+                verify_package(self.manifest, self.artifact, 'original', check_archive=True)
 
     def test_wrong_size_and_hash_rejected(self):
         for change in [{'size': 1}, {'sha256': 'a' * 64}]:

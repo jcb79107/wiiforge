@@ -7,7 +7,12 @@ The ZIP's size and SHA-256 are supplied by GitHub's release API, not locally inv
 This is a pinned observation, not a promise that the version remains current or a signed publisher attestation.
 
 The repository license API returned 404 and no root license file appeared in the reviewed tag's tree.
-That does not prove the project is unlicensed: source headers and bundled components still need review.
+Pinned source review found component-specific notices:
+- [GUI header](https://github.com/wiidev/usbloadergx/blob/v4.0-r1283/source/GUI/gui.h): permission with origin, modification and notice-preservation conditions.
+- [FreeTypeGX](https://github.com/wiidev/usbloadergx/blob/v4.0-r1283/source/FreeTypeGX.cpp): LGPL-3.0-or-later.
+- [libpng header](https://github.com/wiidev/usbloadergx/blob/v4.0-r1283/portlibs/include/png.h): identifies the libpng license.
+
+These observations do not establish licensing for the complete release or all bundled components.
 `license_review` therefore remains `pending`. No binary has been downloaded, extracted, executed or redistributed here.
 
 If you already have the exact release ZIP in a private host folder:
@@ -15,14 +20,23 @@ If you already have the exact release ZIP in a private host folder:
 ```sh
 PYTHONPATH=src python3 -m wiiforge verify-package \
   --manifest packages/usb-loader-gx.yaml \
-  --artifact /your/private/folder/usbloadergx_r1283.zip --model original
+  --artifact /your/private/folder/usbloadergx_r1283.zip --model original --check-archive
 ```
 
 The command reads a regular local file and compares its size/hash. It does not fetch the URL or extract the ZIP.
-A match returns `content-verified` **and exit 2**, because license review, archive safety and hardware validation
+With `--check-archive`, hash verification runs first, then ZIP metadata checks reject traversal/nonportable names,
+case collisions, file/directory conflicts, links/special files, encryption, unsupported compression and excessive
+entry counts, sizes or compression ratios. No files are extracted or decompressed. The result reports
+`archive.status: metadata-checked`; CRCs, local headers, payload contents and expected app layout are **not verified**.
+Without the flag only size/hash are checked.
+
+The [pinned build workflow](https://github.com/wiidev/usbloadergx/blob/v4.0-r1283/.github/workflows/main.yml)
+stages `boot.dol`, `icon.png` and `meta.xml` under `apps/usbloader_gx`. This is build-layout evidence, not proof
+of the unexamined release ZIP's members. Synthetic tests do not validate that release's archive.
+
+A match returns `content-verified` **and exit 2**, because license review, archive content and hardware validation
 still block installation. A mismatch also exits 2 with an error. The manifest itself must be trusted/reviewed;
 editing its hash can make arbitrary bytes match. This checker is not a signature verifier or malware scanner.
 The model list is WiiForge's limited review scope, not an upstream compatibility claim.
 
-Before staging: review licensing, recheck release metadata, implement archive traversal/symlink and capacity
-checks, then test preservation and interrupted copies in temporary directories. Media writes remain separate.
+Before staging: review licensing, recheck release metadata, verify archive content/layout and capacity, then test preservation and interrupted copies in temporary directories. Media writes remain separate.
