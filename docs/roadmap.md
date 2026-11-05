@@ -16,7 +16,9 @@ Review current official guidance and primary upstream releases. Record per-artif
 
 **Acceptance gate:** a reviewable manifest and synthetic rejection tests for wrong model, missing origin, stale pins and hash/size mismatch. Downloads/execution are not implied by this milestone.
 
-## Then — non-destructive staging
+## In progress — non-destructive staging
+
+A synthetic-only `rehearse` command now exercises bounded copies, read-back verification and cleanup in a private temporary host directory. It cannot accept release packages or a destination. Persistent staging/resume and licensing approval are still outstanding.
 
 Start in a temporary host directory. Reject archive traversal and symlinks, check capacity and FAT32 file-size limits, preserve unrelated files and stop on I/O errors. Track partial work with source identity and expected content, not file presence.
 

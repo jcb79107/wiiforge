@@ -24,4 +24,5 @@ jobs:
           python3 --version
           python3 -m unittest discover -s tests -v
           python3 -m wiiforge demo
+          python3 -m wiiforge rehearse
           python3 -m compileall -q src

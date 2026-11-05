@@ -11,6 +11,7 @@ import subprocess
 import sys
 
 from .archive import check_zip
+from .rehearsal import rehearse
 
 GUIDE = 'https://wii.hacks.guide/'
 
@@ -297,6 +298,7 @@ def verify_package(manifest, artifact, model, check_archive=False):
 def main():
     parser = argparse.ArgumentParser(prog='wiiforge', description='Read-only Wii homebrew inspection and manual planning.')
     sub = parser.add_subparsers(dest='command', required=True)
+    sub.add_parser('rehearse', help='Copy synthetic fixtures into a temporary host directory, verify, then remove')
     sub.add_parser('demo', help='Try synthetic plans; no media or network access')
     sub.add_parser('inspect', help='Read macOS whole-disk metadata').add_argument('--device', required=True)
     package_parser = sub.add_parser('verify-package', help='Verify local package bytes without extraction or execution')
@@ -316,6 +318,8 @@ def main():
     try:
         if args.command == 'demo':
             result = demo()
+        elif args.command == 'rehearse':
+            result = rehearse()
         elif args.command == 'verify-package':
             result = verify_package(read(args.manifest), args.artifact, args.model, args.check_archive)
         elif args.command == 'inspect':

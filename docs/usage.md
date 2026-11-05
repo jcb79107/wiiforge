@@ -75,3 +75,19 @@ Save successful JSON output privately. On later calls add `--state /your/private
 Write output to a **new** private filename and replace prior state only after exit `0`. Never redirect onto an input file: shell redirection truncates it before Python runs.
 
 Changed profile, evidence, disk identity, device number or capacity invalidates old state. Identical metadata cannot prove the same physical medium or unchanged content. Supply `--checkpoint` and `--level` together; failed acknowledgments leave the previous state unchanged. Plans generated before a fingerprint change must be regenerated. All checkpoints are local user attestations, not signed proof. Loader launch does not prove gameplay.
+
+## Rehearse file preparation without media
+
+```sh
+python3 -m wiiforge rehearse
+```
+
+This command uses two built-in text fixtures, validates their ZIP metadata, writes them exclusively inside
+a newly created private OS temporary directory, checks byte counts/CRC and read-back hashes, then removes
+the directory. Output lists synthetic paths, sizes and hashes. It accepts no artifact or destination argument,
+performs no network access, and never calls the installation planner or changes its blockers.
+
+On an ordinary exception or keyboard interrupt, partial temporary work is removed. A new invocation starts
+fresh; this is not persistent copy/resume support. Forced process termination or host failure can leave the
+OS temporary directory behind. No general cleanup command is provided. Use a host whose OS temporary
+directory is on local scratch storage. No package licensing, archive compatibility or hardware support is implied.
