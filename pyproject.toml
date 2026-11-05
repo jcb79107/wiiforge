@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "wiiforge"
 version = "0.1.0"
-description = "Read-only Wii homebrew evidence and resumable manual planning"
+description = "Wii homebrew evidence, resumable planning and controlled file preparation"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 dependencies = []

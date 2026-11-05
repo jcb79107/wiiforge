@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <strong>Read-only Wii homebrew planning, built for people and their agents.</strong><br>
-  Python 3.10+ · Zero runtime dependencies · MIT licensed · Planning MVP
+  <strong>Wii homebrew planning and controlled file preparation, for people and their agents.</strong><br>
+  Python 3.10+ · Zero runtime dependencies · MIT licensed · Preparation MVP
 </p>
 
 <p align="center">
@@ -17,7 +17,7 @@
 
 ---
 
-WiiForge turns hardware observations into a checked, resumable **manual setup plan** centered on USB Loader GX. It keeps unknowns visible, separates historical observations from new test results, and gives any coding agent the same deterministic tools and safety rules.
+WiiForge turns hardware observations into a checked, resumable **manual setup plan** centered on USB Loader GX, and prepares verified package files after approval of an exact destination write plan. It keeps unknowns visible, separates historical observations from new test results, and gives any coding agent the same deterministic tools and safety rules.
 
 > **Current scope:** read-only inspection and manual planning, plus controlled file preparation and opt-in disposable staging. Staging writes to OS temporary storage; its backing device is not verified. WiiForge does not install homebrew, download packages, format drives, repair filesystems or write to a console. Live hardware validation is still pending.
 
