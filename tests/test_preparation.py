@@ -7,10 +7,11 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 import zipfile
 from unittest.mock import Mock, patch
-from wiiforge.prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation, _copy_new
+from wiiforge.prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation, _copy_new, root_directory, parent_directory
 from wiiforge.__main__ import read
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -143,6 +144,43 @@ class PreparationTests(unittest.TestCase):
         with self.assertRaises(OSError):
             self.execute(plan)
         self.assertEqual(list(outside.iterdir()), [])
+
+    def test_descendant_device_boundary_rejected_without_writes(self):
+        plan = plan_preparation(self.data, self.dest, 'original')
+        nested = self.dest / 'apps/demo'
+        nested.mkdir(parents=True)
+        real_fstat = os.fstat
+        inode = (self.dest / 'apps').stat().st_ino
+        def different_device(fd):
+            info = real_fstat(fd)
+            if info.st_ino == inode:
+                return SimpleNamespace(st_dev=info.st_dev + 1)
+            return info
+        with patch('wiiforge.prepare.os.fstat', different_device):
+            with self.assertRaisesRegex(ValueError, 'device boundary'):
+                self.execute(plan)
+            with root_directory(self.dest) as (root, _):
+                with self.assertRaisesRegex(ValueError, 'device boundary'):
+                    with parent_directory(root, 'apps/demo/a.txt'):
+                        self.fail('Cross-device parent was accepted')
+        self.assertEqual(list(nested.iterdir()), [])
+
+    def test_existing_file_on_different_device_is_rejected(self):
+        (self.dest / 'apps/demo').mkdir(parents=True)
+        target = self.dest / 'apps/demo/b.txt'
+        target.write_bytes(b'beta')
+        inode = target.stat().st_ino
+        real_fstat = os.fstat
+        def different_device(fd):
+            info = real_fstat(fd)
+            if info.st_ino == inode:
+                return SimpleNamespace(st_dev=info.st_dev + 1)
+            return info
+        with patch('wiiforge.prepare.os.fstat', different_device):
+            with self.assertRaisesRegex(ValueError, 'device boundary'):
+                plan_preparation(self.data, self.dest, 'original')
+        self.assertEqual(target.read_bytes(), b'beta')
+        self.assertFalse((self.dest / 'apps/demo/a.txt').exists())
 
     def test_space_and_models_fail_closed(self):
         with patch('wiiforge.prepare.os.fstatvfs', return_value=Mock(f_bavail=0, f_frsize=4096)):

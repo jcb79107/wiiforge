@@ -135,7 +135,8 @@ python3 -m wiiforge prepare --manifest packages/usb-loader-gx.yaml \
   --approve-plan DIGEST_FROM_REVIEWED_PLAN
 ```
 
-Approval binds the exact package bytes, original-Wii model, file inventory and destination directory identity.
+Approval binds the exact package bytes, original-Wii model, file inventory and destination directory identity
+(canonical path plus root `st_dev`/`st_ino`). This is filesystem identity, not a persistent physical-media identifier.
 The tool rechecks these and all existing target files before writes. Missing files are created exclusively;
 unrelated files remain untouched. Files are flushed and read-back verified. Exit 0 means preparation completed,
 not installation approval: inspect `installation_supported: false` and `installation_blockers`.
@@ -149,4 +150,11 @@ or a guarantee of durability through power failure.
 
 Do not modify, rename, reconnect or concurrently access the destination during preparation. Directory descriptors
 and no-follow opens constrain paths, but cannot secure a destination against another process with your privileges.
-Free-space checks are not reservations. Reconnection or changed identity requires a newly reviewed plan.
+Opened descendant directories and files must report the same `st_dev` as the destination root; different-device
+mounts are rejected. This does not detect same-device bind mounts, every mount topology, or malicious same-account
+races. The root itself may be a mountpoint. The tool does not classify storage as internal/removable or bind plans
+to a drive serial number. Free-space checks are not reservations.
+
+After any reconnect, unmount/remount or changed hardware, inspect the target again and obtain a newly reviewed
+plan and approval, even if the tool would accept the previous path/device/inode values. Those values can be reused;
+matching them is not proof of the same physical drive. No reconnect, power-loss or real-media safety claim is made.

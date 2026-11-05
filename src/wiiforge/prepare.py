@@ -37,6 +37,11 @@ def root_directory(destination):
         os.close(fd)
 
 
+def same_device(root, child):
+    require(os.fstat(root).st_dev == os.fstat(child).st_dev,
+            'Destination subtree crosses a filesystem device boundary')
+
+
 @contextmanager
 def parent_directory(root, relative):
     fd = os.dup(root)
@@ -45,6 +50,7 @@ def parent_directory(root, relative):
             child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
             os.close(fd)
             fd = child
+            same_device(root, fd)
         yield fd, relative.split('/')[-1]
     finally:
         os.close(fd)
@@ -85,6 +91,7 @@ def file_state(root, item):
         return 'create'
     with os.fdopen(fd, 'rb') as source:
         before = os.fstat(source.fileno())
+        same_device(root, source.fileno())
         require(stat.S_ISREG(before.st_mode) and before.st_size == item['bytes'], 'Existing destination conflicts: ' + item['path'])
         checksum, count = hashlib.sha256(), 0
         while True:
@@ -107,7 +114,10 @@ def directory_state(root, path):
             fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
     except FileNotFoundError:
         return 'create'
-    os.close(fd)
+    try:
+        same_device(root, fd)
+    finally:
+        os.close(fd)
     return 'keep'
 
 
@@ -140,6 +150,7 @@ def _copy_new(archive, item, root):
         created = os.fstat(fd)
         try:
             with os.fdopen(fd, 'wb') as output, archive.open(item['path']) as source:
+                same_device(root, output.fileno())
                 count, checksum = 0, hashlib.sha256()
                 while True:
                     chunk = source.read(min(65536, item['bytes'] - count + 1))

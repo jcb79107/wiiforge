@@ -22,6 +22,9 @@ accepts a destination argument. Default package verification and inspection rema
 It never overwrites an existing file: matching content is verified and skipped; mismatches block preparation.
 Run it only after reviewing every planned path and authorizing that destination. Keep exclusive access to
 the destination while it runs; directory descriptors and no-follow opens do not protect against an adversary
-with the same account or physical device removal. No physical-media compatibility testing has been completed.
+with the same account or physical device removal. Plan identity is the canonical root path plus filesystem device/inode, not persistent physical-media identity.
+Different-device descendants are rejected, but same-device bind mounts and same-account races are not excluded.
+Reconnections require renewed inspection and approval even if those values match. No physical-media compatibility
+testing has been completed.
 
 The CLI has no package execution, formatting, filesystem-repair or console-write path. Future changes that introduce these capabilities require a separate safety review and explicit target-specific approval. Unsupported or uncertain model paths must stay blocked.
