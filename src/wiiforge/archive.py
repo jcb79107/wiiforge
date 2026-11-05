@@ -10,6 +10,9 @@ def check_zip(stream):
         if not ok:
             raise ValueError(message)
 
+    stream.seek(0, 2)
+    require(stream.tell() <= 64 * 1024 * 1024, 'ZIP input exceeds 64 MiB limit')
+    stream.seek(0)
     try:
         with zipfile.ZipFile(stream) as archive:
             entries = archive.infolist()
@@ -24,7 +27,7 @@ def check_zip(stream):
                 parts = (name[:-1] if name.endswith('/') else name).split('/')
                 require(all(p and p not in ('.', '..') and not p.endswith((' ', '.')) for p in parts),
                         'Unsafe ZIP path')
-                require(all(not re.fullmatch(r'(CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])',
+                require(all(not re.fullmatch(r'(CON|PRN|AUX|NUL|COM[0-9¹²³]|LPT[0-9¹²³])',
                                              p.split('.')[0], re.I) for p in parts), 'Reserved ZIP path')
                 for i in range(1, len(parts) + 1):
                     prefix = '/'.join(parts[:i])

@@ -4,7 +4,7 @@ import struct
 import unittest
 import warnings
 import zipfile
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from wiiforge.archive import check_zip
 
 
@@ -34,6 +34,22 @@ class ArchiveTests(unittest.TestCase):
                      'a:stream', 'CON.txt', 'a/aux', 'a.', 'a ', './a', 'a\nb', 'e\u0301']:
             with self.subTest(name=name), self.assertRaises(ValueError):
                 check_zip(archive([(name, b'x')]))
+
+    def test_superscript_device_names_are_reserved(self):
+        for prefix in ['COM', 'LPT', 'com', 'lpt']:
+            for digit in '¹²³':
+                for suffix in ['', '.txt', '.tar.gz', '/child']:
+                    name = 'apps/' + prefix + digit + suffix
+                    with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'Reserved'):
+                        check_zip(archive([(name, b'x')]))
+
+    def test_input_size_checked_before_zip_parser(self):
+        stream = Mock()
+        stream.tell.return_value = 64 * 1024 * 1024 + 1
+        with patch('wiiforge.archive.zipfile.ZipFile') as parser:
+            with self.assertRaisesRegex(ValueError, '64 MiB'):
+                check_zip(stream)
+            parser.assert_not_called()
 
     def test_collisions_and_file_parents(self):
         for names in [['a', 'a'], ['A', 'a'], ['a', 'a/b'], ['a/b', 'a'], ['a/', 'A']]:

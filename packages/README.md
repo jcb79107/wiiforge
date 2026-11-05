@@ -30,6 +30,14 @@ entry counts, sizes or compression ratios. No files are extracted or decompresse
 `archive.status: metadata-checked`; CRCs, local headers, payload contents and expected app layout are **not verified**.
 Without the flag only size/hash are checked.
 
+Input size is limited to 64 MiB before ZIP parsing, including direct use of the metadata checker.
+The 4,096-entry check runs **after** Python's `ZipFile` parses the central directory; it is not a
+preallocation or hard memory/CPU bound. A dense central directory can still consume substantial memory.
+This local, reviewed-pin workflow is not suitable as an untrusted upload service. A future service or
+broader archive intake needs isolated resource limits before parsing, not just this entry-count check.
+Reserved-name checks include Windows' superscript COM/LPT device names and their extensions, per
+[Microsoft's naming rules](https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file).
+
 The [pinned build workflow](https://github.com/wiidev/usbloadergx/blob/v4.0-r1283/.github/workflows/main.yml)
 stages `boot.dol`, `icon.png` and `meta.xml` under `apps/usbloader_gx`. This is build-layout evidence, not proof
 of the unexamined release ZIP's members. Synthetic tests do not validate that release's archive.
