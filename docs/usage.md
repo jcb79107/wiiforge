@@ -91,3 +91,15 @@ On an ordinary exception or keyboard interrupt, partial temporary work is remove
 fresh; this is not persistent copy/resume support. Forced process termination or host failure can leave the
 OS temporary directory behind. No general cleanup command is provided. Use a host whose OS temporary
 directory is on appropriate scratch storage; the tool does not verify its backing device and TMPDIR can point to removable media. No package licensing, archive compatibility or hardware support is implied.
+
+## When a command stops
+
+| Result | Next step |
+| --- | --- |
+| Unknown/conflicting console model or region | Check the console label/menu or a reviewed diagnostic; do not infer it from storage. |
+| Internal/ambiguous disk or missing geometry | Stop. Recheck the selected whole disk; retain the blocker if metadata is unavailable. Do not format to make the check pass. |
+| Inputs changed during resume | Generate a fresh plan and reverify its checkpoints; do not copy old completion records across. |
+| Package verified but exit code 2 | Integrity matched, but the listed installation blockers remain. This is expected, including after experimental staging. |
+| Interrupted experimental staging | Ordinary failures clean up; rerun from the verified source. There is no persistent staging resume or console rollback. |
+
+If a bug remains, use a synthetic reproducer in an issue. Never attach raw disk reports or recovery artifacts.

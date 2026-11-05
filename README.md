@@ -28,6 +28,15 @@ WiiForge turns hardware observations into a checked, resumable **manual setup pl
 - **Resume with context.** Checkpoints are bound to the profile, observations and disk report. Changed inputs invalidate previous progress.
 - **Bring your own agent.** A small Python CLI, readable JSON output and [AGENTS.md](AGENTS.md). No agent framework, account or service required.
 
+## Start with your assistant
+
+Open this repository in your coding assistant and paste:
+
+> Read AGENTS.md and run the synthetic demo. Help me collect the console observations needed for a WiiForge plan, keeping unknowns explicit. Explain each blocker in plain language. Keep my reports outside the repository. Do not select a disk, install software, stage packages or change my Wii without discussing that specific step with me.
+
+You can use any assistant that can run Python commands. It should first show you a plan and the evidence
+still needed. WiiForge does not provide an automatic homebrew installation or an undo button for console changes.
+
 ## Try it in a minute
 
 You need Git and Python 3.10+ already installed. These commands use a POSIX shell on macOS or Linux. No Wii, SD card, USB drive, package installation or elevated privileges needed.
