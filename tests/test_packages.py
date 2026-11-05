@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from wiiforge.__main__ import read, verify_package
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,6 +51,46 @@ class PackageTests(unittest.TestCase):
         link.symlink_to(self.artifact)
         with self.assertRaises(OSError):
             verify_package(self.manifest, link, 'original')
+
+    def test_file_changes_during_verification_are_rejected(self):
+        original = self.artifact.read_bytes()
+        real_fstat = os.fstat
+        for change, message in [('truncate', 'truncated'), ('grow', 'grew'),
+                                ('metadata', 'changed')]:
+            self.artifact.write_bytes(original)
+            calls = 0
+
+            def mutate_after_initial_stat(fd):
+                nonlocal calls
+                info = real_fstat(fd)
+                calls += 1
+                if calls == 1:
+                    if change == 'truncate':
+                        self.artifact.write_bytes(original[:5])
+                    elif change == 'grow':
+                        self.artifact.write_bytes(original + b'extra')
+                    else:
+                        os.utime(self.artifact, ns=(info.st_atime_ns, info.st_mtime_ns + 2000000000))
+                return info
+
+            with self.subTest(change=change), patch('wiiforge.__main__.os.fstat', mutate_after_initial_stat):
+                with self.assertRaisesRegex(ValueError, message):
+                    verify_package(self.manifest, self.artifact, 'original')
+
+    @unittest.skipUnless(hasattr(os, 'mkfifo'), 'POSIX FIFO check')
+    def test_nonregular_artifact_is_rejected_without_blocking(self):
+        fifo = Path(self.tmp.name) / 'fifo'
+        os.mkfifo(fifo)
+        manifest = Path(self.tmp.name) / 'manifest.json'
+        manifest.write_text(json.dumps(self.manifest))
+        result = subprocess.run([sys.executable, '-m', 'wiiforge', 'verify-package',
+                                 '--manifest', str(manifest), '--artifact', str(fifo),
+                                 '--model', 'original'], capture_output=True, text=True, timeout=5,
+                                env=dict(os.environ, PYTHONPATH=str(ROOT / 'src')))
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('regular file', result.stderr)
+        self.assertNotIn('Traceback', result.stderr)
+        self.assertEqual(result.stdout, '')
 
     def test_cli_reports_verified_but_blocked(self):
         manifest = Path(self.tmp.name) / 'manifest.json'
