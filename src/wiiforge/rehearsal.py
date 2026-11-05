@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 import tempfile
 import zipfile
+import zlib
 from .archive import check_zip
 
 
@@ -48,18 +49,21 @@ def _stage_zip(data, *, synthetic=True):
     if metadata['declared_bytes'] > output_limit:
         raise ValueError('Staging expanded size exceeds limit')
     files = {}
-    with zipfile.ZipFile(stream) as archive, tempfile.TemporaryDirectory(prefix='wiiforge-rehearsal-') as folder:
-        root = Path(folder)
-        if shutil.disk_usage(root).free < metadata['declared_bytes'] + 1024 * 1024:
-            raise ValueError('Insufficient temporary storage space')
-        for entry in archive.infolist():
-            target = root / entry.filename
-            if entry.is_dir():
-                target.mkdir(parents=True, exist_ok=True)
-                continue
-            target.parent.mkdir(parents=True, exist_ok=True)
-            with archive.open(entry) as source:
-                files[entry.filename] = _copy_member(source, target, entry.file_size)
+    try:
+        with zipfile.ZipFile(stream) as archive, tempfile.TemporaryDirectory(prefix='wiiforge-rehearsal-') as folder:
+            root = Path(folder)
+            if shutil.disk_usage(root).free < metadata['declared_bytes'] + 1024 * 1024:
+                raise ValueError('Insufficient temporary storage space')
+            for entry in archive.infolist():
+                target = root / entry.filename
+                if entry.is_dir():
+                    target.mkdir(parents=True, exist_ok=True)
+                    continue
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with archive.open(entry) as source:
+                    files[entry.filename] = _copy_member(source, target, entry.file_size)
+    except (zipfile.BadZipFile, zlib.error, NotImplementedError) as exc:
+        raise ValueError('Invalid or unsupported ZIP contents: ' + str(exc)) from exc
     return {'synthetic': synthetic, 'status': 'rehearsal-complete' if synthetic else 'experimental-stage-verified', 'files': files,
             'temporary_files_removed': True, 'installation_supported': False}
 

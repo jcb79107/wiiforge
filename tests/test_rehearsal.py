@@ -86,7 +86,7 @@ class RehearsalTests(unittest.TestCase):
     def test_crc_failure_cleans_partial_copy(self):
         data = fixture()
         data = data.replace(b'synthetic', b'corrupted', 1)
-        with self.assertRaises(zipfile.BadZipFile):
+        with self.assertRaisesRegex(ValueError, 'ZIP contents'):
             _stage_zip(data)
         self.assert_clean()
 

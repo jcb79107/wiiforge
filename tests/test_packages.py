@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import struct
 import sys
 import tempfile
 import unittest
@@ -129,6 +130,35 @@ class PackageTests(unittest.TestCase):
         self.assertIn('regular file', result.stderr)
         self.assertNotIn('Traceback', result.stderr)
         self.assertEqual(result.stdout, '')
+
+    def test_cli_corrupt_deflate_and_unsupported_flags_are_clean(self):
+        scratch = Path(self.tmp.name) / 'scratch'
+        scratch.mkdir()
+        for kind in ['deflate', 'patched-data']:
+            with zipfile.ZipFile(self.artifact, 'w', compression=zipfile.ZIP_DEFLATED) as output:
+                output.writestr('a.txt', b'synthetic')
+            data = bytearray(self.artifact.read_bytes())
+            if kind == 'deflate':
+                name_length, extra_length = struct.unpack_from('<HH', data, 26)
+                data[30 + name_length + extra_length] = 7  # Reserved DEFLATE block type.
+            else:
+                central = data.index(b'PK\x01\x02')
+                struct.pack_into('<H', data, central + 8, 1 << 5)
+                struct.pack_into('<H', data, 6, 1 << 5)
+            self.artifact.write_bytes(data)
+            self.manifest.update(size=len(data), sha256=hashlib.sha256(data).hexdigest())
+            manifest = Path(self.tmp.name) / 'manifest.json'
+            manifest.write_text(json.dumps(self.manifest))
+            result = subprocess.run([sys.executable, '-m', 'wiiforge', 'verify-package',
+                                     '--manifest', str(manifest), '--artifact', str(self.artifact),
+                                     '--model', 'original', '--experimental-stage'], capture_output=True, text=True,
+                                    env=dict(os.environ, PYTHONPATH=str(ROOT / 'src'), TMPDIR=str(scratch)))
+            with self.subTest(kind=kind):
+                self.assertEqual(result.returncode, 2)
+                self.assertIn('Invalid or unsupported ZIP contents', result.stderr)
+                self.assertNotIn('Traceback', result.stderr)
+                self.assertEqual(result.stdout, '')
+                self.assertEqual(list(scratch.iterdir()), [])
 
     def test_cli_staging_crc_error_is_clean(self):
         with zipfile.ZipFile(self.artifact, 'w') as output:
