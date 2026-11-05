@@ -10,6 +10,8 @@ import zipfile
 import zlib
 from .archive import check_zip
 
+PREPARATION_PLAN_LIMIT = 8 * 1024 * 1024
+
 
 def require(ok, message):
     if not ok:
@@ -126,7 +128,10 @@ def plan_preparation(data, destination, model):
             'destination': identity, 'directories': dirs, 'files': files, 'required_bytes': required,
             'installation_supported': False,
             'installation_blockers': ['license-review-pending', 'console-installation-not-implemented', 'hardware-untested']}
-    return dict(body, digest=digest(body))
+    plan = dict(body, digest=digest(body))
+    require(len(json.dumps(plan, indent=2, sort_keys=True).encode('utf-8')) + 1 <= PREPARATION_PLAN_LIMIT,
+            'Preparation plan exceeds 8 MiB; reduce the package inventory')
+    return plan
 
 
 def _copy_new(archive, item, root):

@@ -13,7 +13,7 @@ import zipfile
 
 from .archive import check_zip
 from .rehearsal import rehearse, _stage_zip
-from .prepare import plan_preparation, execute_preparation
+from .prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation
 
 GUIDE = 'https://wii.hacks.guide/'
 
@@ -27,7 +27,7 @@ def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
 
-def read(path):
+def read(path, max_bytes=1048576):
     # JSON is a strict YAML 1.2 subset. No YAML tags, constructors or dependencies.
     def unique(pairs):
         out = {}
@@ -40,8 +40,8 @@ def read(path):
     fd = os.open(path, flags)
     with os.fdopen(fd, 'rb') as stream:
         require(stat.S_ISREG(os.fstat(stream.fileno()).st_mode), 'Input must be a regular file')
-        raw = stream.read(1048577)
-    require(len(raw) <= 1048576, 'Input exceeds 1 MiB')
+        raw = stream.read(max_bytes + 1)
+    require(len(raw) <= max_bytes, f'Input exceeds {max_bytes} bytes')
     def constant(value):
         raise ValueError('Non-finite JSON numbers are not supported')
     try:
@@ -353,7 +353,7 @@ def main():
             if args.command == 'prepare-plan':
                 result = plan_preparation(data, args.destination, args.model)
             else:
-                result = execute_preparation(data, args.destination, args.model, read(args.plan), args.approve_plan)
+                result = execute_preparation(data, args.destination, args.model, read(args.plan, PREPARATION_PLAN_LIMIT), args.approve_plan)
         elif args.command == 'inspect':
             result = inspect(args.device)
         else:

@@ -44,7 +44,7 @@ python3 -m wiiforge plan --profile profiles/original-wii.yaml \
   --inspection /your/private/folder/inspection.json
 ```
 
-Profiles use **JSON syntax, a strict YAML 1.2 subset**. Unknown, missing and duplicate fields fail validation. Inputs must be regular UTF-8 JSON files no larger than 1 MiB with at most 32 nesting levels. Non-finite numbers are rejected. Final-component symlinks are rejected on hosts supporting no-follow opens. Current choices:
+Profiles use **JSON syntax, a strict YAML 1.2 subset**. Unknown, missing and duplicate fields fail validation. Inputs must be regular UTF-8 JSON files with at most 32 nesting levels. Profiles, evidence and state are limited to 1 MiB; preparation plans have a shared 8 MiB generation/read limit. Non-finite numbers are rejected. Final-component symlinks are rejected on hosts supporting no-follow opens. Current choices:
 
 | Field | Values / default behavior |
 | --- | --- |

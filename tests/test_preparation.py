@@ -10,7 +10,7 @@ import tempfile
 import unittest
 import zipfile
 from unittest.mock import Mock, patch
-from wiiforge.prepare import plan_preparation, execute_preparation, _copy_new
+from wiiforge.prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation, _copy_new
 from wiiforge.__main__ import read
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -152,6 +152,42 @@ class PreparationTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 plan_preparation(self.data, self.dest, model)
         self.assertEqual(list(self.dest.iterdir()), [])
+
+    def test_large_plan_round_trips_through_cli(self):
+        data = fixture([('apps/' + str(i).zfill(4) + '_' + 'x' * 220 + '/a', b'x') for i in range(2500)])
+        artifact = self.root / 'large.zip'
+        artifact.write_bytes(data)
+        manifest = read(ROOT / 'packages/usb-loader-gx.yaml')
+        manifest.update(size=len(data), sha256=hashlib.sha256(data).hexdigest())
+        manifest_path = self.root / 'manifest.json'
+        manifest_path.write_text(json.dumps(manifest))
+        args = ['--manifest', str(manifest_path), '--artifact', str(artifact), '--model', 'original',
+                '--destination', str(self.dest)]
+        env = dict(os.environ, PYTHONPATH=str(ROOT / 'src'))
+        result = subprocess.run([sys.executable, '-m', 'wiiforge', 'prepare-plan', *args],
+                                env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertGreater(len(result.stdout.encode()), 1048576)
+        plan_path = self.root / 'large-plan.json'
+        plan_path.write_text(result.stdout)
+        with self.assertRaises(ValueError):
+            read(plan_path)  # Other input types keep the original limit.
+        plan = read(plan_path, PREPARATION_PLAN_LIMIT)
+        result = subprocess.run([sys.executable, '-m', 'wiiforge', 'prepare', *args,
+                                 '--plan', str(plan_path), '--approve-plan', plan['digest']],
+                                env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(json.loads(result.stdout)['written']), 2500)
+
+    def test_plan_limit_is_enforced_at_generation_and_read(self):
+        with patch('wiiforge.prepare.PREPARATION_PLAN_LIMIT', 100):
+            with self.assertRaisesRegex(ValueError, 'plan exceeds'):
+                plan_preparation(self.data, self.dest, 'original')
+        self.assertEqual(list(self.dest.iterdir()), [])
+        oversized = self.root / 'oversized.json'
+        oversized.write_bytes(b' ' * (PREPARATION_PLAN_LIMIT + 1))
+        with self.assertRaisesRegex(ValueError, 'exceeds'):
+            read(oversized, PREPARATION_PLAN_LIMIT)
 
     def test_cli_review_approve_and_resume(self):
         artifact = self.root / 'synthetic.zip'
