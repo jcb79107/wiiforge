@@ -40,7 +40,7 @@ The assistant owns the inventory, source checks, file layout and verification. T
 4. Nintendont has a [local-file preparation path](usage.md#prepare-nintendont-from-local-files) using the same engine. The [Priiloader installer and menu launcher](usage.md#prepare-priiloader-recovery-files) also have reviewed local-ZIP preparation. The [HackMii, NAND-dumper and d2x installer files](usage.md#prepare-homebrew-channel-backup-and-cios-tools) also have local preparation paths. Choose only the packages needed at the current checkpoint. Other apps/exploits still need guide-specific preparation. **Do not change the GX manifest to pretend they are reviewed.** Review their archive, source, layout and destination separately before any explicitly authorized copy. Never silently replace `apps`, `private`, saves or loader configuration.
 5. Show the resulting layout and safe-eject instructions. Reinspect and approve a new plan after reconnect. The agent should identify what it completed and what still needs manual work.
 
-Windows users should be offered the current ModMii workflow rather than asked to install a POSIX environment just to run WiiForge. The `start` command itself runs with Python 3.10+; CI includes a Windows intake/smoke job, separate from POSIX preparation tests.
+Windows users should be offered the current ModMii workflow rather than asked to install a POSIX environment just to run WiiForge. The `start` command itself runs with Python 3.10+; CI includes Windows intake/private-ZIP/smoke jobs on Python 3.10 and 3.13, separate from POSIX preparation tests.
 
 ### Personalized exploit handoff (Wilbrand)
 

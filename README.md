@@ -44,7 +44,7 @@ python3 -m wiiforge start
 
 `start` prints beginner questions and a next step. It makes no changes. Your assistant can supply private observations with `--answers PATH` and request draft profiles with `--json`. Unknowns stay unknown.
 
-Windows users can read the playbook immediately. For the Python intake in PowerShell, set `$env:PYTHONPATH="$PWD/src"` and run `py -3 -m wiiforge start`. CI includes Windows intake/smoke checks; the destination-writing tool requires POSIX. The official guide's **ModMii** route is the Windows preparation option to review with your assistant.
+Windows users can read the playbook immediately. For the Python intake in PowerShell, set `$env:PYTHONPATH="$PWD/src"` and run `py -3 -m wiiforge start`. CI includes Windows intake, private ZIP and smoke checks; the destination-writing tool requires POSIX. The official guide's **ModMii** route is the Windows preparation option to review with your assistant.
 
 For a hardware-free demonstration or developer check:
 
@@ -71,7 +71,7 @@ Current GX supports Wii games on SD as well as USB; a USB drive is not mandatory
 | Wii mini | Model recognized | Installation planning blocked; no recipe |
 | Wii U vWii | Model recognized | Installation planning blocked; no recipe |
 | macOS storage inspection | Read-only `diskutil` adapter | Mocked tests only; real-device validation pending |
-| Linux / Windows inspection | Not implemented | Linux runs synthetic tests; Windows has intake/smoke checks only |
+| Linux / Windows inspection | Not implemented | Linux runs synthetic tests; Windows has intake, private ZIP and smoke checks only |
 | CRT / HD / regional video | Explicit profile fields; preserve by default | No tested display compatibility matrix |
 | Wii / GameCube gameplay | Manual checkpoints | No gameplay compatibility claims |
 | Package staging | Opt-in disposable host staging | Experimental; licensing/installation blocked; no destination accepted |
