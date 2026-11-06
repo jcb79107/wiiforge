@@ -4,7 +4,7 @@ A small evidence-driven roadmap, not a compatibility promise or dated release sc
 
 ## Implemented — planning and controlled preparation
 
-Implemented: strict profiles, conservative macOS metadata inspection, original-Wii 4.3U manual planning, ordered resume checks, a hardware-free demo, offline package verification, bounded archive validation, disposable staging and explicitly approved no-overwrite file preparation. Synthetic tests cover interruption/resume, conflicts, capacity failures and unsafe archives.
+Implemented: a beginner intake with guide routing and profile drafts, a buying-to-gameplay playbook, strict profiles, conservative macOS metadata inspection, original-Wii 4.3U manual planning, ordered resume checks, a hardware-free demo, offline package verification, bounded archive validation, disposable staging and explicitly approved no-overwrite file preparation. Synthetic tests cover interruption/resume, conflicts, capacity failures and unsafe archives.
 
 **Next acceptance gate:** an opt-in macOS inspection session with no writes to media. Verify the actual diskutil field names and behavior for suitable FAT32/MBR media, internal disks, missing identity and reconnects. Keep raw observations private; add only redacted, synthetic-equivalent fixtures. Document false rejections rather than silently weakening checks. Test the supported Python/host matrix before claiming it.
 

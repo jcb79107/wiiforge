@@ -1,103 +1,65 @@
 <p align="center">
-  <img src="docs/assets/wiiforge.svg" alt="WiiForge — Know your hardware. Plan with evidence." width="100%">
+  <img src="docs/assets/wiiforge.svg" alt="WiiForge" width="100%">
 </p>
 
-<p align="center">
-  <strong>Wii homebrew planning and controlled file preparation, for people and their agents.</strong><br>
-  Python 3.10+ · Zero runtime dependencies · MIT licensed · Preparation MVP
-</p>
+# Your Wii, ready for game night
 
-<p align="center">
-  <a href="#try-it-in-a-minute">Quickstart</a> ·
-  <a href="docs/usage.md">Usage</a> ·
-  <a href="#support-status">Support</a> ·
-  <a href="docs/roadmap.md">Roadmap</a> ·
-  <a href="CONTRIBUTING.md">Contribute</a>
-</p>
+Give WiiForge to your AI coding assistant. It helps you choose hardware, figure out your setup, prepare files on your computer, and work through the Wii steps with you—one checkpoint at a time.
 
----
+**USB Loader GX is the starting point.** Play your lawful Wii backups, add GameCube through Nintendont if you want it, and consider autoboot once the basics work. Keep what already works; customize the rest.
 
-WiiForge turns hardware observations into a checked, resumable **manual setup plan** centered on USB Loader GX, and prepares verified package files after approval of an exact destination write plan. It keeps unknowns visible, separates historical observations from new test results, and gives any coding agent the same deterministic tools and safety rules.
+## Start here
 
-> **Current scope:** read-only inspection and manual planning, plus controlled file preparation and opt-in disposable staging. Staging writes to OS temporary storage; its backing device is not verified. WiiForge does not install homebrew, download packages, format drives, repair filesystems or write to a console. Live hardware validation is still pending.
+Paste this into your assistant:
 
-## Why WiiForge?
+> Help me set up my Wii using https://github.com/jcb79107/wiiforge. Read AGENTS.md and follow the playbook. Ask what I own first, help me buy only what I need, do the computer work you can verify, and walk me through the console steps. Keep my files private and ask before changing my media or console.
 
-- **Evidence before instructions.** Unknown or conflicting console details block model-sensitive plans. An SD card cannot tell us which Wii you own.
-- **Opinionated, adjustable defaults.** USB Loader GX is the starting point. Video settings are preserved; autoboot and GameCube support require separate review.
-- **Resume with context.** Checkpoints are bound to the profile, observations and disk report. Changed inputs invalidate previous progress.
-- **Bring your own agent.** A small Python CLI, readable JSON output and [AGENTS.md](AGENTS.md). No agent framework, account or service required.
+You don't need to know Python or write configuration files to start the conversation. Your assistant needs repository access, a way to read current guides, and permission to run local commands. It cannot press buttons on your Wii or verify a game works without your observations.
 
-## Start with your assistant
+**[The walkthrough](docs/playbook.md)** · **[What to buy](docs/buying.md)** · **[Command reference](docs/usage.md)**
 
-Open this repository in your coding assistant and paste:
+## What the journey looks like
 
-> Read AGENTS.md and run the synthetic demo. Help me collect the console observations needed for a WiiForge plan, keeping unknowns explicit. Explain each blocker in plain language. Keep my reports outside the repository. Do not select a disk, install software, stage packages or change my Wii without discussing that specific step with me.
+| Stage | Your assistant | You |
+| --- | --- | --- |
+| Choose gear | Compare suitable console/storage/TV/controller options | Say what you own, your budget and what you want to play |
+| Discover | Record model, menu, existing mods and missing information | Read the label/menu and identify cables |
+| Prepare | Review sources, inspect supported storage, show exact writes and verify prepared files | Choose the destination and approve that plan |
+| Set up | Explain the current model-specific guide, one task at a time | Operate the Wii; report the actual screen/result |
+| Play | Help with your own dumps, loader settings and troubleshooting | Test gameplay, controls, audio/video and save/reload |
+| Finish | Record versions, backups, recovery access and daily-use instructions | Keep a private copy; enjoy the setup |
 
-You can use any assistant that can run Python commands. It should first show you a plan and the evidence
-still needed. WiiForge does not provide an automatic homebrew installation or an undo button for console changes.
+The first milestone is a working game, not a theme pack. Defaults preserve video settings; GameCube and autoboot are separate choices. Hardware suggestions are tradeoffs, not promises that every adapter or drive works.
 
-## Try it in a minute
+## Try the tools
 
-You need Git and Python 3.10+ already installed. These commands use a POSIX shell on macOS or Linux. No Wii, SD card, USB drive, package installation or elevated privileges needed.
+With Git and Python 3.10+ already installed, on macOS/Linux:
 
 ```sh
 git clone https://github.com/jcb79107/wiiforge.git
 cd wiiforge
 export PYTHONPATH="$PWD/src"
-python3 -m wiiforge demo
+python3 -m wiiforge start
 ```
 
-The demo runs the real planner against **invented data**, showing an allowed manual plan, an unknown-model rejection and an empty resume state. It never inspects hardware or records a successful console test.
+`start` prints beginner questions and a next step. It makes no changes. Your assistant can supply private observations with `--answers PATH` and request draft profiles with `--json`. Unknowns stay unknown.
 
-Selected output fields:
+Windows users can read the playbook immediately. For the Python intake in PowerShell, set `$env:PYTHONPATH="$PWD/src"` and run `py -3 -m wiiforge start`. CI includes Windows intake/smoke checks; the destination-writing tool requires POSIX. The official guide's **ModMii** route is the Windows preparation option to review with your assistant.
 
-```json
-{
-  "demo": true,
-  "manual_plan": {"status": "manual-review-only", "execution_supported": false},
-  "unknown_model_plan": {"status": "blocked", "steps": []},
-  "initial_state": {"completed": []}
-}
-```
-
-Explore the commands or run the synthetic tests:
+For a hardware-free demonstration or developer check:
 
 ```sh
-python3 -m wiiforge --help
+python3 -m wiiforge demo
 python3 -m unittest discover -s tests -v
 ```
 
-**Ready to gather real evidence?** Follow [the usage guide](docs/usage.md). Live inspection is macOS-only. Choose the physical disk yourself, keep reports outside the checkout, and leave unknown evidence unknown. Do not use demo data for a real console.
+## What works today
 
-## How it works
+WiiForge includes a tested intake/router, read-only macOS metadata inspection, resumable manual checkpoints, local package verification, archive checks, and **explicitly approved no-overwrite file preparation**. It can resume completed files by checking their contents. [Commands and limits](docs/usage.md).
 
-```text
-Read disk metadata + collect console observations
-                       │
-                       ▼
-              Validate profile and evidence
-                       │
-          ┌────────────┴────────────┐
-          ▼                         ▼
-     Missing/conflicting       Manual review plan
-     evidence → blocked             │
-                                    ▼
-                          Human-confirmed checkpoints
-                          (no automatic execution)
-```
+It is **not a one-click exploit installer**. The guided journey uses current [Wii Hacks Guide](https://wii.hacks.guide/get-started) procedures; the CLI's checked recipe and package support are narrower. Exploit files, recovery tools, cIOS and Nintendont still need guide-specific preparation and manual console actions. The agent must explain these handoffs instead of pretending automation exists.
 
-| Command | What it does |
-| --- | --- |
-| `verify-package --manifest … --artifact … --model original` | Checks local package size/hash; optional experimental temporary staging; installation remains blocked ([provenance](packages/README.md)) |
-| `prepare-plan` / `prepare` | Review exact destination writes, then approve the saved plan; no overwrites ([usage](docs/usage.md#controlled-file-preparation)) |
-| `rehearse` | Copies built-in synthetic files into a private temporary host directory, verifies and removes them; accepts no package or destination |
-| `demo` | Shows deterministic synthetic planning and rejection examples |
-| `inspect --device diskN` | Reads macOS disk metadata; rejects ambiguous/internal targets |
-| `plan --profile … --evidence … --inspection …` | Validates inputs and produces linked manual checkpoints |
-| `resume --profile … --evidence … --inspection …` | Validates saved progress or records the next explicit acknowledgment |
-
-JSON goes to stdout; errors go to stderr. Exit `0` means the requested operation succeeded, **not** that a console works. Exit `2` means blocked or invalid. Profiles use JSON syntax, a strict YAML 1.2 subset; arbitrary YAML is not supported.
+Current GX supports Wii games on SD as well as USB; a USB drive is not mandatory. The existing storage planner is conservative and USB-oriented, so SD-only users follow the guide without a fabricated inspection report. No end-to-end WiiForge hardware run has been completed.
 
 ## Support status
 
@@ -109,7 +71,7 @@ JSON goes to stdout; errors go to stderr. Exit `0` means the requested operation
 | Wii mini | Model recognized | Installation planning blocked; no recipe |
 | Wii U vWii | Model recognized | Installation planning blocked; no recipe |
 | macOS storage inspection | Read-only `diskutil` adapter | Mocked tests only; real-device validation pending |
-| Linux / Windows inspection | Not implemented | Fails closed; Linux can run the synthetic demo/tests |
+| Linux / Windows inspection | Not implemented | Linux runs synthetic tests; Windows has intake/smoke checks only |
 | CRT / HD / regional video | Explicit profile fields; preserve by default | No tested display compatibility matrix |
 | Wii / GameCube gameplay | Manual checkpoints | No gameplay compatibility claims |
 | Package staging | Opt-in disposable host staging | Experimental; licensing/installation blocked; no destination accepted |
@@ -118,24 +80,14 @@ JSON goes to stdout; errors go to stderr. Exit `0` means the requested operation
 
 Storage checks conservatively require an external physical whole disk, persistent identifier, known capacity and a single MBR/FAT32 partition with 32 KiB clusters. Missing metadata blocks planning even if a drive might otherwise work. This is **not a filesystem integrity check or a guarantee of compatibility**.
 
-## Safety is part of the interface
+## Boundaries that protect your setup
 
-WiiForge never infers BootMii eligibility, installed cIOS or display capabilities from drive contents. It does not authorize changes, execute downloaded software, distribute games/keys/NAND/IOS files, or treat loader launch as proof that a game runs. Future destructive operations require separate explicit approval and fresh target checks.
+No automatic formatting, overwrites, console writes, region changes or downloaded-code execution. Media writes require a reviewed exact plan and specific approval. No games, BIOS, keys, NAND backups or upstream binaries are bundled. Local package preparation is not license clearance; redistribution and GameTDB web publication remain outside scope.
 
-Keep real reports, device identifiers and recovery material private. Checkpoints are user attestations, not signed evidence. Read the [evidence notes](docs/evidence.md), [agent rules](AGENTS.md) and [reporting guidance](SECURITY.md).
+Keep backups, identifiers and reports outside the checkout. Temporary staging follows the host's temporary-directory configuration; WiiForge does not certify its backing device. Reconnects require fresh review. See [SECURITY.md](SECURITY.md) for concurrency and power-loss limits.
 
-## What comes next
+## Help improve it
 
-1. **Validate read-only inspection on real macOS hardware**, including reconnects and real diskutil metadata.
-2. **Complete the upstream license review** before enabling distribution or installation. The pinned ZIP has passed host-side integrity and disposable-staging checks.
-3. **Validate controlled preparation on disposable media** after specific approval. Completed files can resume by verification; forced termination during a file leaves a conflict requiring separate cleanup approval.
+See [CONTRIBUTING.md](CONTRIBUTING.md), [remaining work](docs/roadmap.md) and [evidence behind the defaults](docs/evidence.md). Synthetic tests are not hardware compatibility claims. Report reproducible issues without private recovery files.
 
-Each step has an explicit acceptance gate in the [roadmap](docs/roadmap.md). Wider console support follows evidence, not a release date.
-
-## Contribute
-
-Small, reproducible improvements are welcome: synthetic regression cases, clearer blocker explanations and documentation fixes. Start with [CONTRIBUTING.md](CONTRIBUTING.md). Hardware reports need explicit consent and redaction; never attach a raw recovery archive.
-
-[Wii Hacks Guide](https://wii.hacks.guide/) is the authoritative procedural reference. [USB Loader GX](https://github.com/wiidev/usbloadergx) is the upstream loader. WiiForge is an independent project, not endorsed by either project or Nintendo.
-
-[MIT license](LICENSE) · Third-party projects retain their own licenses.
+WiiForge is independent of Nintendo, Wii Hacks Guide and USB Loader GX. [MIT license](LICENSE) covers WiiForge; upstream projects retain their own licenses.

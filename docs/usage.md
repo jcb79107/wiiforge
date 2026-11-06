@@ -7,7 +7,31 @@ export PYTHONPATH="$PWD/src"
 python3 -m wiiforge --help
 ```
 
-Use `python3 -m wiiforge demo` first. It uses invented data; it is not a hardware test.
+Begin with `python3 -m wiiforge start`. It asks what you own and gives a guide route without inspecting hardware or writing files. `demo` is a separate invented-data example, not your setup.
+
+## Begin with your own setup
+
+An assistant can collect answers conversationally and keep this JSON privately outside the checkout:
+
+```json
+{
+  "model": "unknown",
+  "menu": "unknown",
+  "computer": "unknown",
+  "homebrew": "unknown",
+  "sd": "unknown",
+  "storage": "unknown",
+  "display": "unknown",
+  "cable": "unknown",
+  "gamecube": "unknown"
+}
+```
+
+Run `python3 -m wiiforge start --answers /private/intake.json` for readable guidance; add `--json` for profile/evidence drafts. No arguments prints questions. Omitted fields remain unknown. Exit 0 means the intake was processed, not that a setup is ready. Invalid input exits 2.
+
+Values: `model` = original/family/mini/vwii/unknown; `menu` = observed version and letter (such as 4.3E) or unknown; `computer` = windows/macos/linux/unknown; `homebrew`, `sd`, `gamecube` = yes/no/unknown; `storage` = sd/usb-hdd/usb-ssd/usb-flash/unknown. Display and cable use the choices below. No serials, MAC addresses, paths or freeform private notes belong in this file.
+
+The JSON result contains `profile_draft` and `evidence_draft` for your assistant to save separately only after you confirm the observations. `reference_plan_scope` identifies the existing original-Wii 4.3U recipe, not hardware validation or storage suitability. Intake routes can link to official guidance outside that recipe without enabling installation. Follow [the playbook](playbook.md).
 
 ## Collect evidence
 

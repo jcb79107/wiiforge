@@ -11,6 +11,7 @@ import subprocess
 import sys
 import zipfile
 
+from .onboarding import start, render
 from .archive import check_zip
 from .rehearsal import rehearse, _stage_zip
 from .prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation
@@ -315,6 +316,9 @@ def package_bytes(manifest, artifact, model):
 def main():
     parser = argparse.ArgumentParser(prog='wiiforge', description='Wii homebrew inspection, planning and explicitly approved file preparation.')
     sub = parser.add_subparsers(dest='command', required=True)
+    welcome = sub.add_parser('start', help='Get beginner questions and a tailored guide route; no writes')
+    welcome.add_argument('--answers', help='Private JSON intake file; omitted fields stay unknown')
+    welcome.add_argument('--json', action='store_true', help='Include draft profile/evidence for your assistant')
     sub.add_parser('rehearse', help='Copy synthetic fixtures into a temporary host directory, verify, then remove')
     sub.add_parser('demo', help='Try synthetic plans; no media or network access')
     sub.add_parser('inspect', help='Read macOS whole-disk metadata').add_argument('--device', required=True)
@@ -342,7 +346,11 @@ def main():
             p.add_argument('--level', choices=['user-confirmed', 'console-tested'])
     args = parser.parse_args()
     try:
-        if args.command == 'demo':
+        if args.command == 'start':
+            result = start(read(args.answers) if args.answers else None)
+            print(json.dumps(result, indent=2, sort_keys=True) if args.json else render(result))
+            return 0
+        elif args.command == 'demo':
             result = demo()
         elif args.command == 'rehearse':
             result = rehearse()

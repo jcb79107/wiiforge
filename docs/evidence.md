@@ -27,3 +27,7 @@ Reviewed 2026-11-04:
 - https://wii.hacks.guide/wii-loaders — USB Loader GX prerequisites, upstream links and storage considerations.
 
 The MVP links to these procedures rather than reproducing a fixed console-write recipe. The pinned USB Loader GX package has since passed host-side integrity checks and disposable experimental staging; see [package evidence](../packages/README.md). No package has been executed or tested on a console by WiiForge. Licensing and installation remain blocked.
+
+## Gamer journey review — 2026-11-06
+
+Current Get Started links Windows users to ModMii, SD-card Wii users to Wilbrand, and mini users to BlueBomb. The loader guide now supports SD for Wii games; USB-only historical advice is not a universal requirement. The new intake routes to those guides without expanding the checked installation recipe. HBC/BootMii, NAND backup, Priiloader, cIOS and disc-dumping pages were reviewed for sequencing; Nintendont upstream supplies the GameCube layout/controller reference. See [the playbook](playbook.md) for linked sources and handoffs. No software test here establishes physical-media, console or display compatibility.
