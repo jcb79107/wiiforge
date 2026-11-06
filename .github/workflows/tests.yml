@@ -46,6 +46,8 @@ jobs:
         run: python -m unittest discover -s tests -p test_onboarding.py -v
       - name: Command compatibility and optional picture flow
         run: python -m unittest discover -s tests -p test_identity.py -v
+      - name: Optional system selection and GameCube checkpoint
+        run: python -m unittest discover -s tests -p test_extras.py -v
       - name: Windows private ZIP checks
         run: python -m unittest discover -s tests -p test_exploit.py -v
       - name: Windows game header checks

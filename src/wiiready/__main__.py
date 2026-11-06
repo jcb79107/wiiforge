@@ -13,6 +13,7 @@ import sys
 import zipfile
 
 from .onboarding import start, render, shopping
+from .extras import extras, render_extras, OPTIONS
 from .nintendont import nintendont_bytes
 from .hackmii import hackmii_snapshot
 from .exploit import check_exploit
@@ -280,6 +281,10 @@ def checkpoint_preparation(checkpoint, wii_network, homebrew='unknown'):
             result['instruction'] = 'Ask one question now: can this Wii connect to the internet? Rerun journey with --wii-network online or offline. This selects guidance only; no download or install is authorized.'
     elif checkpoint == 'gamecube-test':
         result['instruction'] = 'Prepare Nintendont only if needed. Use check-gamecube on the user\'s own raw ISO/GCM files to catch disc-order and layout issues. On POSIX, gamecube-plan hashes full files and proposes exact paths; gamecube-copy requires separate destination/digest approval. Copy verification does not establish dump integrity. Test Nintendont directly, controls and save/reload before GX integration.'
+        result['completion_checks'] = ['Nintendont launches directly and the chosen game plays with the intended controller.',
+                                       'The selected memory-card mode saves and reloads correctly; existing saves are preserved.',
+                                       'GX uses Nintendont and its actual app/game paths; the same game launches and reloads its save from GX.']
+        result['guide'] = 'docs/gamecube.md'
     elif checkpoint == 'wii-test':
         result['source'] = GUIDE + 'dump-games'
         result['instruction'] = 'Already have a lawful verified dump? Skip CleanRip preparation. Otherwise prepare the reviewed Wii CleanRip package and guide the user through dumping their own disc, including checksum verification and space checks. Dumping writes storage and requires separate approval. Keep games and dump records private. For split CleanRip dumps on POSIX, wii-join-plan matches the original dump SHA-1; wii-join requires separate destination/digest approval. WiiReady does not dump discs or convert Wii backup formats. Follow docs/usage.md for the TinyWiiBackupManager handoff: confirm an empty host staging destination, WBFS output, forced FAT32 splitting and source deletion disabled before separately approved import.'
@@ -462,6 +467,12 @@ def main():
     intake_mode.add_argument('--answers', help='Private JSON intake file; omitted fields stay unknown')
     intake_mode.add_argument('--shopping', action='store_true', help='No console yet: start with budget, existing gear and game goals')
     welcome.add_argument('--json', action='store_true', help='Include draft profile/evidence for your assistant')
+    extra = sub.add_parser('extras', help='Choose optional retro systems or skip; guided handoffs only')
+    selection = extra.add_mutually_exclusive_group()
+    selection.add_argument('--system', action='append', choices=list(OPTIONS), default=[])
+    selection.add_argument('--skip', action='store_true')
+    extra.add_argument('--model', choices=['original', 'family', 'mini', 'vwii', 'unknown'], default='unknown')
+    extra.add_argument('--json', action='store_true')
     summary = sub.add_parser('plan-summary', help='Show saved preparation totals without private paths, IDs or hashes; never approve writes')
     summary.add_argument('--plan', required=True)
     session = sub.add_parser('journey', help='Resume a portable manual checklist for a confirmed original Wii 4.3U')
@@ -524,6 +535,10 @@ def main():
                 result = summarize_plan(read(args.plan, PREPARATION_PLAN_LIMIT))
             except (ValueError, OSError) as exc:
                 raise ValueError('Cannot summarize this private plan; review the file locally') from exc
+        elif args.command == 'extras':
+            result = extras(args.system, args.model, args.skip)
+            print(json.dumps(result, indent=2, sort_keys=True) if args.json else render_extras(result))
+            return 0
         elif args.command == 'start':
             result = shopping() if args.shopping else start(read(args.answers) if args.answers else None)
             print(json.dumps(result, indent=2, sort_keys=True) if args.json else render(result))

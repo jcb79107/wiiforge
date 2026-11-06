@@ -44,9 +44,9 @@ Use an existing lawful dump, or follow [CleanRip](https://wii.hacks.guide/dump-g
 Use [Wii backup management](https://wii.hacks.guide/backups) and the [computer handoff](usage.md#get-a-wii-dump-ready-for-its-first-launch)
 for joining/conversion. Verify actual play, controls, audio/video and save/reload; a loader opening is not enough.
 
-Want GameCube? Follow [Nintendont upstream](https://github.com/FIX94/Nintendont), prepare its local files,
-and test directly before GX integration. Stock Family Edition, mini and vWii cannot dump GameCube discs.
-Offer [optional picture setup](video.md) if wanted; skipping it keeps current settings and does not block gameplay. Offer autoboot only after recovery and gameplay work.
+For GameCube, follow [the Nintendont checkpoint](gamecube.md): prepare its local files,
+test directly, then launch the same game through GX. Skip if the user only wants Wii. Stock Family Edition, mini and vWii cannot dump GameCube discs.
+Offer [optional picture setup](video.md) if wanted; skipping it keeps current settings and does not block gameplay. Offer [extra systems](extras.md) separately; selecting none is fine. Offer autoboot only after recovery and gameplay work.
 
 Finish with how to launch games, save, safely eject and reach recovery, plus a private record of versions
 and confirmed results. If something fails, inspect that error before changing global settings.

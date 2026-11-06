@@ -6,18 +6,18 @@
 
 Give this repo to your AI coding agent. It helps you buy what you need, prepare files on your computer,
 and follow **[Wii Hacks Guide](https://wii.hacks.guide/get-started)** on your console.
-USB Loader GX for Wii games. Nintendont if you want GameCube. Your own lawful games, your setup.
+USB Loader GX for Wii games. Nintendont for GameCube. Your own lawful games, your setup.
 
 ## Get started
 
 Paste this into your agent:
 
-> Help me set up my Wii using https://github.com/jcb79107/wiiready. Read AGENTS.md. Ask what I own, help with the computer work, and walk me through Wii Hacks Guide one step at a time. Use USB Loader GX. Ask before changing my storage or console, and keep my private files local.
+> Help me set up my Wii using https://github.com/jcb79107/wiiready. Read AGENTS.md. Ask what I own, help with the computer work, and walk me through Wii Hacks Guide one step at a time. Use USB Loader GX and Nintendont for Wii and GameCube. Ask before changing my storage or console, and keep my private files local.
 
 No console yet? Tell it your budget and what you want to play. Already modded? Tell it what works.
 You handle the Wii remote; your agent handles the supported computer work and explains the rest.
 
-**[What to buy](docs/buying.md)** · **[Optional picture setup](docs/video.md)** · **[Setup flow](docs/playbook.md)** · **[Commands](docs/usage.md)**
+**[What to buy](docs/buying.md)** · **[Extra systems](docs/extras.md)** · **[Picture setup](docs/video.md)** · **[Setup flow](docs/playbook.md)** · **[Commands](docs/usage.md)**
 
 ## What it handles
 
