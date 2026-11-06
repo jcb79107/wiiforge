@@ -16,6 +16,7 @@ from .onboarding import start, render
 from .nintendont import nintendont_bytes
 from .hackmii import hackmii_snapshot
 from .exploit import check_exploit
+from .games import check_gamecube
 from .archive import check_zip
 from .rehearsal import rehearse, _stage_zip
 from .prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation
@@ -271,6 +272,8 @@ def checkpoint_preparation(checkpoint, wii_network):
                                   for ios, version in [(38, 4123), (56, 5661), (57, 5918), (58, 6175)]]
         else:
             result['instruction'] = 'Ask one question now: can this Wii connect to the internet? Rerun journey with --wii-network online or offline. This selects guidance only; no download or install is authorized.'
+    elif checkpoint == 'gamecube-test':
+        result['instruction'] = 'Prepare Nintendont only if needed. Use check-gamecube on the user\'s own raw ISO/GCM files to catch disc-order and layout issues; this does not verify the dump. Test Nintendont directly, controls and save/reload before GX integration.'
     return result
 
 
@@ -435,6 +438,9 @@ def main():
     exploit = sub.add_parser('check-exploit', help='Partially inspect a private Wilbrand ZIP; never verify personalization or authorize writes')
     for arg in ['artifact', 'model', 'menu']:
         exploit.add_argument('--' + arg, required=True)
+    game = sub.add_parser('check-gamecube', help='Read local ISO/GCM headers and suggest layout; no copying or full dump verification')
+    game.add_argument('--disc1', required=True)
+    game.add_argument('--disc2', help='Optional second disc of the same game')
     sub.add_parser('rehearse', help='Copy synthetic fixtures into a temporary host directory, verify, then remove')
     sub.add_parser('demo', help='Try synthetic plans; no media or network access')
     sub.add_parser('inspect', help='Read macOS whole-disk metadata').add_argument('--device', required=True)
@@ -468,6 +474,8 @@ def main():
             return 0
         elif args.command == 'check-exploit':
             result = check_exploit(args.artifact, args.model, args.menu)
+        elif args.command == 'check-gamecube':
+            result = check_gamecube(args.disc1, args.disc2)
         elif args.command == 'journey':
             result = journey(read(args.answers), read(args.state) if args.state else None, args.checkpoint, args.level, args.wii_network)
         elif args.command == 'demo':

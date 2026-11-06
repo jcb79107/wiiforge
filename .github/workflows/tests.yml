@@ -46,6 +46,8 @@ jobs:
         run: python -m unittest discover -s tests -p test_onboarding.py -v
       - name: Windows private ZIP checks
         run: python -m unittest discover -s tests -p test_exploit.py -v
+      - name: Windows game header checks
+        run: python -m unittest discover -s tests -p test_games.py -v
       - name: Intake smoke test
         run: python -m wiiforge start
       - name: Synthetic plan smoke test

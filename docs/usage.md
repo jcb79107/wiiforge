@@ -297,3 +297,29 @@ Review the correct host build and publisher/signature information, then obtain s
 Do not disable security controls or treat a guide's antivirus reassurance as an authorization to bypass them.
 Use the guide's original-Wii choices, keep acquired files private, and review any copying/renaming separately.
 WiiForge does not validate WAD contents or acquire/distribute Nintendo files. Never substitute the vWii versions.
+
+## Check a local GameCube dump before first launch
+
+```sh
+python3 -m wiiforge check-gamecube --disc1 /private/own-dump.iso
+# For a two-disc game, add: --disc2 /private/own-disc-two.iso
+```
+
+This read-only check reads 1,120 header bytes from each selected regular ISO/GCM file.
+It catches unsupported headers, reversed discs and mismatched game IDs, then suggests
+`games/<your-game-folder>/game.iso` and, when supplied, `disc2.iso` beside it.
+It reports whether the selected paths already match that layout; alternate layouts may work too.
+It never scans a library, copies, renames, converts or downloads games. Reports omit source paths,
+titles and game IDs. Keep your files and reports private.
+
+Exit 0 means the limited header check completed; it does **not** verify the complete dump,
+lawful provenance, disc contents, required disc count or playability. Smaller files may be trimmed
+or incomplete; their headers cannot distinguish those cases. NKit, RVZ, CISO, WBFS, extracted games,
+multi-game compilations and oversized images are outside this check; do not rename them to bypass it.
+Keep the original dump/checksum record and use the [backup-management guide](https://wii.hacks.guide/backups)
+for conversion/organization. Any copy or conversion needs separate review and approval.
+
+Layout follows [Nintendont's instructions](https://github.com/FIX94/Nintendont#quick-installation).
+Header fields were checked against its [pinned format detection](https://github.com/FIX94/Nintendont/blob/c683db301c941a64e6fe5cef6ac079bd1a726074/loader/source/global.c#L407)
+and Dolphin's [disc metadata reader](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/DiscIO/VolumeDisc.cpp).
+No upstream code or game data was copied. Test controls and a real save/reload in Nintendont before GX integration.

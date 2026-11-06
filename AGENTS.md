@@ -26,6 +26,8 @@ Use journey output's `computer_preparation` for the current step. Ask about Wii 
 `--wii-network online` skips the unnecessary offline acquisition route. Never upload a MAC without
 specific approval naming the destination. `check-exploit` is only a local partial check, not personalization validation.
 Give one console action and its expected outcome at a time, then wait for what the user actually sees.
+Before GameCube file organization, use `check-gamecube` on the user's own raw ISO/GCM files to check
+headers, disc order and suggested naming. It neither verifies the whole dump nor authorizes a copy.
 Do not mark a checkpoint passed because files were copied. Finish with launch/save/recovery instructions
 and a private record of what was actually tested. USB Loader GX is the default; preserve video settings,
 review Nintendont when requested, and defer autoboot until recovery and gameplay work.
