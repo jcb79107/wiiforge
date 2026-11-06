@@ -10,6 +10,11 @@ Give WiiForge to your AI coding assistant. It helps you choose hardware, figure 
 
 ## Start here
 
+**Experimental: tested with synthetic files, not a real Wii or drive.** The checked setup path is original
+Wii 4.3U; other models/menus need their separate guide and remain blocked in WiiForge’s installation planner.
+Your assistant should explain each proposed change and ask before media or console changes. Console
+changes are not all reversible; recovery preparation comes before gameplay.
+
 1. Open your AI coding assistant on the computer you will use for setup.
 2. Paste the prompt below. Start with what you own; if you are shopping, say so.
 3. Let the assistant handle the supported computer steps and guide you through one Wii screen at a time.
