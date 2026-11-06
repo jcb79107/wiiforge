@@ -121,6 +121,33 @@ class WalkthroughTests(unittest.TestCase):
                         self.assertEqual(cli('prepare', *apply, plan['digest'])['written'], [])
                         self.assertEqual(journey(answers, session)['state'], before_state)
                 if checkpoint['id'] == 'homebrew': answers['homebrew'] = 'yes'
+                if checkpoint['id'] == 'wii-test':
+                    # Joining happens in host staging, not the simulated card.
+                    # These bytes deliberately are not a valid game image.
+                    parts = [root / ('invented.part%d.iso' % n) for n in range(2)]
+                    for part, data in zip(parts, [b'Synthetic first part', b'Synthetic second part']):
+                        part.write_bytes(data)
+                    combined = b''.join(part.read_bytes() for part in parts)
+                    staging = root / 'host-staging'; staging.mkdir()
+                    common = ['--part', parts[0], '--part', parts[1], '--dump-sha1',
+                              hashlib.sha1(combined).hexdigest(), '--destination', staging, '--model', 'original']
+                    plan = cli('wii-join-plan', *common)
+                    saved = root / 'join-plan.json'; saved.write_text(json.dumps(plan))
+                    summary = cli('plan-summary', '--plan', saved)
+                    self.assertEqual(summary['bytes_to_write'], len(combined))
+                    self.assertNotIn(str(root), json.dumps(summary))
+                    cli('wii-join', *common, '--plan', saved, '--approve-plan', 'wrong', expected=2)
+                    self.assertEqual(list(staging.iterdir()), [])
+                    joined = cli('wii-join', *common, '--plan', saved, '--approve-plan', plan['digest'])
+                    self.assertFalse(joined['image_format_verified'])
+                    self.assertFalse(joined['gameplay_verified'])
+                    self.assertEqual((staging / 'joined.iso').read_bytes(), combined)
+                    self.assertEqual(cli('wii-join', *common, '--plan', saved,
+                                         '--approve-plan', plan['digest'])['written'], [])
+                    self.assertEqual(files(), expected_files)
+                    self.assertEqual(journey(answers, session)['state'], before_state)
+                    self.assertIn('TinyWiiBackupManager handoff', checkpoint['computer_preparation']['instruction'])
+                    # Conversion remains a handoff: never fabricate a successful conversion.
                 if checkpoint['id'] == 'gamecube-test':
                     game = root / 'invented.iso'; game.write_bytes(synthetic_header())
                     self.assertFalse(check_gamecube(game)['gameplay_verified'])
