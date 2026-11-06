@@ -18,6 +18,7 @@ from .hackmii import hackmii_snapshot
 from .exploit import check_exploit
 from .games import check_gamecube
 from .gamecopy import plan_game_copy, execute_game_copy
+from .wiijoin import plan_wii_join, execute_wii_join
 from .archive import check_zip
 from .rehearsal import rehearse, _stage_zip
 from .prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation, summarize_plan
@@ -281,7 +282,7 @@ def checkpoint_preparation(checkpoint, wii_network, homebrew='unknown'):
         result['instruction'] = 'Prepare Nintendont only if needed. Use check-gamecube on the user\'s own raw ISO/GCM files to catch disc-order and layout issues. On POSIX, gamecube-plan hashes full files and proposes exact paths; gamecube-copy requires separate destination/digest approval. Copy verification does not establish dump integrity. Test Nintendont directly, controls and save/reload before GX integration.'
     elif checkpoint == 'wii-test':
         result['source'] = GUIDE + 'dump-games'
-        result['instruction'] = 'Already have a lawful verified dump? Skip CleanRip preparation. Otherwise prepare the reviewed Wii CleanRip package and guide the user through dumping their own disc, including checksum verification and space checks. Dumping writes storage and requires separate approval. Keep games and dump records private; WiiForge does not dump discs or convert Wii backup formats.'
+        result['instruction'] = 'Already have a lawful verified dump? Skip CleanRip preparation. Otherwise prepare the reviewed Wii CleanRip package and guide the user through dumping their own disc, including checksum verification and space checks. Dumping writes storage and requires separate approval. Keep games and dump records private. For split CleanRip dumps on POSIX, wii-join-plan matches the original dump SHA-1; wii-join requires separate destination/digest approval. WiiForge does not dump discs or convert Wii backup formats.'
     return result
 
 
@@ -481,6 +482,14 @@ def main():
         if name == 'gamecube-copy':
             copying.add_argument('--plan', required=True)
             copying.add_argument('--approve-plan', required=True)
+    for name in ['wii-join-plan', 'wii-join']:
+        joining = sub.add_parser(name, help='Plan or approve joining explicit CleanRip parts on POSIX; no conversion')
+        joining.add_argument('--part', action='append', required=True, help='Repeat for each part, ordered from part0')
+        for arg in ['dump-sha1', 'destination', 'model']:
+            joining.add_argument('--' + arg, required=True)
+        if name == 'wii-join':
+            joining.add_argument('--plan', required=True)
+            joining.add_argument('--approve-plan', required=True)
     sub.add_parser('rehearse', help='Copy synthetic fixtures into a temporary host directory, verify, then remove')
     sub.add_parser('demo', help='Try synthetic plans; no media or network access')
     sub.add_parser('inspect', help='Read macOS whole-disk metadata').add_argument('--device', required=True)
@@ -526,6 +535,11 @@ def main():
         elif args.command == 'gamecube-copy':
             result = execute_game_copy(args.disc1, args.disc2, args.destination, args.model,
                                        read(args.plan, PREPARATION_PLAN_LIMIT), args.approve_plan)
+        elif args.command == 'wii-join-plan':
+            result = plan_wii_join(args.part, args.dump_sha1, args.destination, args.model)
+        elif args.command == 'wii-join':
+            result = execute_wii_join(args.part, args.dump_sha1, args.destination, args.model,
+                                      read(args.plan, PREPARATION_PLAN_LIMIT), args.approve_plan)
         elif args.command == 'journey':
             result = journey(read(args.answers), read(args.state) if args.state else None, args.checkpoint, args.level, args.wii_network)
         elif args.command == 'demo':

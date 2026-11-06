@@ -201,7 +201,7 @@ def summarize_plan(plan):
     _check_approval(plan, plan.get('digest'))  # Consistency only, never user approval.
     require(type(plan.get('schema')) is int and plan['schema'] == 1 and
             plan.get('model') == 'original' and plan.get('installation_supported') is False and
-            plan.get('kind') in (None, 'gamecube-copy'), 'Unsupported preparation plan')
+            plan.get('kind') in (None, 'gamecube-copy', 'wii-join'), 'Unsupported preparation plan')
     files = plan.get('files')
     require(isinstance(files, list) and all(isinstance(item, dict) and
             item.get('action') in ('create', 'keep') and type(item.get('bytes')) is int and
@@ -210,7 +210,7 @@ def summarize_plan(plan):
     require(type(plan.get('required_bytes')) is int and plan['required_bytes'] == required,
             'Inconsistent planned byte count')
     return {'status': 'private-plan-summary',
-            'operation': 'gamecube-copy' if plan.get('kind') == 'gamecube-copy' else 'package-preparation',
+            'operation': plan.get('kind') or 'package-preparation',
             'files_to_create': sum(item['action'] == 'create' for item in files),
             'files_to_preserve': sum(item['action'] == 'keep' for item in files),
             'bytes_to_write': required, 'write_authorized': False,

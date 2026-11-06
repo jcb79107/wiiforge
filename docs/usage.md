@@ -390,8 +390,8 @@ Successful byte verification still exits 2 for licensing/hardware blockers. Revi
 [controlled preparation](#controlled-file-preparation) only after destination/digest approval. This copies
 the app, never a game. On the console, follow the [dumping guide](https://wii.hacks.guide/dump-games):
 check free space, select the correct storage and enable checksum verification. Dumping writes storage;
-obtain separate approval and keep all resulting games/checksum records private. Joining split Wii dumps
-or converting formats remains a separately reviewed task; never rename extensions as conversion.
+obtain separate approval and keep all resulting games/checksum records private. Joining split Wii dumps uses the separately approved flow below;
+converting formats remains a separately reviewed task; never rename extensions as conversion.
 
 
 ## Get a Wii dump ready for its first launch
@@ -419,3 +419,37 @@ supports configurable Wii output and splitting; its
 [conversion code](https://github.com/mq1/TinyWiiBackupManager/blob/v6.1.11/src/games/convert.rs) can replace output files.
 Do not assume it has WiiForge's no-overwrite guarantees. This route was source-reviewed, not executed or
 hardware-tested here. No converter binary or game content is included in this repository.
+
+
+### Join CleanRip parts without overwriting
+
+On POSIX, choose an existing dedicated **host staging folder** with enough space and a filesystem
+supporting the full ISO size (not FAT32). WiiForge does not classify its backing device or filesystem.
+Read the original private dump record's SHA-1; never calculate a new expected checksum just to pass a failed check.
+The [guide](https://wii.hacks.guide/backups#joining-part-files-from-a-wii-disc-on-a-fat32-device) requires the
+joined checksum to match. [CleanRip source](https://github.com/emukidid/cleanrip/blob/master/source/main.c)
+records SHA-1 when checksum calculation is enabled and numbers parts from zero.
+
+```sh
+python3 -m wiiforge wii-join-plan --model original \
+  --part /private/own-game.part0.iso --part /private/own-game.part1.iso \
+  --dump-sha1 SHA1_FROM_ORIGINAL_DUMP_RECORD --destination /chosen/host-staging
+```
+
+List every part explicitly in order; no wildcard expansion. Save the plan directly to a new private local
+file, then review it locally and obtain approval for its exact destination/digest. `plan-summary` provides
+redacted totals. Repeat all source options when running `wii-join`, adding `--plan /private/join-plan.json`
+and `--approve-plan EXACT_APPROVED_DIGEST`. Raw plans contain private paths, identities and hashes.
+
+The planner reads all selected parts in bounded chunks and requires the supplied SHA-1 to match before
+any output write. The executor rechecks the plan, creates only `joined.iso`, verifies SHA-256/readback and
+preserves every source. Existing different output blocks; identical completed output is retained on resume.
+Ordinary interrupted writes remove only the newly created partial file; power loss may leave a conflict
+requiring separately approved cleanup. There is no byte-offset resume. Keep exclusive access throughout.
+The same device-identity, concurrency and reconnect limits as controlled preparation apply.
+
+This accepts 2–16 consecutive same-basename parts, totaling at most 9 GiB. It does **not** parse an image,
+check full-disc size, validate the supplied record's authenticity, establish lawful provenance, convert to
+WBFS or prove gameplay. Even invented bytes can match an invented checksum. Tests use only such synthetic
+fixtures. Windows joining remains blocked; use the reviewed guide handoff there. After joining, continue
+with the one-game conversion workflow above, with separate execution/transfer approval.

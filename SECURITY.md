@@ -18,7 +18,7 @@ normally remove them on completion or failure. The tool does not verify the back
 running either command. Forced termination or cleanup failure can leave files behind. Neither command
 accepts a destination argument. Default package verification and inspection remain read-only.
 
-`prepare` and `gamecube-copy` are write-capable commands with an explicit destination and saved plan approval.
+`prepare`, `gamecube-copy` and `wii-join` are write-capable commands with an explicit destination and saved plan approval.
 They never overwrite an existing file: matching content is verified and skipped; mismatches block preparation.
 Run it only after reviewing every planned path and authorizing that destination. Keep exclusive access to
 the destination while it runs; directory descriptors and no-follow opens do not protect against an adversary
