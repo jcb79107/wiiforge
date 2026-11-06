@@ -39,7 +39,7 @@ Before GameCube file organization, use `check-gamecube` on the user's own raw IS
 headers, disc order and suggested naming. It neither verifies the whole dump nor authorizes a copy.
 For raw GameCube files on POSIX, use `gamecube-plan`, show the exact source/destination paths and
 hashes privately, and get specific destination/digest approval before `gamecube-copy`. Never move/delete
-original dumps or treat a copy hash as dump authenticity. Wii conversion/splitting still needs guide-specific review.
+original dumps or treat a copy hash as dump authenticity. For Wii conversion/splitting, use the one-game staging handoff in docs/usage.md; external execution and media transfer each need specific approval.
 Do not mark a checkpoint passed because files were copied. Finish with launch/save/recovery instructions
 and a private record of what was actually tested. USB Loader GX is the default; preserve video settings,
 review Nintendont when requested, and defer autoboot until recovery and gameplay work.

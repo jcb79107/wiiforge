@@ -285,49 +285,71 @@ def checkpoint_preparation(checkpoint, wii_network, homebrew='unknown'):
     return result
 
 
-def journey(answers, saved=None, checkpoint=None, level=None, wii_network='unknown'):
-    require(wii_network in ('online', 'offline', 'unknown'), 'Invalid Wii network observation')
-    intake = start(answers)
-    require(intake['reference_plan_scope'] and all(intake['observations'][key] != 'unknown'
-            for key in ['computer', 'homebrew', 'sd', 'storage']),
-            'Guided sessions need original Wii 4.3U, computer, homebrew and storage observations; use start to collect them')
-    p = intake['profile_draft']
+def _journey_plan(p, baseline):
     steps = manual_steps(p)
     steps[1:1] = [
         ('storage-review', 'Review actual storage, backups and the selected current guide. No writes authorized.', GUIDE + 'get-started'),
         ('homebrew', 'Verify Homebrew Channel opens after the selected guide, or confirm the existing installation.', GUIDE + 'hbc')]
-    baseline = intake['observations']
+    body = {'schema': 1, 'inputs': digest(baseline), 'blockers': [],
+            'status': 'manual-review-only', 'execution_supported': False,
+            'steps': [{'id': i, 'instruction': instruction, 'source': url} for i, instruction, url in steps]}
+    return dict(body, digest=digest(body))
+
+
+def journey(answers, saved=None, checkpoint=None, level=None, wii_network=None):
+    saved_network = saved.get('wii_network', 'unknown') if isinstance(saved, dict) else 'unknown'
+    require(saved_network in ('online', 'offline', 'unknown'), 'Invalid saved Wii network observation')
+    wii_network = saved_network if wii_network is None else wii_network
+    require(wii_network in ('online', 'offline', 'unknown'), 'Invalid Wii network observation')
+    intake = start(answers)
+    observations = intake['observations']
+    require(intake['reference_plan_scope'] and all(observations[key] != 'unknown'
+            for key in ['computer', 'homebrew', 'sd', 'storage']),
+            'Guided sessions need original Wii 4.3U, computer, homebrew and storage observations; use start to collect them')
+    baseline = observations
     previous = baseline
     state = None
     if saved is not None:
         require(isinstance(saved, dict) and saved.get('kind') == 'guided-session', 'Expected a saved guided-session result')
         previous = start(saved.get('observations'))['observations']
         baseline = start(saved.get('baseline_answers', previous))['observations']
-        protected = set(baseline) - {'computer', 'homebrew'}
-        require(all(intake['observations'][key] == baseline[key] == previous[key] for key in protected),
-                'Console, storage, display or goals changed; review a new session')
+        require(all(observations[key] == baseline[key] == previous[key] for key in ('model', 'menu', 'sd', 'storage')),
+                'Console or storage changed; review a new session')
+        for old, new in [(baseline, previous), (previous, observations)]:
+            require(all(old[key] == new[key] or old[key] == 'unknown' for key in ('display', 'cable')),
+                    'Known display or cable changed; review the actual setup before continuing')
+            require(old['gamecube'] == new['gamecube'] or old['gamecube'] == 'unknown' or
+                    (old['gamecube'] == 'no' and new['gamecube'] == 'yes'),
+                    'GameCube goal regressed; review the session rather than removing checkpoints')
         state = saved.get('state')
         require(isinstance(state, dict), 'Missing guided-session state')
-    body = {'schema': 1, 'inputs': digest(baseline), 'blockers': [],
-            'status': 'manual-review-only', 'execution_supported': False,
-            'steps': [{'id': i, 'instruction': instruction, 'source': url} for i, instruction, url in steps]}
-    current = dict(body, digest=digest(body))
+        previous_plan = _journey_plan(start(previous)['profile_draft'], baseline)
+        state = resume(previous_plan, state)  # Validate old evidence before extending its plan.
+        if baseline['homebrew'] != previous['homebrew']:
+            require(baseline['homebrew'] == 'no' and previous['homebrew'] == 'yes' and
+                    any(item['id'] == 'homebrew' for item in state['completed']),
+                    'Saved Homebrew transition lacks its completed checkpoint')
+    current = _journey_plan(intake['profile_draft'], baseline)
+    if state is not None and current['digest'] != state['plan_digest']:
+        require(current['steps'][:len(previous_plan['steps'])] == previous_plan['steps'],
+                'Changed plan is not a safe extension of existing checkpoints')
+        state = dict(state, plan_digest=current['digest'])
     state = resume(current, state)
-    if previous['homebrew'] != intake['observations']['homebrew']:
-        require(previous['homebrew'] == 'no' and intake['observations']['homebrew'] == 'yes',
+    if previous['homebrew'] != observations['homebrew']:
+        require(previous['homebrew'] == 'no' and observations['homebrew'] == 'yes',
                 'Homebrew status regressed or is unknown; investigate before continuing')
         require(any(item['id'] == 'homebrew' for item in state['completed']) or
                 (checkpoint == 'homebrew' and level == 'console-tested'),
                 'Confirm the Homebrew Channel checkpoint before recording installation progress')
     state = resume(current, state, checkpoint, level)
     pending = current['steps'][len(state['completed']):]
-    return {'kind': 'guided-session', 'observations': intake['observations'], 'baseline_answers': baseline, 'state': state,
-            'guide_route': start(baseline)['route'],
+    return {'kind': 'guided-session', 'observations': observations, 'baseline_answers': baseline, 'state': state,
+            'wii_network': wii_network, 'guide_route': start(baseline)['route'],
             'next_checkpoint': dict(pending[0], required_evidence=checkpoint_level(pending[0]['id']),
-                                    computer_preparation=checkpoint_preparation(pending[0]['id'], wii_network, intake['observations']['homebrew'])) if pending else None,
+                                    computer_preparation=checkpoint_preparation(pending[0]['id'], wii_network, observations['homebrew'])) if pending else None,
             'status': 'manual-checkpoints-complete' if not pending else 'awaiting-user',
             'write_authorized': False, 'inspection_performed': False, 'installation_supported': False,
-            'notice': 'User attestations only. File preparation does not complete a console checkpoint; computer changes preserve the selected guide; console/storage/display/goal changes require review.'}
+            'notice': 'User attestations only. Computer changes and identifying previously unknown display/cable preserve progress; adding GameCube appends its test. This assumes the same actual hardware. Known display/cable, console or storage changes require review. File copies and network observations never complete console checkpoints.'}
 
 
 def demo():
@@ -443,7 +465,7 @@ def main():
     session.add_argument('--answers', required=True)
     session.add_argument('--state', help='Previous successful journey JSON output, saved privately')
     session.add_argument('--checkpoint')
-    session.add_argument('--wii-network', choices=['online', 'offline', 'unknown'], default='unknown', help='Wii internet availability for cIOS guidance; no network requests')
+    session.add_argument('--wii-network', choices=['online', 'offline', 'unknown'], help='Wii internet availability; omission retains saved observation, unknown clears it; no network requests')
     session.add_argument('--level', choices=['user-confirmed', 'console-tested'])
     exploit = sub.add_parser('check-exploit', help='Partially inspect a private Wilbrand ZIP; never verify personalization or authorize writes')
     for arg in ['artifact', 'model', 'menu']:

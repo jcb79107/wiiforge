@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 from pathlib import Path
@@ -200,6 +201,67 @@ class JourneyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             journey(dict(answers, homebrew='yes'), result, 'homebrew', 'console-tested')
 
+    def test_identifying_unknown_display_and_cable_preserves_progress(self):
+        from wiiforge.__main__ import journey
+        answers = dict(self.answers, display='unknown', cable='unknown')
+        saved = journey(answers, checkpoint='review', level='user-confirmed')
+        original = copy.deepcopy(saved)
+        answers.update(display='hd', cable='component')
+        result = journey(answers, saved)
+        self.assertEqual(result['state'], saved['state'])
+        self.assertEqual(saved, original)
+        self.assertEqual(result['baseline_answers']['display'], 'unknown')
+        self.assertEqual(journey(answers, result)['state'], result['state'])
+        for changes in [{'display': 'crt'}, {'cable': 'adapter'}, {'cable': 'unknown'}, {'storage': 'usb-hdd'}]:
+            with self.assertRaises(ValueError): journey(dict(answers, **changes), result)
+
+    def test_gamecube_can_be_added_after_wii_completion_without_repeating_setup(self):
+        from wiiforge.__main__ import journey
+        for initial_goal in ['no', 'unknown']:
+            answers = dict(self.answers, gamecube=initial_goal)
+            saved = journey(answers)
+            while saved['next_checkpoint']:
+                step = saved['next_checkpoint']
+                saved = journey(answers, saved, step['id'], step['required_evidence'])
+            original = copy.deepcopy(saved)
+            answers['gamecube'] = 'yes'
+            result = journey(answers, saved)
+            self.assertEqual(result['next_checkpoint']['id'], 'gamecube-test')
+            self.assertEqual(result['state']['completed'], saved['state']['completed'])
+            self.assertNotEqual(result['state']['plan_digest'], saved['state']['plan_digest'])
+            self.assertEqual(saved, original)
+            self.assertEqual(journey(answers, result)['state'], result['state'])
+            with self.assertRaises(ValueError): journey(answers, result, 'gamecube-test', 'user-confirmed')
+            complete = journey(answers, result, 'gamecube-test', 'console-tested')
+            self.assertIsNone(complete['next_checkpoint'])
+            with self.assertRaises(ValueError): journey(dict(answers, gamecube='no'), complete)
+
+    def test_extension_validates_existing_evidence_and_never_skips_pending_steps(self):
+        from wiiforge.__main__ import journey
+        answers = dict(self.answers, gamecube='no')
+        saved = journey(answers, checkpoint='review', level='user-confirmed')
+        added = dict(answers, gamecube='yes')
+        self.assertEqual(journey(added, saved)['next_checkpoint']['id'], 'storage-review')
+        with self.assertRaises(ValueError): journey(added, saved, 'gamecube-test', 'console-tested')
+        corrupt = copy.deepcopy(saved); corrupt['state']['plan_digest'] = '0' * 64
+        with self.assertRaises(ValueError): journey(added, corrupt)
+        corrupt = copy.deepcopy(saved); corrupt['state']['completed'][0]['evidence'] = 'console-tested'
+        with self.assertRaises(ValueError): journey(added, corrupt)
+        corrupt = copy.deepcopy(saved); corrupt['observations']['homebrew'] = 'no'
+        with self.assertRaises(ValueError): journey(dict(added, homebrew='no'), corrupt)
+
+    def test_network_observation_is_retained_overridden_and_clearable(self):
+        from wiiforge.__main__ import journey
+        saved = journey(self.answers, wii_network='online')
+        self.assertEqual(journey(self.answers, saved)['wii_network'], 'online')
+        changed = journey(self.answers, saved, wii_network='offline')
+        self.assertEqual(changed['wii_network'], 'offline')
+        self.assertEqual(changed['state'], saved['state'])
+        self.assertEqual(journey(self.answers, changed, wii_network='unknown')['wii_network'], 'unknown')
+        legacy = dict(saved); del legacy['wii_network']
+        self.assertEqual(journey(self.answers, legacy)['wii_network'], 'unknown')
+        with self.assertRaises(ValueError): journey(self.answers, dict(saved, wii_network='invalid'))
+
     def test_cli_can_resume_saved_output_on_any_host_without_inspection(self):
         with tempfile.TemporaryDirectory() as folder:
             answers = Path(folder) / 'answers.json'
@@ -207,13 +269,14 @@ class JourneyTests(unittest.TestCase):
             answers.write_text(json.dumps(self.answers))
             env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / 'src'))
             command = [sys.executable, '-m', 'wiiforge', 'journey', '--answers', str(answers)]
-            first = subprocess.run(command, cwd=folder, env=env, text=True, capture_output=True)
+            first = subprocess.run(command + ['--wii-network', 'online'], cwd=folder, env=env, text=True, capture_output=True)
             self.assertEqual(first.returncode, 0, first.stderr)
             saved.write_text(first.stdout)
             second = subprocess.run(command + ['--state', str(saved), '--checkpoint', 'review', '--level', 'user-confirmed'],
                                     cwd=folder, env=env, text=True, capture_output=True)
             self.assertEqual(second.returncode, 0, second.stderr)
             self.assertEqual(json.loads(second.stdout)['next_checkpoint']['id'], 'storage-review')
+            self.assertEqual(json.loads(second.stdout)['wii_network'], 'online')
             self.assertEqual(saved.read_text(), first.stdout)
             self.assertEqual(set(p.name for p in Path(folder).iterdir()), {'answers.json', 'progress.json'})
 

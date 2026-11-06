@@ -235,9 +235,9 @@ python3 -m wiiforge journey --answers /private/intake.json \
   > /private/progress-2.json
 ```
 
-Pass the entire previous successful output as `--state`; do not redirect onto an input. Check exit 0 before retaining new progress. The next step appears automatically; skipped steps and changed console/storage/display/goals are rejected. Moving between computers retains progress and the originally selected guide. A homebrew change from no to yes is accepted only with the Homebrew Channel console-tested checkpoint or after that checkpoint; regression to no requires investigation. The saved baseline keeps the original plan binding intact. Use `user-confirmed` for review, storage-review, backup and cIOS; `console-tested` for Homebrew Channel, recovery, loader and game tests. File preparation does not acknowledge any of these.
+Pass the entire previous successful output as `--state`; do not redirect onto an input. Check exit 0 before retaining new progress. The next step appears automatically; skipped steps and changed console/storage are rejected. Moving between computers retains progress and the originally selected guide. A homebrew change from no to yes is accepted only with the Homebrew Channel console-tested checkpoint or after that checkpoint; regression to no requires investigation. The saved baseline keeps the original plan binding intact. Use `user-confirmed` for review, storage-review, backup and cIOS; `console-tested` for Homebrew Channel, recovery, loader and game tests. File preparation does not acknowledge any of these.
 
-TV/cable and optional GameCube intent may remain unknown initially; video is preserved and no GameCube checkpoint is added until requested. Changing those later requires a reviewed session, not silently reusing prior display/game tests.
+TV/cable and optional GameCube intent may remain unknown initially. Identifying the same previously unknown TV/cable preserves progress; replacing a known display/cable requires review. Video settings remain preserved. Adding GameCube appends its console test without repeating completed Wii steps or skipping pending steps. Removing that goal is rejected. These are local attestations about the same console, not automatic hardware detection.
 
 This reuses the ordered checkpoint validator. It is a portable record of user attestations, not an inspection, write permission, signed proof or automatic installer. Keep the file private. Revisit storage after every reconnect; never reuse a preparation approval on that basis. Other models/menus remain guide handoffs, and `start` still helps collect their observations. For ModMii follow its generated instructions; use the checklist only to record outcomes, not to substitute a different recipe.
 
@@ -303,7 +303,7 @@ personalized archives have been tested; no real console payload was generated or
 `journey` now includes `next_checkpoint.computer_preparation`, listing relevant local manifests and the next
 computer task. These are suggestions for the current step, not a command to prepare every package at once.
 At cIOS, rerun the same session with `--wii-network online` or `--wii-network offline` according to the Wii's
-actual internet availability. This does not query the network, invalidate progress, download files or authorize execution.
+actual internet availability. The observation is saved; later resumes retain it unless overridden. Use `--wii-network unknown` to clear it. This does not query the network, invalidate progress, download files or authorize execution.
 
 The [current original-Wii guide](https://wii.hacks.guide/cios) permits online users to skip offline IOS acquisition.
 Offline output lists only its four base-IOS versions and expected filenames and links [NUSGet upstream](https://github.com/NinjaCheetah/NUSGet/releases/latest).
@@ -392,3 +392,30 @@ the app, never a game. On the console, follow the [dumping guide](https://wii.ha
 check free space, select the correct storage and enable checksum verification. Dumping writes storage;
 obtain separate approval and keep all resulting games/checksum records private. Joining split Wii dumps
 or converting formats remains a separately reviewed task; never rename extensions as conversion.
+
+
+## Get a Wii dump ready for its first launch
+
+Use the [current backup guide](https://wii.hacks.guide/backups) and
+[TinyWiiBackupManager upstream releases](https://github.com/mq1/TinyWiiBackupManager/releases).
+This is an agent-guided external-tool handoff, not a WiiForge copy command:
+
+1. Keep the original dump and checksum record unchanged. For CleanRip PART files, join only the explicitly
+   reviewed, numbered parts of one game into a new file on host storage that supports large files.
+   Check the joined checksum against the dump record before conversion; do not use a broad wildcard or overwrite an existing ISO.
+2. Select the official build for the computer's OS/architecture and check its release digest when supplied.
+   Obtain specific approval before executing it. Stop on security warnings; do not disable protections.
+3. Start with one game and a new empty host staging folder, with enough space for both source and output.
+   Review the exact destination before importing. Select WBFS for Wii output and enable splitting for FAT32
+   even when host staging uses another filesystem. Do not normalize an existing library, delete originals or accept replacements.
+4. Inspect the resulting `wbfs/<game folder>/` files, including all split parts, and use the tool's integrity check.
+   An integrity result does not establish lawful provenance or console compatibility. Review the final media
+   destination and conflicts separately before approving transfer; WiiForge does not yet copy Wii backups.
+5. Safely eject after the approved transfer, launch the one game in USB Loader GX and test play/save before
+   acknowledging the journey's Wii-game checkpoint. Report an error rather than changing cIOS or video settings at random.
+
+The [v6.1.11 import source](https://github.com/mq1/TinyWiiBackupManager/blob/v6.1.11/src/games/import.rs)
+supports configurable Wii output and splitting; its
+[conversion code](https://github.com/mq1/TinyWiiBackupManager/blob/v6.1.11/src/games/convert.rs) can replace output files.
+Do not assume it has WiiForge's no-overwrite guarantees. This route was source-reviewed, not executed or
+hardware-tested here. No converter binary or game content is included in this repository.
