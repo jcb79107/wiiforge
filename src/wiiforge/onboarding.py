@@ -33,16 +33,16 @@ def start(answers=None):
         questions.insert(1, 'What full version appears at the top right of Wii Settings (for example 4.3E)? Do not update just to match an example.')
     route, url = 'Identify your console before choosing an exploit.', GUIDE + 'get-started'
     model = values['model']
-    if model in ('mini', 'vwii', 'family'):
+    if values['homebrew'] == 'yes':
+        route = 'Already modded: inventory the existing setup first. Do not rerun an exploit or replace cIOS blindly.'
+    elif model in ('mini', 'vwii', 'family'):
         route = {'mini': 'Wii mini: use the dedicated BlueBomb guide; WiiForge installation and package preparation stay blocked.',
                  'vwii': 'Wii U: use the dedicated vWii route; never use original-Wii IOS or recovery instructions.',
                  'family': 'Family Edition: review its route in Get Started; WiiForge installation and package preparation stay blocked.'}[model]
         if model == 'mini':
             url = GUIDE + 'bluebomb'
     elif model == 'original':
-        if values['homebrew'] == 'yes':
-            route = 'Already modded: inventory the existing setup first. Do not rerun an exploit or replace cIOS blindly.'
-        elif values['homebrew'] == 'unknown' or menu == 'unknown':
+        if values['homebrew'] == 'unknown' or menu == 'unknown':
             route = 'Confirm menu and existing homebrew before choosing a fresh-install route.'
         elif values['computer'] == 'windows':
             route, url = 'Review ModMii for guided Windows preparation; approve running it separately and follow its generated guide.', GUIDE + 'modmii'

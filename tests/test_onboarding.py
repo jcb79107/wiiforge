@@ -44,6 +44,14 @@ class OnboardingTests(unittest.TestCase):
             result = start({'model': 'original', 'computer': 'windows', 'menu': '4.3U', 'homebrew': homebrew})
             self.assertTrue(result['route']['source'].endswith('get-started'))
 
+    def test_existing_homebrew_is_inventory_first_for_every_model(self):
+        for model in ['original', 'family', 'mini', 'vwii', 'unknown']:
+            with self.subTest(model=model):
+                result = start({'model': model, 'homebrew': 'yes', 'computer': 'windows', 'menu': '4.3U'})
+                self.assertIn('inventory', result['route']['instruction'])
+                self.assertTrue(result['route']['source'].endswith('get-started'))
+                self.assertFalse(result['installation_supported'])
+
     def test_non_reference_region_does_not_gain_planner_support(self):
         result = start({'model': 'original', 'menu': '4.3E', 'computer': 'macos', 'homebrew': 'no', 'sd': 'yes'})
         self.assertTrue(result['route']['source'].endswith('wilbrand'))
