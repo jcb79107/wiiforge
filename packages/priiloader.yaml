@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "package": "priiloader",
+  "version": "0.10.0",
+  "asset": "Priiloader_v0_10.zip",
+  "url": "https://github.com/DacoTaco/priiloader/releases/download/0.10.0/Priiloader_v0_10.zip",
+  "size": 570721,
+  "sha256": "312881836bc62ae55d496a9caef987d19493f635e26079bc60ecde08a2a31c1d",
+  "digest_source": "local-sha256-official-release",
+  "models": [
+    "original"
+  ],
+  "license_review": "pending"
+}

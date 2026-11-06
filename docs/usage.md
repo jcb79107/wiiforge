@@ -226,3 +226,16 @@ Pass the entire previous successful output as `--state`; do not redirect onto an
 TV/cable and optional GameCube intent may remain unknown initially; video is preserved and no GameCube checkpoint is added until requested. Changing those later requires a reviewed session, not silently reusing prior display/game tests.
 
 This reuses the ordered checkpoint validator. It is a portable record of user attestations, not an inspection, write permission, signed proof or automatic installer. Keep the file private. Revisit storage after every reconnect; never reuse a preparation approval on that basis. Other models/menus remain guide handoffs, and `start` still helps collect their observations. For ModMii follow its generated instructions; use the checklist only to record outcomes, not to substitute a different recipe.
+
+## Prepare Priiloader recovery files
+
+After reviewing the current [original-Wii Priiloader procedure](https://wii.hacks.guide/priiloader), obtain the two ZIPs from the [author's pinned release](https://github.com/DacoTaco/priiloader/releases/tag/0.10.0). Keep them in a private host folder. Use the existing verification and controlled-preparation commands with these pairs:
+
+| `--manifest` | `--artifact` |
+| --- | --- |
+| `packages/priiloader.yaml` | Your local `Priiloader_v0_10.zip` |
+| `packages/loadpriiloader.yaml` | Your local `LoadPriiloader.zip` |
+
+For each pair: run `verify-package --model original --check-archive`, then `prepare-plan --model original --destination YOUR_TARGET`, review its output, and run `prepare` with the saved plan and explicit digest approval. Use a separate saved plan for each package. Neither command installs Priiloader on the console, alters its settings or records recovery as tested. The installer ZIP includes a root `LICENSE`; preserve it and stop if it conflicts with an existing file.
+
+After preparation and safe eject, the agent opens the guide, explains that the installer changes the console's internal storage, obtains approval for that console action, and waits for the user's result. Recovery is complete only after the user can actually enter Priiloader; record `recovery --level console-tested` in the journey then. The Load Priiloader app launches an existing installation; it is not the installer. Do not install a forwarder or enable autoboot at this stage.

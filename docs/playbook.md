@@ -37,10 +37,21 @@ The assistant owns the inventory, source checks, file layout and verification. T
 1. Identify the exact storage and preserve existing files. Review capacity, filesystem and backup needs. Never auto-format, repair, repartition or overwrite. Do not use a folder as proof of physical-drive identity.
 2. Obtain needed tools only from links in the selected current guide or primary upstream. Record source and version privately. Do not execute unfamiliar downloads without approval or disable antivirus to make them run.
 3. For the reviewed local GX ZIP, use [verify-package and controlled preparation](usage.md#controlled-file-preparation): preflight → show exact writes → approve digest → prepare → read-back verification. This supports POSIX hosts, not Windows destinations. Package licensing stays unresolved; no redistribution or website hosting of bundled GameTDB data.
-4. Nintendont has a [local-file preparation path](usage.md#prepare-nintendont-from-local-files) using the same engine. Other apps/exploits still need guide-specific preparation. **Do not change the GX manifest to pretend they are reviewed.** Review their archive, source, layout and destination separately before any explicitly authorized copy. Never silently replace `apps`, `private`, saves or loader configuration.
+4. Nintendont has a [local-file preparation path](usage.md#prepare-nintendont-from-local-files) using the same engine. The [Priiloader installer and menu launcher](usage.md#prepare-priiloader-recovery-files) also have reviewed local-ZIP preparation. Other apps/exploits still need guide-specific preparation. **Do not change the GX manifest to pretend they are reviewed.** Review their archive, source, layout and destination separately before any explicitly authorized copy. Never silently replace `apps`, `private`, saves or loader configuration.
 5. Show the resulting layout and safe-eject instructions. Reinspect and approve a new plan after reconnect. The agent should identify what it completed and what still needs manual work.
 
 Windows users should be offered the current ModMii workflow rather than asked to install a POSIX environment just to run WiiForge. The `start` command itself runs with Python 3.10+; CI includes a Windows intake/smoke job, separate from POSIX preparation tests.
+
+### Personalized exploit handoff (Wilbrand)
+
+If the selected guide calls for Wilbrand, keep this handoff short:
+
+1. Ask the user to read the actual menu/region and console MAC privately. Open the generator linked by the live [Wilbrand guide](https://wii.hacks.guide/wilbrand); the user enters the MAC directly, selects the observed menu/region and includes HackMii. Do not put their MAC or generated payload into this repo or chat.
+2. Keep the generated ZIP in a private host folder. The agent can list it and review the intended `private` folder and `boot.elf` layout, but **WiiForge does not validate that this personalized payload matches the console**. A file hash or plausible filename does not establish that match. Do not relabel it as a GX/recovery manifest.
+3. Before a guide-specific copy, inventory the selected SD card and show exactly what would be added. An existing `private` folder or `boot.elf` is a conflict to inspect, not permission to replace it. This copy is a separately reviewed agent task, outside WiiForge's package preparer; no automatic extraction or overwrite is authorized by downloading the ZIP.
+4. After authorized preparation, tell the user to safely eject, insert SD in the Wii's own slot and follow the guide's Message Board step. Ask what screen appears. If the expected letter is absent, check the console date and adjacent days as the guide describes; don't generate a different region or update the menu to guess a fix.
+
+For ModMii users, use its generated instructions instead; do not mix exploit outputs. HackMii/BootMii and NAND-dumper preparation still require their own reviewed files and procedure. No console MAC is required to use WiiForge's other commands.
 
 ## 4. Walk through the console, one checkpoint at a time
 

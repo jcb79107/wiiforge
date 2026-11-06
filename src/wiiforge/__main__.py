@@ -319,14 +319,20 @@ def verify_package(manifest, artifact, model, check_archive=False, experimental_
                 'execution_supported': False}
     keys(manifest, 'schema package version asset url size sha256 digest_source models license_review')
     require(type(manifest['schema']) is int and manifest['schema'] == 1, 'Invalid package schema')
-    require(manifest['package'] == 'usb-loader-gx', 'Unreviewed package')
-    require(isinstance(manifest['version'], str) and re.fullmatch(r'v[0-9]+\.[0-9]+-r[0-9]+', manifest['version']),
-            'Package requires an exact release version')
-    require(isinstance(manifest['asset'], str) and re.fullmatch(r'usbloadergx_r[0-9]+\.zip', manifest['asset']),
-            'Invalid package asset')
-    expected = 'https://github.com/wiidev/usbloadergx/releases/download/' + manifest['version'] + '/' + manifest['asset']
+    require(manifest['package'] in ('usb-loader-gx', 'priiloader', 'loadpriiloader'), 'Unreviewed package')
+    if manifest['package'] == 'usb-loader-gx':
+        require(isinstance(manifest['version'], str) and re.fullmatch(r'v[0-9]+\.[0-9]+-r[0-9]+', manifest['version']),
+                'Package requires an exact release version')
+        require(isinstance(manifest['asset'], str) and re.fullmatch(r'usbloadergx_r[0-9]+\.zip', manifest['asset']),
+                'Invalid package asset')
+        repository, digest_source = 'wiidev/usbloadergx', 'github-release-api'
+    else:
+        asset = 'Priiloader_v0_10.zip' if manifest['package'] == 'priiloader' else 'LoadPriiloader.zip'
+        require(manifest['version'] == '0.10.0' and manifest['asset'] == asset, 'Unreviewed recovery release or asset')
+        repository, digest_source = 'DacoTaco/priiloader', 'local-sha256-official-release'
+    expected = 'https://github.com/' + repository + '/releases/download/' + manifest['version'] + '/' + manifest['asset']
     require(manifest['url'] == expected, 'Package origin does not match reviewed upstream')
-    require(manifest['digest_source'] == 'github-release-api', 'Unreviewed digest source')
+    require(manifest['digest_source'] == digest_source, 'Unreviewed digest source')
     require(isinstance(manifest['sha256'], str) and re.fullmatch('[0-9a-f]{64}', manifest['sha256']),
             'Missing or invalid SHA-256 pin')
     require(type(manifest['size']) is int and 0 < manifest['size'] <= 64 * 1024 * 1024,

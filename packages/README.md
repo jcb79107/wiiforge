@@ -119,3 +119,16 @@ The source tree contains component-specific COPYING/LICENSE files; that is not a
 `license_review` stays pending. No game, BIOS, save, key or upstream binary is included in this repo.
 Read-only verification of the actual pinned files passed; destination preparation and resume were tested with synthetic files only.
 See [Nintendont preparation](../docs/usage.md#prepare-nintendont-from-local-files) for commands.
+
+## Priiloader recovery files — 2026-11-06
+
+The current [Wii Hacks Guide](https://wii.hacks.guide/priiloader) links the Priiloader installer and Load Priiloader app; Open Shop Channel lists installer version 0.10.0. We reviewed the author's [0.10.0 release](https://github.com/DacoTaco/priiloader/releases/tag/0.10.0) directly:
+
+| Manifest | Exact upstream ZIP | Size | Checked contents |
+| --- | --- | --- | --- |
+| `priiloader.yaml` | `Priiloader_v0_10.zip` | 570,721 bytes | Five files: installer app, icon, `META.XML`, hacks file, root `LICENSE` |
+| `loadpriiloader.yaml` | `LoadPriiloader.zip` | 159,478 bytes | Three files under `apps/LoadPriiloader` |
+
+The manifest version identifies the release containing the assets; Load Priiloader's own app version is 1.0. GitHub's API returned no asset digest. SHA-256 values were therefore calculated locally from the official downloads; they are not upstream-supplied digests or signatures. Both actual ZIPs passed bounded metadata and streamed CRC/size inspection without extraction or execution. Only synthetic fixtures have exercised destination writes.
+
+The installer contains a GPL version 2 notice, which the preparation engine preserves unchanged at its original root `LICENSE` path. An existing conflicting file blocks preparation; do not remove it automatically. Complete distribution obligations are not cleared by finding one notice: licensing remains pending and no upstream binaries are redistributed. The Wii U forwarder is not accepted. All WiiForge preparation remains restricted to explicit original-Wii selection.

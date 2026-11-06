@@ -20,7 +20,7 @@ run or install it. On other hosts, review the appropriate guide route. WiiForge'
 is not the full guide's compatibility list. Never forge macOS inspection data for Windows or SD storage.
 
 Do the authorized computer work, rather than handing the user a wall of terminal commands. Explain
-what will change and show the exact target/write plan before media writes. Use the reviewed GX and Nintendont manifests with the existing verify/prepare flow. For unsupported packages,
+what will change and show the exact target/write plan before media writes. Use the reviewed GX, Nintendont and Priiloader manifests with the existing verify/prepare flow. For unsupported packages,
 say what review/preparation is still manual; never edit the GX pin to bypass package validation.
 Give one console action and its expected outcome at a time, then wait for what the user actually sees.
 Do not mark a checkpoint passed because files were copied. Finish with launch/save/recovery instructions
