@@ -38,6 +38,8 @@ def start(answers=None):
     model = values['model']
     if values['homebrew'] == 'yes':
         route = 'Already modded: inventory the existing setup first. Do not rerun an exploit or replace cIOS blindly.'
+    elif values['homebrew'] == 'unknown':
+        route = 'Check whether Homebrew Channel already opens before choosing a fresh-install route.'
     elif model in ('mini', 'vwii', 'family'):
         route = {'mini': 'Wii mini: use the dedicated BlueBomb guide; WiiForge installation and package preparation stay blocked.',
                  'vwii': 'Wii U: use the dedicated vWii route; never use original-Wii IOS or recovery instructions.',
@@ -61,7 +63,7 @@ def start(answers=None):
         notes.append('Before System Menu 4.0, the stock menu needs an SD card of 2 GB or less; do not buy a larger card for the exploit stage.')
     if model == 'mini':
         notes.append('Wii mini has no SD slot. SD storage cannot be used directly; use its dedicated USB-based guide. WiiForge preparation remains blocked.')
-        if values['sd'] == 'yes' or values['storage'] == 'sd':
+        if values['storage'] == 'sd':
             notes.append('Your SD choice does not fit a stock Wii mini; revise the storage choice before proceeding.')
     if values['storage'] == 'usb-flash':
         alternative = 'a USB hard drive' if model == 'mini' else 'SD or a USB hard drive'
@@ -92,6 +94,8 @@ def start(answers=None):
 def render(result):
     lines = ['WiiForge — start here', '', result['route']['instruction'], result['route']['source']]
     if result['questions']:
-        lines += ['', 'Ask next:'] + ['- ' + q for q in result['questions']]
+        lines += ['', 'Ask next:'] + ['- ' + q for q in result['questions'][:3]]
+        if len(result['questions']) > 3:
+            lines.append('Then collect the remaining setup details with your assistant; unknown video settings stay unchanged.')
     lines += ['', 'For this setup:'] + ['- ' + note for note in result['notes']]
     return '\n'.join(lines + ['', result['next']])

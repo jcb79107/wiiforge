@@ -246,30 +246,45 @@ def resume(current, state=None, checkpoint=None, level=None):
 
 def journey(answers, saved=None, checkpoint=None, level=None):
     intake = start(answers)
-    require(intake['reference_plan_scope'] and not intake['questions'],
-            'Guided sessions require complete intake for original Wii 4.3U; use start and the model-specific guide otherwise')
+    require(intake['reference_plan_scope'] and all(intake['observations'][key] != 'unknown'
+            for key in ['computer', 'homebrew', 'sd', 'storage']),
+            'Guided sessions need original Wii 4.3U, computer, homebrew and storage observations; use start to collect them')
     p = intake['profile_draft']
     steps = manual_steps(p)
     steps[1:1] = [
         ('storage-review', 'Review actual storage, backups and the selected current guide. No writes authorized.', GUIDE + 'get-started'),
         ('homebrew', 'Verify Homebrew Channel opens after the selected guide, or confirm the existing installation.', GUIDE + 'hbc')]
-    body = {'schema': 1, 'inputs': digest(intake['observations']), 'blockers': [],
-            'status': 'manual-review-only', 'execution_supported': False,
-            'steps': [{'id': i, 'instruction': instruction, 'source': url} for i, instruction, url in steps]}
-    current = dict(body, digest=digest(body))
+    baseline = intake['observations']
+    previous = baseline
     state = None
     if saved is not None:
         require(isinstance(saved, dict) and saved.get('kind') == 'guided-session', 'Expected a saved guided-session result')
+        previous = start(saved.get('observations'))['observations']
+        baseline = start(saved.get('baseline_answers', previous))['observations']
+        protected = set(baseline) - {'computer', 'homebrew'}
+        require(all(intake['observations'][key] == baseline[key] == previous[key] for key in protected),
+                'Console, storage, display or goals changed; review a new session')
         state = saved.get('state')
         require(isinstance(state, dict), 'Missing guided-session state')
+    body = {'schema': 1, 'inputs': digest(baseline), 'blockers': [],
+            'status': 'manual-review-only', 'execution_supported': False,
+            'steps': [{'id': i, 'instruction': instruction, 'source': url} for i, instruction, url in steps]}
+    current = dict(body, digest=digest(body))
+    state = resume(current, state)
+    if previous['homebrew'] != intake['observations']['homebrew']:
+        require(previous['homebrew'] == 'no' and intake['observations']['homebrew'] == 'yes',
+                'Homebrew status regressed or is unknown; investigate before continuing')
+        require(any(item['id'] == 'homebrew' for item in state['completed']) or
+                (checkpoint == 'homebrew' and level == 'console-tested'),
+                'Confirm the Homebrew Channel checkpoint before recording installation progress')
     state = resume(current, state, checkpoint, level)
     pending = current['steps'][len(state['completed']):]
-    return {'kind': 'guided-session', 'observations': intake['observations'], 'state': state,
-            'guide_route': intake['route'],
+    return {'kind': 'guided-session', 'observations': intake['observations'], 'baseline_answers': baseline, 'state': state,
+            'guide_route': start(baseline)['route'],
             'next_checkpoint': dict(pending[0], required_evidence=checkpoint_level(pending[0]['id'])) if pending else None,
             'status': 'manual-checkpoints-complete' if not pending else 'awaiting-user',
             'write_authorized': False, 'inspection_performed': False, 'installation_supported': False,
-            'notice': 'User attestations only. File preparation does not complete a console checkpoint; changed answers invalidate progress.'}
+            'notice': 'User attestations only. File preparation does not complete a console checkpoint; computer changes preserve the selected guide; console/storage/display/goal changes require review.'}
 
 
 def demo():

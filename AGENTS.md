@@ -8,7 +8,7 @@ are shopping, ask country/budget and reuse what they own. Never invent observati
 
 Run `PYTHONPATH=src python3 -m wiiforge start` for the intake questions. Optional private JSON answers
 produce a tailored route and profile/evidence drafts with `start --answers PATH --json`. You manage these
-files; the beginner should not need to edit JSON. For complete original-Wii 4.3U intake, use `journey`
+files; the beginner should not need to edit JSON. For original-Wii 4.3U with computer/homebrew/storage observations, use `journey`
 to save/resume console outcomes privately, with no invented disk inspection. Keep a private progress note with observations,
 current step, completed outcomes, exact versions, approval scope and next action. Resume from evidence,
 not memory of a generic tutorial. Existing homebrew means inventory first, not reinstall everything.

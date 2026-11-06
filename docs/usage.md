@@ -207,7 +207,7 @@ Only `apps/Nintendont/boot.dol`, `meta.xml` and `icon.png` are prepared. Existin
 
 ## Resume the guided journey across computers
 
-For fully answered intake describing an original Wii 4.3U, `journey` provides a manual checklist on Windows, macOS or Linux without pretending to inspect a disk:
+For an original Wii 4.3U with computer, homebrew and storage observations, `journey` provides a manual checklist on Windows, macOS or Linux without pretending to inspect a disk:
 
 ```sh
 python3 -m wiiforge journey --answers /private/intake.json > /private/progress-1.json
@@ -221,6 +221,8 @@ python3 -m wiiforge journey --answers /private/intake.json \
   > /private/progress-2.json
 ```
 
-Pass the entire previous successful output as `--state`; do not redirect onto an input. Check exit 0 before retaining new progress. The next step appears automatically; skipped steps and changed answers are rejected. Use `user-confirmed` for review, storage-review, backup and cIOS; `console-tested` for Homebrew Channel, recovery, loader and game tests. File preparation does not acknowledge any of these.
+Pass the entire previous successful output as `--state`; do not redirect onto an input. Check exit 0 before retaining new progress. The next step appears automatically; skipped steps and changed console/storage/display/goals are rejected. Moving between computers retains progress and the originally selected guide. A homebrew change from no to yes is accepted only with the Homebrew Channel console-tested checkpoint or after that checkpoint; regression to no requires investigation. The saved baseline keeps the original plan binding intact. Use `user-confirmed` for review, storage-review, backup and cIOS; `console-tested` for Homebrew Channel, recovery, loader and game tests. File preparation does not acknowledge any of these.
+
+TV/cable and optional GameCube intent may remain unknown initially; video is preserved and no GameCube checkpoint is added until requested. Changing those later requires a reviewed session, not silently reusing prior display/game tests.
 
 This reuses the ordered checkpoint validator. It is a portable record of user attestations, not an inspection, write permission, signed proof or automatic installer. Keep the file private. Revisit storage after every reconnect; never reuse a preparation approval on that basis. Other models/menus remain guide handoffs, and `start` still helps collect their observations. For ModMii follow its generated instructions; use the checklist only to record outcomes, not to substitute a different recipe.

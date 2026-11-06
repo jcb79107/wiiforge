@@ -66,15 +66,29 @@ class OnboardingTests(unittest.TestCase):
         self.assertIn('supports Wii games on SD', ' '.join(result['notes']))
         self.assertIn('does not prove', ' '.join(result['notes']))
 
+    def test_unknown_homebrew_never_selects_fresh_exploit(self):
+        for model in ['original', 'family', 'mini', 'vwii', 'unknown']:
+            result = start({'model': model, 'homebrew': 'unknown', 'menu': '4.3U', 'computer': 'windows'})
+            self.assertIn('Check whether', result['route']['instruction'])
+            self.assertTrue(result['route']['source'].endswith('get-started'))
+
     def test_mini_does_not_recommend_sd(self):
         for storage in ['unknown', 'sd', 'usb-flash']:
             result = start({'model': 'mini', 'storage': storage, 'sd': 'yes'})
             notes = ' '.join(result['notes'])
             self.assertIn('no SD slot', notes)
-            self.assertIn('does not fit', notes)
+            if storage == 'sd':
+                self.assertIn('does not fit', notes)
+            else:
+                self.assertNotIn('does not fit', notes)
             self.assertNotIn('supports Wii games on SD', notes)
             self.assertNotIn('Choose SD', notes)
             self.assertNotIn('Do you have an SD card', ' '.join(result['questions']))
+
+    def test_mini_sd_ownership_does_not_conflict_with_usb_selection(self):
+        result = start({'model': 'mini', 'sd': 'yes', 'storage': 'usb-hdd'})
+        self.assertNotIn('revise', ' '.join(result['notes']))
+        self.assertIn('no SD slot', ' '.join(result['notes']))
 
     def test_pre_3_menu_gets_review_not_identification_or_exploit(self):
         for computer in ['windows', 'macos', 'linux']:
@@ -141,6 +155,47 @@ class JourneyTests(unittest.TestCase):
         with self.assertRaises(ValueError): journey(dict(self.answers, menu='4.3E'))
         with self.assertRaises(ValueError): journey({})
         self.assertEqual(len(result['state']['completed']), 1)
+
+    def test_unknown_video_and_optional_gamecube_do_not_block_start(self):
+        from wiiforge.__main__ import journey
+        answers = dict(self.answers, display='unknown', cable='unknown', gamecube='unknown')
+        result = journey(answers)
+        self.assertEqual(result['next_checkpoint']['id'], 'review')
+        self.assertEqual(result['observations']['display'], 'unknown')
+        self.assertFalse(result['write_authorized'])
+        self.assertEqual(render(start()).count('\n- What'), 2)
+        self.assertEqual(len([line for line in render(start()).split('For this setup:')[0].splitlines() if line.startswith('- ')]), 3)
+
+    def test_computer_and_completed_installation_progress_preserve_session(self):
+        from wiiforge.__main__ import journey
+        answers = dict(self.answers, homebrew='no')
+        result = journey(answers)
+        original_route = result['guide_route']
+        original_digest = result['state']['plan_digest']
+        for checkpoint in ['review', 'storage-review']:
+            result = journey(answers, result, checkpoint, 'user-confirmed')
+        answers.update(computer='macos', homebrew='yes')
+        result = journey(answers, result, 'homebrew', 'console-tested')
+        self.assertEqual(result['next_checkpoint']['id'], 'backup')
+        self.assertEqual(result['guide_route'], original_route)
+        self.assertEqual(result['state']['plan_digest'], original_digest)
+        result = journey(dict(answers, computer='linux'), result)
+        self.assertEqual(len(result['state']['completed']), 3)
+        self.assertEqual(result['guide_route'], original_route)
+        with self.assertRaises(ValueError): journey(dict(answers, homebrew='no'), result)
+        with self.assertRaises(ValueError): journey(dict(answers, cable='adapter'), result)
+
+    def test_homebrew_transition_requires_checkpoint_and_legacy_state_resumes(self):
+        from wiiforge.__main__ import journey
+        answers = dict(self.answers, homebrew='no')
+        result = journey(answers)
+        del result['baseline_answers']  # Previous CLI output had no explicit baseline.
+        with self.assertRaises(ValueError): journey(dict(answers, homebrew='yes'), result)
+        result = journey(dict(answers, computer='linux'), result, 'review', 'user-confirmed')
+        self.assertEqual(result['next_checkpoint']['id'], 'storage-review')
+        self.assertEqual(result['baseline_answers']['computer'], 'windows')
+        with self.assertRaises(ValueError):
+            journey(dict(answers, homebrew='yes'), result, 'homebrew', 'console-tested')
 
     def test_cli_can_resume_saved_output_on_any_host_without_inspection(self):
         with tempfile.TemporaryDirectory() as folder:
