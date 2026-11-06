@@ -12,7 +12,7 @@ menu/region, storage and TV/cable as needed. Never invent observations. Existing
 
 Follow [playbook.md](docs/playbook.md). Keep the conversation on the next action, not the CLI internals.
 Wii and GameCube are the core path; use [gamecube.md](docs/gamecube.md) for Nintendont and GX integration. Respect a user who only wants Wii.
-After the first game, offer [extras.md](docs/extras.md) once: prepare only selected systems, and accept a skip.
+Offer [extras.md](docs/extras.md) once before the first approved file copy: include only selected apps in a batch to reduce card swapping. Accept a skip; test extras after Wii/GameCube.
 Offer [video.md](docs/video.md) once for cable/picture help; accept a skip without asking for more TV details or blocking setup. Keep unknown display/cable values and preserve output when skipped.
 Manage JSON yourself; do not ask the user to edit it. Give one console action and expected screen, then
 wait for what they see. If it differs, inspect the error. Preserve working video settings; first game before autoboot.
@@ -26,7 +26,7 @@ On Windows, review the guide's ModMii option rather than requiring a POSIX envir
 
 At each checkpoint, prepare only its needed files using [usage.md](docs/usage.md) and reviewed manifests.
 Use `verify-package`, then `prepare-plan`; review exact writes locally and obtain destination/digest approval
-before `prepare`. For own game files use `check-gamecube` / `gamecube-plan` / `gamecube-copy`, or
+before `prepare`. Use `batch-plan` / `batch-prepare` for selected packages sharing a destination; one exact approval covers the complete file list. Fetch only manifest URLs into private host staging, never execute downloads. For own game files use `check-gamecube` / `gamecube-plan` / `gamecube-copy`, or
 `wii-join-plan` / `wii-join` for numbered CleanRip parts and the original dump checksum. Conversion remains
 the documented external-tool handoff. A copy or checksum never proves gameplay or completes a console checkpoint.
 

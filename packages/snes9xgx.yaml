@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "package": "snes9xgx",
+  "version": "5.0.5",
+  "asset": "Snes9xGX-5.0.5-Wii.zip",
+  "url": "https://github.com/dborth/snes9xgx/releases/download/5.0.5/Snes9xGX-5.0.5-Wii.zip",
+  "size": 3042986,
+  "sha256": "6f3b8481d28d30ec73f5ce4bc97f031cd15616b057d130fc0c9810f841d28978",
+  "digest_source": "github-release-api",
+  "models": [
+    "original"
+  ],
+  "license_review": "pending"
+}

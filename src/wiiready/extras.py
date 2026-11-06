@@ -15,9 +15,9 @@ OPTIONS = {
              'No 32X support. Sega CD needs a lawful matching BIOS and correctly paired disc files.'),
     '32x': ('Sega 32X', 'RetroArch Wii / PicoDrive', GUIDE,
             'Review the current Wii core and target game; do not substitute Genesis Plus GX.'),
-    'gb': ('Game Boy / Game Boy Color', 'mGBA Wii build', 'https://mgba.io/downloads.html',
+    'gb': ('Game Boy / Game Boy Color', 'Visual Boy Advance GX (mGBA is an alternative)', 'https://github.com/dborth/vbagx/releases',
            'Select the Wii build, then check controls and save support for the game.'),
-    'gba': ('Game Boy Advance', 'mGBA Wii build', 'https://mgba.io/downloads.html',
+    'gba': ('Game Boy Advance', 'Visual Boy Advance GX (mGBA is an alternative)', 'https://github.com/dborth/vbagx/releases',
             'Select the Wii build; performance varies. Do not download a BIOS bundle.'),
     'ps1': ('PlayStation', 'WiiStation', 'https://github.com/xjsxjs197/WiiSXRX_2022/releases',
             'Per-game compatibility and performance review first; BIOS and disc requirements vary.'),
@@ -53,6 +53,8 @@ def extras(systems=(), model='unknown', skip=False):
                                 'Read current upstream Wii instructions; review release origin, license, storage layout and any BIOS requirement.',
                                 'Review an exact file plan and obtain approval before guide-specific preparation; preserve existing apps/saves.',
                                 'Launch from Homebrew Channel; test controls, gameplay, save and reload. Stop on errors.'],
+                      'batch_manifest': {'nes': 'packages/fceugx.yaml', 'snes': 'packages/snes9xgx.yaml',
+                                         'gb': 'packages/vbagx.yaml', 'gba': 'packages/vbagx.yaml'}.get(system),
                       'automated_preparation': False})
     return {'status': 'skipped' if skip else ('guide-review' if paths else 'choose-or-skip'),
             'available': {key: value[0] for key, value in OPTIONS.items()}, 'selected': paths,
@@ -71,5 +73,7 @@ def render_extras(result):
     for path in result['selected']:
         lines += [path['title'] + ' — ' + path['candidate'], path['source'], path['limitation'], path['model_note']]
         lines += [str(n) + '. ' + step for n, step in enumerate(path['steps'], 1)]
+        if path['batch_manifest']:
+            lines.append('Optional batch file preparation (original Wii, macOS/Linux): ' + path['batch_manifest'])
         lines.append('')
     return '\n'.join(lines + [result['notice']])

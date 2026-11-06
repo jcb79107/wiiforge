@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "package": "fceugx",
+  "version": "4.0.4",
+  "asset": "FCEUltraGX-4.0.4-Wii.zip",
+  "url": "https://github.com/dborth/fceugx/releases/download/4.0.4/FCEUltraGX-4.0.4-Wii.zip",
+  "size": 2852066,
+  "sha256": "a1335c1e655bdabf4d0b4bd1686006891d28e8031cbdc7442305ce1b4e6ba2bd",
+  "digest_source": "github-release-api",
+  "models": [
+    "original"
+  ],
+  "license_review": "pending"
+}

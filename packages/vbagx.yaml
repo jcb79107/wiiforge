@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "package": "vbagx",
+  "version": "3.0.5",
+  "asset": "VisualBoyAdvanceGX-3.0.5-Wii.zip",
+  "url": "https://github.com/dborth/vbagx/releases/download/3.0.5/VisualBoyAdvanceGX-3.0.5-Wii.zip",
+  "size": 3646877,
+  "sha256": "0b6ed52c2c5888bcbebabd71108b6e5c7656c9c267ec50f124b2c8381c4ba1be",
+  "digest_source": "github-release-api",
+  "models": [
+    "original"
+  ],
+  "license_review": "pending"
+}

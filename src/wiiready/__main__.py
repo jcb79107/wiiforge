@@ -13,6 +13,7 @@ import sys
 import zipfile
 
 from .onboarding import start, render, shopping
+from .batch import combine_packages, check_emulator_layout
 from .extras import extras, render_extras, OPTIONS
 from .nintendont import nintendont_bytes
 from .hackmii import hackmii_snapshot
@@ -26,6 +27,9 @@ from .prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparati
 
 GUIDE = 'https://wii.hacks.guide/'
 APP_RELEASES = {
+    'vbagx': ('dborth/vbagx', '3.0.5', 'VisualBoyAdvanceGX-3.0.5-Wii.zip', 'github-release-api'),
+    'snes9xgx': ('dborth/snes9xgx', '5.0.5', 'Snes9xGX-5.0.5-Wii.zip', 'github-release-api'),
+    'fceugx': ('dborth/fceugx', '4.0.4', 'FCEUltraGX-4.0.4-Wii.zip', 'github-release-api'),
     'priiloader': ('DacoTaco/priiloader', '0.10.0', 'Priiloader_v0_10.zip', 'local-sha256-official-release'),
     'loadpriiloader': ('DacoTaco/priiloader', '0.10.0', 'LoadPriiloader.zip', 'local-sha256-official-release'),
     'nanddumper-ios': ('Naim2000/nanddumper_ios', '1.1', 'nanddumper_ios.zip', 'github-release-api'),
@@ -456,6 +460,8 @@ def package_bytes(manifest, artifact, model):
         data = source.read(manifest['size'] + 1)
     require(len(data) == manifest['size'] and hashlib.sha256(data).hexdigest() == manifest['sha256'],
             'Package changed after verification')
+    if manifest['package'] in ('fceugx', 'snes9xgx', 'vbagx'):
+        return check_emulator_layout(data, manifest['package'])
     return hackmii_snapshot(data) if manifest['package'] == 'hackmii' else data
 
 
@@ -519,6 +525,14 @@ def main():
         if name == 'prepare':
             preparation.add_argument('--plan', required=True)
             preparation.add_argument('--approve-plan', required=True)
+    for name in ['batch-plan', 'batch-prepare']:
+        batch = sub.add_parser(name, help='Combine selected local packages into one reviewed preparation')
+        batch.add_argument('--package', nargs=2, action='append', required=True, metavar=('MANIFEST', 'ARTIFACT'))
+        for arg in ['model', 'destination']:
+            batch.add_argument('--' + arg, required=True)
+        if name == 'batch-prepare':
+            batch.add_argument('--plan', required=True)
+            batch.add_argument('--approve-plan', required=True)
     for name in ['plan', 'resume']:
         p = sub.add_parser(name, help={'plan': 'Validate evidence and produce manual checkpoints',
                                       'resume': 'Validate or acknowledge ordered checkpoints'}[name])
@@ -568,6 +582,14 @@ def main():
         elif args.command in ('prepare-plan', 'prepare'):
             data = package_bytes(read(args.manifest), args.artifact, args.model)
             if args.command == 'prepare-plan':
+                result = plan_preparation(data, args.destination, args.model)
+            else:
+                result = execute_preparation(data, args.destination, args.model, read(args.plan, PREPARATION_PLAN_LIMIT), args.approve_plan)
+        elif args.command in ('batch-plan', 'batch-prepare'):
+            require(1 <= len(args.package) <= 12, 'Choose between 1 and 12 packages')
+            data = combine_packages(package_bytes(read(manifest), artifact, args.model)
+                                    for manifest, artifact in args.package)
+            if args.command == 'batch-plan':
                 result = plan_preparation(data, args.destination, args.model)
             else:
                 result = execute_preparation(data, args.destination, args.model, read(args.plan, PREPARATION_PLAN_LIMIT), args.approve_plan)

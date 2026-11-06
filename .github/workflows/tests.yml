@@ -48,6 +48,8 @@ jobs:
         run: python -m unittest discover -s tests -p test_identity.py -v
       - name: Optional system selection and GameCube checkpoint
         run: python -m unittest discover -s tests -p test_extras.py -v
+      - name: Batch validation and platform restrictions
+        run: python -m unittest discover -s tests -p test_batch.py -v
       - name: Windows private ZIP checks
         run: python -m unittest discover -s tests -p test_exploit.py -v
       - name: Windows game header checks
