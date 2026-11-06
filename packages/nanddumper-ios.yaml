@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "package": "nanddumper-ios",
+  "version": "1.1",
+  "asset": "nanddumper_ios.zip",
+  "url": "https://github.com/Naim2000/nanddumper_ios/releases/download/1.1/nanddumper_ios.zip",
+  "size": 1168703,
+  "sha256": "e67656e180d45b5336a55f3f711c4ac0f461dbd833f2dbe3cff9a76469fafbc2",
+  "digest_source": "github-release-api",
+  "models": [
+    "original"
+  ],
+  "license_review": "pending"
+}

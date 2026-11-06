@@ -132,3 +132,17 @@ The current [Wii Hacks Guide](https://wii.hacks.guide/priiloader) links the Prii
 The manifest version identifies the release containing the assets; Load Priiloader's own app version is 1.0. GitHub's API returned no asset digest. SHA-256 values were therefore calculated locally from the official downloads; they are not upstream-supplied digests or signatures. Both actual ZIPs passed bounded metadata and streamed CRC/size inspection without extraction or execution. Only synthetic fixtures have exercised destination writes.
 
 The installer contains a GPL version 2 notice, which the preparation engine preserves unchanged at its original root `LICENSE` path. An existing conflicting file blocks preparation; do not remove it automatically. Complete distribution obligations are not cleared by finding one notice: licensing remains pending and no upstream binaries are redistributed. The Wii U forwarder is not accepted. All WiiForge preparation remains restricted to explicit original-Wii selection.
+
+## HackMii, NAND dumper and d2x files — 2026-11-06
+
+| Manifest | Publisher source | Integrity evidence | Preparation |
+| --- | --- | --- | --- |
+| `hackmii.yaml` | [BootMii download page](https://bootmii.org/download/) → HackMii 1.2 | 4,427,097 bytes; locally calculated SHA-256 | Root `boot.elf` plus six unchanged notice/readme files under `wiiforge-notices/hackmii/` |
+| `nanddumper-ios.yaml` | [Naim2000 release 1.1](https://github.com/Naim2000/nanddumper_ios/releases/tag/1.1) | 1,168,703 bytes; GitHub release SHA-256 matched | Four files under `apps/nanddumper_ios` |
+| `d2x-cios-installer.yaml` | [wiidev d2x-v11-beta3](https://github.com/wiidev/d2x-cios/releases/tag/d2x-v11-beta3) | 670,538 bytes; locally calculated SHA-256 | Twelve installer/config/module files under `apps/d2x-cios-installer` |
+
+The [NAND guide](https://wii.hacks.guide/nand-backup) and [cIOS guide](https://wii.hacks.guide/cios) link Open Shop Channel pages identifying these upstream projects. The OSC download endpoint returned HTTP 403 during review; these pins use the primary authors' GitHub assets, not an assumed identical OSC ZIP. All actual inputs passed bounded archive and streamed CRC/size inspection in memory. No payload was executed or prepared onto media.
+
+HackMii's publisher forbids redistribution. WiiForge neither bundles nor hosts it: users obtain their own copy from the publisher. The preparation snapshot excludes `bootmini.elf` and all `wiiload` PC executables, preserves selected files byte-for-byte, and leaves the private source ZIP untouched. This does not generate a personalized exploit or establish BootMii eligibility. The local-use workflow is not a legal clearance; redistribution remains prohibited.
+
+The d2x ZIP contains installer code, configuration and d2x modules; it supplies no Nintendo base-IOS WADs. Original-Wii selection is mandatory; the differently named vWii package is rejected. Preparing files does not install cIOS or select slots. NAND-dumper preparation supplies an app, not a backup: actual backups and unique keys stay private. Complete component licensing and real hardware validation remain outstanding for these paths.

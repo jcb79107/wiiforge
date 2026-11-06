@@ -239,3 +239,27 @@ After reviewing the current [original-Wii Priiloader procedure](https://wii.hack
 For each pair: run `verify-package --model original --check-archive`, then `prepare-plan --model original --destination YOUR_TARGET`, review its output, and run `prepare` with the saved plan and explicit digest approval. Use a separate saved plan for each package. Neither command installs Priiloader on the console, alters its settings or records recovery as tested. The installer ZIP includes a root `LICENSE`; preserve it and stop if it conflicts with an existing file.
 
 After preparation and safe eject, the agent opens the guide, explains that the installer changes the console's internal storage, obtains approval for that console action, and waits for the user's result. Recovery is complete only after the user can actually enter Priiloader; record `recovery --level console-tested` in the journey then. The Load Priiloader app launches an existing installation; it is not the installer. Do not install a forwarder or enable autoboot at this stage.
+
+## Prepare Homebrew Channel, backup and cIOS tools
+
+Use the same `verify-package` → `prepare-plan` → explicit digest-approved `prepare` sequence, with a separate plan per package:
+
+| Manifest | User-supplied artifact | When needed |
+| --- | --- | --- |
+| `packages/hackmii.yaml` | `hackmii_installer_v1.2.zip` from the [publisher](https://bootmii.org/download/) | Standalone HackMii preparation when the chosen guide calls for it; skip if your reviewed exploit already includes it |
+| `packages/nanddumper-ios.yaml` | `nanddumper_ios.zip` from [release 1.1](https://github.com/Naim2000/nanddumper_ios/releases/tag/1.1) | Before the NAND-backup checkpoint |
+| `packages/d2x-cios-installer.yaml` | `d2x-v11-beta3.zip` from [the original-Wii release](https://github.com/wiidev/d2x-cios/releases/tag/d2x-v11-beta3) | After backup/recovery review and before the cIOS checkpoint |
+
+Pass `--model original`, the exact private artifact path, and the specifically approved destination. Example preflight:
+
+```sh
+python3 -m wiiforge prepare-plan --manifest packages/nanddumper-ios.yaml \
+  --artifact /private/nanddumper_ios.zip --model original \
+  --destination /chosen/existing/directory > /private/nand-tool-plan.json
+```
+
+HackMii preparation places `boot.elf` at the destination root and retains notices under `wiiforge-notices/hackmii`. It excludes `bootmini.elf` and PC tools. A different existing `boot.elf` blocks preparation; do not overwrite an exploit or app to force a match. This does not create Wilbrand's personalized `private` directory. Download directly from the publisher, never a WiiForge mirror or repacked bundle.
+
+On the console, follow the selected guide and confirm actual results. For NAND backup, verify the dumper's checksums locally and keep the backup, keys and verification files in two private locations under your control; do not send them to the agent's hosted chat or commit them. A matching copy is not proof that restoration will succeed.
+
+For cIOS, review the **Wii/Family Edition tab for this original Wii** in the live guide. The pinned package is the installer, not installed cIOS. Online installation and offline base-IOS acquisition remain console/guide-specific work; WiiForge does not fetch Nintendo IOS WADs or keys. Explain the exact proposed console changes and get approval before the user runs the installer. If the expected d2x version is absent or the screen differs, stop. Do not substitute vWii/mini files, guess a slot or automatically repeat writes after an error.

@@ -12,8 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class RecoveryPackageTests(unittest.TestCase):
-    def test_both_pins_verify_prepare_resume_and_keep_notices(self):
-        for package, app in [('priiloader', 'priiloader'), ('loadpriiloader', 'LoadPriiloader')]:
+    def test_recovery_pins_verify_prepare_resume_and_keep_notices(self):
+        for package, app in [('priiloader', 'priiloader'), ('loadpriiloader', 'LoadPriiloader'),
+                             ('nanddumper-ios', 'nanddumper_ios'), ('d2x-cios-installer', 'd2x-cios-installer')]:
             with self.subTest(package=package), tempfile.TemporaryDirectory() as folder:
                 root = Path(folder)
                 stream = io.BytesIO()
@@ -37,7 +38,7 @@ class RecoveryPackageTests(unittest.TestCase):
                     self.assertEqual(len(prepared['written']), expected)
                 if package == 'priiloader': self.assertEqual((destination / 'LICENSE').read_bytes(), b'Synthetic notice')
                 for field, value in [('version', '0.11.0'), ('asset', 'PriiloaderWiiUForwarder.zip'),
-                                     ('url', 'https://example.com/input.zip'), ('digest_source', 'github-release-api')]:
+                                     ('url', 'https://example.com/input.zip'), ('digest_source', 'unreviewed')]:
                     with self.assertRaises(ValueError):
                         verify_package(dict(manifest, **{field: value}), artifact, 'original')
                 for model in ['family', 'mini', 'vwii', 'unknown']:

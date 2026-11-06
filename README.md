@@ -55,9 +55,9 @@ python3 -m unittest discover -s tests -v
 
 ## What works today
 
-WiiForge includes a tested intake/router, read-only macOS metadata inspection, resumable manual checkpoints, local GX/Nintendont/Priiloader verification, archive checks, and **explicitly approved no-overwrite file preparation**. It can resume completed files by checking their contents. [Commands and limits](docs/usage.md).
+WiiForge includes a tested intake/router, read-only macOS metadata inspection, resumable manual checkpoints, local homebrew package verification, archive checks, and **explicitly approved no-overwrite file preparation**. It can resume completed files by checking their contents. [Commands and limits](docs/usage.md).
 
-It is **not a one-click exploit installer**. The guided journey uses current [Wii Hacks Guide](https://wii.hacks.guide/get-started) procedures; the CLI's checked recipe and package support are narrower. Personalized exploit files, NAND-backup tools and cIOS still need guide-specific preparation. GX, Nintendont and Priiloader have local-file preparation paths; console actions remain manual. `journey` resumes original-Wii 4.3U checkpoints across computers without claiming disk inspection. The agent must explain these handoffs instead of pretending automation exists.
+It is **not a one-click exploit installer**. The guided journey uses current [Wii Hacks Guide](https://wii.hacks.guide/get-started) procedures; the CLI's checked recipe and package support are narrower. Personalized exploit generation and base-IOS acquisition still need guide-specific work. GX, Nintendont, Priiloader, HackMii, NAND-dumper and d2x installer files have local preparation paths; console actions remain manual. `journey` resumes original-Wii 4.3U checkpoints across computers without claiming disk inspection. The agent must explain these handoffs instead of pretending automation exists.
 
 Current GX supports Wii games on SD as well as USB; a USB drive is not mandatory. The existing storage planner is conservative and USB-oriented, so SD-only users follow the guide without a fabricated inspection report. No end-to-end WiiForge hardware run has been completed.
 

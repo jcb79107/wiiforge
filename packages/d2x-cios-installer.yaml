@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "package": "d2x-cios-installer",
+  "version": "d2x-v11-beta3",
+  "asset": "d2x-v11-beta3.zip",
+  "url": "https://github.com/wiidev/d2x-cios/releases/download/d2x-v11-beta3/d2x-v11-beta3.zip",
+  "size": 670538,
+  "sha256": "c2c7c9c5dad247c48f561a2b08f74359227e09271104dec814dbab4ad97e68d3",
+  "digest_source": "local-sha256-official-release",
+  "models": [
+    "original"
+  ],
+  "license_review": "pending"
+}

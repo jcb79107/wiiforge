@@ -14,11 +14,18 @@ import zipfile
 
 from .onboarding import start, render
 from .nintendont import nintendont_bytes
+from .hackmii import hackmii_snapshot
 from .archive import check_zip
 from .rehearsal import rehearse, _stage_zip
 from .prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation
 
 GUIDE = 'https://wii.hacks.guide/'
+RECOVERY_RELEASES = {
+    'priiloader': ('DacoTaco/priiloader', '0.10.0', 'Priiloader_v0_10.zip', 'local-sha256-official-release'),
+    'loadpriiloader': ('DacoTaco/priiloader', '0.10.0', 'LoadPriiloader.zip', 'local-sha256-official-release'),
+    'nanddumper-ios': ('Naim2000/nanddumper_ios', '1.1', 'nanddumper_ios.zip', 'github-release-api'),
+    'd2x-cios-installer': ('wiidev/d2x-cios', 'd2x-v11-beta3', 'd2x-v11-beta3.zip', 'local-sha256-official-release'),
+}
 
 
 def require(ok, message):
@@ -319,18 +326,21 @@ def verify_package(manifest, artifact, model, check_archive=False, experimental_
                 'execution_supported': False}
     keys(manifest, 'schema package version asset url size sha256 digest_source models license_review')
     require(type(manifest['schema']) is int and manifest['schema'] == 1, 'Invalid package schema')
-    require(manifest['package'] in ('usb-loader-gx', 'priiloader', 'loadpriiloader'), 'Unreviewed package')
+    require(isinstance(manifest['package'], str) and (manifest['package'] in ('usb-loader-gx', 'hackmii') or manifest['package'] in RECOVERY_RELEASES), 'Unreviewed package')
     if manifest['package'] == 'usb-loader-gx':
         require(isinstance(manifest['version'], str) and re.fullmatch(r'v[0-9]+\.[0-9]+-r[0-9]+', manifest['version']),
                 'Package requires an exact release version')
         require(isinstance(manifest['asset'], str) and re.fullmatch(r'usbloadergx_r[0-9]+\.zip', manifest['asset']),
                 'Invalid package asset')
         repository, digest_source = 'wiidev/usbloadergx', 'github-release-api'
+    elif manifest['package'] == 'hackmii':
+        require(manifest['version'] == '1.2' and manifest['asset'] == 'hackmii_installer_v1.2.zip', 'Unreviewed HackMii release')
+        repository, digest_source = None, 'local-sha256-official-release'
     else:
-        asset = 'Priiloader_v0_10.zip' if manifest['package'] == 'priiloader' else 'LoadPriiloader.zip'
-        require(manifest['version'] == '0.10.0' and manifest['asset'] == asset, 'Unreviewed recovery release or asset')
-        repository, digest_source = 'DacoTaco/priiloader', 'local-sha256-official-release'
-    expected = 'https://github.com/' + repository + '/releases/download/' + manifest['version'] + '/' + manifest['asset']
+        repository, version, asset, digest_source = RECOVERY_RELEASES[manifest['package']]
+        require(manifest['version'] == version and manifest['asset'] == asset, 'Unreviewed recovery release or asset')
+    expected = ('https://bootmii.org/hackmii_installer_v1.2.zip' if repository is None else
+                'https://github.com/' + repository + '/releases/download/' + manifest['version'] + '/' + manifest['asset'])
     require(manifest['url'] == expected, 'Package origin does not match reviewed upstream')
     require(manifest['digest_source'] == digest_source, 'Unreviewed digest source')
     require(isinstance(manifest['sha256'], str) and re.fullmatch('[0-9a-f]{64}', manifest['sha256']),
@@ -363,6 +373,8 @@ def verify_package(manifest, artifact, model, check_archive=False, experimental_
         after = os.fstat(stream.fileno())
         require((before.st_size, before.st_mtime_ns, before.st_ctime_ns) ==
                 (after.st_size, after.st_mtime_ns, after.st_ctime_ns), 'Package changed during verification')
+    if experimental_stage and manifest['package'] == 'hackmii':
+        snapshot = hackmii_snapshot(bytes(snapshot))
     staging = _stage_zip(bytes(snapshot), synthetic=False) if experimental_stage else None
     return {'staging': staging, 'archive': archive_result, 'package': manifest['package'], 'version': manifest['version'],
             'status': 'content-verified', 'sha256': checksum.hexdigest(),
@@ -380,7 +392,7 @@ def package_bytes(manifest, artifact, model):
         data = source.read(manifest['size'] + 1)
     require(len(data) == manifest['size'] and hashlib.sha256(data).hexdigest() == manifest['sha256'],
             'Package changed after verification')
-    return data
+    return hackmii_snapshot(data) if manifest['package'] == 'hackmii' else data
 
 
 def main():

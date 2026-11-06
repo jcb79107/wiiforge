@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "package": "hackmii",
+  "version": "1.2",
+  "asset": "hackmii_installer_v1.2.zip",
+  "url": "https://bootmii.org/hackmii_installer_v1.2.zip",
+  "size": 4427097,
+  "sha256": "32b7406956860ffb50d46f83e5fb6b8d67cd2612781cd97619d0c2371c84c945",
+  "digest_source": "local-sha256-official-release",
+  "models": [
+    "original"
+  ],
+  "license_review": "pending"
+}
