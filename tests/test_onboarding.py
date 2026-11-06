@@ -213,3 +213,30 @@ class JourneyTests(unittest.TestCase):
             self.assertEqual(json.loads(second.stdout)['next_checkpoint']['id'], 'storage-review')
             self.assertEqual(saved.read_text(), first.stdout)
             self.assertEqual(set(p.name for p in Path(folder).iterdir()), {'answers.json', 'progress.json'})
+
+
+class CheckpointPreparationTests(unittest.TestCase):
+    def test_cios_guidance_only_requests_offline_files_when_needed(self):
+        from wiiforge.__main__ import checkpoint_preparation
+        unknown = checkpoint_preparation('cios', 'unknown')
+        self.assertIn('Ask one question', unknown['instruction'])
+        online = checkpoint_preparation('cios', 'online')
+        self.assertNotIn('base_ios', online)
+        offline = checkpoint_preparation('cios', 'offline')
+        self.assertEqual([(x['ios'], x['version']) for x in offline['base_ios']],
+                         [(38, 4123), (56, 5661), (57, 5918), (58, 6175)])
+        self.assertIn('specific approval', offline['instruction'])
+        self.assertEqual(offline['manifests'], ['packages/d2x-cios-installer.yaml'])
+
+    def test_current_checkpoint_points_to_real_manifests_without_advancing(self):
+        from wiiforge.__main__ import checkpoint_preparation, journey
+        root = Path(__file__).resolve().parents[1]
+        for checkpoint in ['homebrew', 'backup', 'recovery', 'cios', 'loader', 'gamecube-test']:
+            for manifest in checkpoint_preparation(checkpoint, 'unknown')['manifests']:
+                self.assertTrue((root / manifest).is_file())
+        answers = {
+            'model': 'original', 'menu': '4.3U', 'computer': 'windows', 'homebrew': 'yes', 'sd': 'yes', 'storage': 'sd'}
+        result = journey(answers, wii_network='online')
+        updated = journey(answers, result, wii_network='offline')
+        self.assertEqual(updated['state'], result['state'])
+        self.assertFalse(updated['write_authorized'])

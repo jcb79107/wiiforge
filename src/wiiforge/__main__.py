@@ -15,6 +15,7 @@ import zipfile
 from .onboarding import start, render
 from .nintendont import nintendont_bytes
 from .hackmii import hackmii_snapshot
+from .exploit import check_exploit
 from .archive import check_zip
 from .rehearsal import rehearse, _stage_zip
 from .prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation
@@ -251,7 +252,30 @@ def resume(current, state=None, checkpoint=None, level=None):
     return state
 
 
-def journey(answers, saved=None, checkpoint=None, level=None):
+def checkpoint_preparation(checkpoint, wii_network):
+    packages = {'homebrew': ['hackmii'], 'backup': ['nanddumper-ios'],
+                'recovery': ['priiloader', 'loadpriiloader'], 'cios': ['d2x-cios-installer'],
+                'loader': ['usb-loader-gx'], 'gamecube-test': ['nintendont']}
+    result = {'manifests': ['packages/' + name + '.yaml' for name in packages.get(checkpoint, [])],
+              'instruction': 'Use only needed packages: verify local files, review the exact destination plan, then obtain approval before preparation. No console checkpoint is completed by copying files.'}
+    if checkpoint == 'homebrew':
+        result['instruction'] = 'If HBC already opens, verify it instead of reinstalling. Otherwise follow the selected exploit route. Check a private Wilbrand ZIP with check-exploit, treating the result as partial only. Standalone HackMii is unnecessary when the reviewed exploit already bundles it.'
+    elif checkpoint == 'cios':
+        result['source'] = GUIDE + 'cios'
+        if wii_network == 'online':
+            result['instruction'] = 'The guide permits skipping offline IOS acquisition when the Wii can connect. Prepare the d2x installer; review the original-Wii console instructions before any install. Do not download a WAD pack.'
+        elif wii_network == 'offline':
+            result['instruction'] = 'Review NUSGet from the live guide for your host; require specific approval before running downloaded software. Acquire only the original-Wii IOS versions listed here into private storage, following the guide. No download, copy or console write is automated by this output.'
+            result['tool_source'] = 'https://github.com/NinjaCheetah/NUSGet/releases/latest'
+            result['base_ios'] = [{'ios': ios, 'version': version, 'filename': f'IOS{ios}-64-v{version}.wad'}
+                                  for ios, version in [(38, 4123), (56, 5661), (57, 5918), (58, 6175)]]
+        else:
+            result['instruction'] = 'Ask one question now: can this Wii connect to the internet? Rerun journey with --wii-network online or offline. This selects guidance only; no download or install is authorized.'
+    return result
+
+
+def journey(answers, saved=None, checkpoint=None, level=None, wii_network='unknown'):
+    require(wii_network in ('online', 'offline', 'unknown'), 'Invalid Wii network observation')
     intake = start(answers)
     require(intake['reference_plan_scope'] and all(intake['observations'][key] != 'unknown'
             for key in ['computer', 'homebrew', 'sd', 'storage']),
@@ -288,7 +312,8 @@ def journey(answers, saved=None, checkpoint=None, level=None):
     pending = current['steps'][len(state['completed']):]
     return {'kind': 'guided-session', 'observations': intake['observations'], 'baseline_answers': baseline, 'state': state,
             'guide_route': start(baseline)['route'],
-            'next_checkpoint': dict(pending[0], required_evidence=checkpoint_level(pending[0]['id'])) if pending else None,
+            'next_checkpoint': dict(pending[0], required_evidence=checkpoint_level(pending[0]['id']),
+                                    computer_preparation=checkpoint_preparation(pending[0]['id'], wii_network)) if pending else None,
             'status': 'manual-checkpoints-complete' if not pending else 'awaiting-user',
             'write_authorized': False, 'inspection_performed': False, 'installation_supported': False,
             'notice': 'User attestations only. File preparation does not complete a console checkpoint; computer changes preserve the selected guide; console/storage/display/goal changes require review.'}
@@ -405,7 +430,11 @@ def main():
     session.add_argument('--answers', required=True)
     session.add_argument('--state', help='Previous successful journey JSON output, saved privately')
     session.add_argument('--checkpoint')
+    session.add_argument('--wii-network', choices=['online', 'offline', 'unknown'], default='unknown', help='Wii internet availability for cIOS guidance; no network requests')
     session.add_argument('--level', choices=['user-confirmed', 'console-tested'])
+    exploit = sub.add_parser('check-exploit', help='Partially inspect a private Wilbrand ZIP; never verify personalization or authorize writes')
+    for arg in ['artifact', 'model', 'menu']:
+        exploit.add_argument('--' + arg, required=True)
     sub.add_parser('rehearse', help='Copy synthetic fixtures into a temporary host directory, verify, then remove')
     sub.add_parser('demo', help='Try synthetic plans; no media or network access')
     sub.add_parser('inspect', help='Read macOS whole-disk metadata').add_argument('--device', required=True)
@@ -437,8 +466,10 @@ def main():
             result = start(read(args.answers) if args.answers else None)
             print(json.dumps(result, indent=2, sort_keys=True) if args.json else render(result))
             return 0
+        elif args.command == 'check-exploit':
+            result = check_exploit(args.artifact, args.model, args.menu)
         elif args.command == 'journey':
-            result = journey(read(args.answers), read(args.state) if args.state else None, args.checkpoint, args.level)
+            result = journey(read(args.answers), read(args.state) if args.state else None, args.checkpoint, args.level, args.wii_network)
         elif args.command == 'demo':
             result = demo()
         elif args.command == 'rehearse':

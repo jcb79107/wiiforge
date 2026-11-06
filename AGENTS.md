@@ -22,6 +22,9 @@ is not the full guide's compatibility list. Never forge macOS inspection data fo
 Do the authorized computer work, rather than handing the user a wall of terminal commands. Explain
 what will change and show the exact target/write plan before media writes. Use the reviewed manifests in packages/ for GX, Nintendont, recovery, HackMii and d2x installer files with the existing verify/prepare flow. For unsupported packages,
 say what review/preparation is still manual; never edit the GX pin to bypass package validation.
+Use journey output's `computer_preparation` for the current step. Ask about Wii internet access only at cIOS;
+`--wii-network online` skips the unnecessary offline acquisition route. Never upload a MAC without
+specific approval naming the destination. `check-exploit` is only a local partial check, not personalization validation.
 Give one console action and its expected outcome at a time, then wait for what the user actually sees.
 Do not mark a checkpoint passed because files were copied. Finish with launch/save/recovery instructions
 and a private record of what was actually tested. USB Loader GX is the default; preserve video settings,

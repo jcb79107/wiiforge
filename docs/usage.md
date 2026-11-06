@@ -263,3 +263,37 @@ HackMii preparation places `boot.elf` at the destination root and retains notice
 On the console, follow the selected guide and confirm actual results. For NAND backup, verify the dumper's checksums locally and keep the backup, keys and verification files in two private locations under your control; do not send them to the agent's hosted chat or commit them. A matching copy is not proof that restoration will succeed.
 
 For cIOS, review the **Wii/Family Edition tab for this original Wii** in the live guide. The pinned package is the installer, not installed cIOS. Online installation and offline base-IOS acquisition remain console/guide-specific work; WiiForge does not fetch Nintendo IOS WADs or keys. Explain the exact proposed console changes and get approval before the user runs the installer. If the expected d2x version is absent or the screen differs, stop. Do not substitute vWii/mini files, guess a slot or automatically repeat writes after an error.
+
+## Partially check a private Wilbrand ZIP
+
+After the user obtains their personalized archive using the current official guide:
+
+```sh
+python3 -m wiiforge check-exploit --artifact /private/generated.zip --model original --menu 4.3U
+```
+
+This command reads only a regular local ZIP (maximum 16 MiB), applies the existing bounded archive checks,
+streams members for size/CRC verification and requires root `boot.elf` to match the installer inside the
+publisher's pinned HackMii 1.2 archive. Other files must be under `private/`, with a nonempty payload.
+It writes/extracts nothing, submits no network requests, accepts no MAC, and reports no private member names or payload hashes.
+
+A successful partial check returns **exit 2**, `status: partial-check-only` and `personalization_verified: false`.
+It does not prove payload origin, correct menu/region/MAC, exploit validity or safety on a Wii. Even arbitrary bytes
+inside a well-formed `private/` tree can pass these limited checks. Do not interpret this as approval to install,
+copy or run them. Confirm the user's official generation flow, then separately review the exact destination copy.
+Unexpected extra files or another installer build are rejected rather than silently accepted. Only synthetic
+personalized archives have been tested; no real console payload was generated or exercised.
+
+## Choose the cIOS acquisition route when needed
+
+`journey` now includes `next_checkpoint.computer_preparation`, listing relevant local manifests and the next
+computer task. These are suggestions for the current step, not a command to prepare every package at once.
+At cIOS, rerun the same session with `--wii-network online` or `--wii-network offline` according to the Wii's
+actual internet availability. This does not query the network, invalidate progress, download files or authorize execution.
+
+The [current original-Wii guide](https://wii.hacks.guide/cios) permits online users to skip offline IOS acquisition.
+Offline output lists only its four base-IOS versions and expected filenames and links [NUSGet upstream](https://github.com/NinjaCheetah/NUSGet/releases/latest).
+Review the correct host build and publisher/signature information, then obtain specific approval before running it.
+Do not disable security controls or treat a guide's antivirus reassurance as an authorization to bypass them.
+Use the guide's original-Wii choices, keep acquired files private, and review any copying/renaming separately.
+WiiForge does not validate WAD contents or acquire/distribute Nintendo files. Never substitute the vWii versions.
