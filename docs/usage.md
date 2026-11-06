@@ -1,11 +1,27 @@
 # Usage
 
-Run commands from the repository root with Python 3.10+:
+## Run the tools
+
+Use Python 3.10+ from the repository root. No pip dependencies or virtual environment needed.
+
+macOS/Linux:
 
 ```sh
 export PYTHONPATH="$PWD/src"
-python3 -m wiiforge --help
+python3 -m wiiforge start
 ```
+
+Windows PowerShell:
+
+```powershell
+$env:PYTHONPATH="$PWD/src"
+py -3 -m wiiforge start
+```
+
+Add `--shopping` if you do not own a console, or `--help` for commands. If Python/Git is missing,
+your agent can still use the guide while you review tool installation separately. Check `python3 --version`
+or `py -3 --version`. For `No module named wiiforge`, return to the checkout and set `PYTHONPATH` again
+in the same terminal. Repeat that line after opening a new terminal.
 
 Begin with `python3 -m wiiforge start`. It asks what you own and gives a guide route without inspecting hardware or writing files. `demo` is a separate invented-data example, not your setup.
 
@@ -482,3 +498,29 @@ check full-disc size, validate the supplied record's authenticity, establish law
 WBFS or prove gameplay. Even invented bytes can match an invented checksum. Tests use only such synthetic
 fixtures. Windows joining remains blocked; use the reviewed guide handoff there. After joining, continue
 with the one-game conversion workflow above, with separate execution/transfer approval.
+
+
+## Support status
+
+Guide assistance and tool support are different. Follow [Wii Hacks Guide](https://wii.hacks.guide/get-started)
+for the console's current route; never invent observations to pass a WiiForge check.
+
+| Tool | Current scope |
+| --- | --- |
+| `start`, shopping and routing | Windows, macOS, Linux; all listed console models recognized |
+| `journey` manual checkpoints | Original Wii 4.3U; portable between computers |
+| Package preparation / game copying / joining | POSIX hosts; original-Wii selection; user-supplied local files |
+| Disk inspection and checked `plan` | macOS USB reference path: original Wii 4.3U, external physical disk with known identity/capacity, one MBR/FAT32 partition, 32 KiB clusters |
+| Other menus/regions, Family, mini, vWii | Guide assistance only; installation planning/preparation blocked |
+| Wii format conversion | External-tool handoff; execution needs separate approval |
+| Formatting, repair, console operations | Not implemented |
+
+Tests use synthetic fixtures, including interruption and conflict cases. WiiForge has no completed
+end-to-end console or physical-media validation; there is no certified storage, controller or display matrix.
+Inspection does not check filesystem integrity. Partial game-header checks and matching copy hashes do not
+establish dump authenticity or gameplay. Temporary storage follows the host configuration; see
+[SECURITY.md](../SECURITY.md) for device identity, concurrency, reconnect and power-loss limits.
+
+Package verification/preparation does not clear upstream licensing. No games, keys, backups, IOS/WADs or
+upstream binaries are distributed. GameTDB contents must not be republished or served on a website.
+WiiForge's MIT license covers its own code; the linked guide and tools retain their own notices and licenses.

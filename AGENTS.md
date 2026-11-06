@@ -1,81 +1,49 @@
-# Help this person get to a game night
+# Get this person to their first game
 
-If the user gives you only this repo link, start helping; do not ask them to understand the CLI first.
-Read README, docs/playbook.md and docs/buying.md. Explain the goal in one sentence, then ask at most
-three related questions at a time: what Wii they have, what computer they use, and whether they already
-have homebrew. Follow with menu/region, TV/cable, storage, controllers and Wii/GameCube goals. If they
-are shopping, ask country/budget and reuse what they own. Never invent observations to get past a check.
+Use [Wii Hacks Guide](https://wii.hacks.guide/get-started) as the primary source for console procedures.
+Its source is [Guide_Wii](https://github.com/hacks-guide/Guide_Wii). Read the current model-specific page
+before each procedure; do not substitute an old pack or a remembered recipe.
 
-If they do not own a console yet, use `start --shopping`: ask budget/country, existing gear and game goals before console observations. Read docs/buying.md, compare current listings and obtain purchase approval separately. Do not invent a menu or draft installation evidence for a shopping choice.
+## Start the conversation
 
-Run `PYTHONPATH=src python3 -m wiiforge start` for the intake questions. Optional private JSON answers
-produce a tailored route and profile/evidence drafts with `start --answers PATH --json`. You manage these
-files; the beginner should not need to edit JSON. For original-Wii 4.3U with computer/homebrew/storage observations, use `journey`
-to save/resume console outcomes privately, with no invented disk inspection. Keep a private progress note with observations,
-current step, completed outcomes, exact versions, approval scope and next action. Resume from evidence,
-not memory of a generic tutorial. Existing homebrew means inventory first, not reinstall everything.
+Ask at most three questions: what Wii they own, their computer OS, and whether Homebrew Channel opens.
+If they are shopping, use `start --shopping` and [buying.md](docs/buying.md) instead. Then collect actual
+menu/region, storage and TV/cable as needed. Never invent observations. Existing homebrew means inventory first.
 
-Raw plans and reports stay **local**, outside the checkout: they can contain source/destination paths,
-device identities, game IDs and hashes. Do not paste or transmit them to chat, remote-agent/tool transcripts,
-telemetry, issues or cloud storage. Redirect full command output directly to a new private local file before
-it enters a tool response; check the exit code. Use `plan-summary --plan PATH` for preparation totals without
-those identifiers. For exact-plan approval, have the user inspect the full local file in their local editor;
-do not upload it as a shortcut. Keep the approved digest local when invoking the copy command.
+Follow [playbook.md](docs/playbook.md). Keep the conversation on the next action, not the CLI internals.
+Manage JSON yourself; do not ask the user to edit it. Give one console action and expected screen, then
+wait for what they see. If it differs, inspect the error. Preserve working video settings; first game before autoboot.
 
-Use docs/playbook.md to own the entire journey: buying → discovery → computer preparation → console
-checkpoints → Wii gameplay → optional GameCube → optional autoboot → useful handoff. Read the live
-model-specific guide before each procedure. On Windows, offer current ModMii guidance; don't silently
-run or install it. On other hosts, review the appropriate guide route. WiiForge's narrow checked planner
-is not the full guide's compatibility list. Never forge macOS inspection data for Windows or SD storage.
+## Do the computer work
 
-Do the authorized computer work, rather than handing the user a wall of terminal commands. Explain
-what will change and show the exact target/write plan before media writes. Use the reviewed manifests in packages/ for GX, Nintendont, recovery, HackMii and d2x installer files with the existing verify/prepare flow. For unsupported packages,
-say what review/preparation is still manual; never edit the GX pin to bypass package validation.
-Use journey output's `computer_preparation` for the current step. Ask about Wii internet access only at cIOS.
-Working Homebrew Channel needs confirmation, not another installer download. Offer CleanRip preparation
-only when the user needs to dump their own discs; use an existing lawful verified dump when available.
-`--wii-network online` skips the unnecessary offline acquisition route. Never upload a MAC without
-specific approval naming the destination. `check-exploit` is only a local partial check, not personalization validation.
-Give one console action and its expected outcome at a time, then wait for what the user actually sees.
-Before GameCube file organization, use `check-gamecube` on the user's own raw ISO/GCM files to check
-headers, disc order and suggested naming. It neither verifies the whole dump nor authorizes a copy.
-For raw GameCube files on POSIX, use `gamecube-plan`, show the exact source/destination paths and
-hashes privately, and get specific destination/digest approval before `gamecube-copy`. Never move/delete
-original dumps or treat a copy hash as dump authenticity. For CleanRip PART files on POSIX, use `wii-join-plan` with the original dump SHA-1, then `wii-join` only with exact destination/digest approval. Joining is not format or authenticity validation. For Wii conversion/splitting, use the one-game staging handoff in docs/usage.md; external execution and media transfer each need specific approval.
-Do not mark a checkpoint passed because files were copied. Finish with launch/save/recovery instructions
-and a private record of what was actually tested. USB Loader GX is the default; preserve video settings,
-review Nintendont when requested, and defer autoboot until recovery and gameplay work.
+Run from the checkout with Python 3.10+ and `PYTHONPATH=src`; no pip dependencies.
+Use `start --answers PATH --json` for routing. `journey` saves original-Wii 4.3U manual checkpoints.
+Other models/menus use their current guide; never fake inspection data to pass a blocker.
+On Windows, review the guide's ModMii option rather than requiring a POSIX environment.
 
-## Safety and implementation rules
+At each checkpoint, prepare only its needed files using [usage.md](docs/usage.md) and reviewed manifests.
+Use `verify-package`, then `prepare-plan`; review exact writes locally and obtain destination/digest approval
+before `prepare`. For own game files use `check-gamecube` / `gamecube-plan` / `gamecube-copy`, or
+`wii-join-plan` / `wii-join` for numbered CleanRip parts and the original dump checksum. Conversion remains
+the documented external-tool handoff. A copy or checksum never proves gameplay or completes a console checkpoint.
 
-Use deterministic Python commands for inspection/planning. Read README and docs/evidence.md first.
-Never infer console model, region, cIOS, BootMii eligibility or TV capability from storage contents.
-Unknown, conflicting or ambiguous evidence blocks model-sensitive planning. Recognize original,
-Family Edition, mini and vWii separately. Do not reuse original-Wii payloads across them.
+## Boundaries
 
-Inspection, planning, `prepare-plan` and default package verification are read-only.
-`prepare`, `gamecube-copy` and `wii-join` write only files/directories listed by their reviewed plans, after explicit digest approval.
-They refuse overwrites and verify completed files when resumed. Never run them against actual user media
-without authorization for that specific destination and exact plan; our tests use temporary fixtures only. `rehearse` and opt-in
-`verify-package --experimental-stage` write files inside newly created private OS temporary directories.
-The backing device is not classified: TMPDIR (or the host equivalent) can point to removable media.
-Before running either write-capable command, confirm the host temporary directory is appropriate scratch
-storage. Do not describe these commands as media-write-free. The temporary rehearsal/staging commands accept no destination; controlled `prepare` does.
-The CLI does not download packages, execute downloaded code, format, repair or perform console operations.
-Preserve those boundaries. Proposed future destructive operations need
-separate explicit approval naming the physical target and data loss, plus fresh device validation.
-Do not treat a plan, checkpoint, historical success or GitHub publication approval as write permission.
-Never run unrecognized tools/scripts/binaries without per-action approval. No production services.
+- Keep raw plans, reports, identifiers, games, keys and NAND backups local, outside the checkout. Redirect
+  full command output to a new private local file before it enters remote tool transcripts. Never upload it
+  to chat, issues, telemetry or cloud storage. `plan-summary` shares only counts/bytes; exact approval stays local.
+- Do not submit a MAC address without specific approval naming the destination. The user can enter it
+  directly in the generator linked by the guide. `check-exploit` does not validate personalization.
+- No automatic formatting, repair, overwrite, region change or console write. Review physical targets and
+  obtain separate approval for destructive operations. Existing files are conflicts to inspect, not replace.
+- No downloaded-code execution without action-time approval; no security bypasses or production services.
+  Do not redistribute packages, GameTDB content, games, BIOS, Nintendo IOS/WADs or recovery artifacts.
+- Respect model gates. Never interchange Wii, mini or vWii IOS/recovery instructions. Confirm recovery and
+  keep backups private; do not test a NAND restore routinely or promise every change can be undone.
+- Read [SECURITY.md](SECURITY.md) before writes. Keep exclusive access; reconnects need fresh review.
+  Temporary staging follows TMPDIR and may use removable storage: check the scratch location first.
 
-Keep recovery reports, personal logs, device identifiers, console keys, NAND dumps, games and Nintendo
-IOS/WADs out of source, fixtures, issues and releases. Use only synthetic tests and sanitized findings.
-Keep package preparation limited to user-supplied local files. Do not publish bundled GameTDB records,
-serve prepared database files on a website, or redistribute upstream packages; complete licensing remains unresolved.
-No automatic game-ID changes, no broad cleanup, no repair of a failing source, no game/key distribution.
-Consult current https://wii.hacks.guide/ and primary upstream releases for each added procedure.
-Historical versions are evidence, not package pins. Record hashes, origin and model constraints before
-adding any staging capability. Do not call locally computed hashes upstream authenticity.
-
-Run `PYTHONPATH=src python3 -m unittest discover -s tests -v`. Review the exact Git index before push.
-Report prepared, content-verified, user-confirmed and console-tested evidence separately. Synthetic
-unit tests do not establish hardware support. Reconnects and changed inputs invalidate old plans.
+Finish with launch/save instructions, recovery access and a private record of what actually worked.
+For code changes, run `PYTHONPATH=src python3 -m unittest discover -s tests -v`, review the staged diff
+for private data, and report software tests separately from real hardware observations. See
+[the support limits](docs/usage.md#support-status); do not broaden claims without evidence.
