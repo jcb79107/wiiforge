@@ -10,8 +10,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from wiiforge.wiijoin import plan_wii_join, execute_wii_join
-from wiiforge.prepare import summarize_plan
+from wiiready.wiijoin import plan_wii_join, execute_wii_join
+from wiiready.prepare import summarize_plan
 
 
 @unittest.skipUnless(os.name == 'posix', 'POSIX directory descriptors required')
@@ -71,7 +71,7 @@ class JoinTests(unittest.TestCase):
         plan = self.plan()
         self.parts[0].write_bytes(b'changed')
         with self.assertRaises(ValueError): self.run_join(plan)
-        with patch('wiiforge.wiijoin.MAX_BYTES', 20):
+        with patch('wiiready.wiijoin.MAX_BYTES', 20):
             with self.assertRaises(ValueError): self.plan()
         self.parts[0].write_bytes(b'')
         with self.assertRaises(ValueError): self.plan()
@@ -86,7 +86,7 @@ class JoinTests(unittest.TestCase):
 
     def test_interruption_cleans_only_new_output_and_retry_succeeds(self):
         plan = self.plan()
-        from wiiforge import wiijoin
+        from wiiready import wiijoin
         original = wiijoin._chunks
         calls = 0
         def interrupted(sources):
@@ -104,7 +104,7 @@ class JoinTests(unittest.TestCase):
 
     def test_copy_time_corruption_is_rejected_and_removed(self):
         plan = self.plan()
-        from wiiforge import wiijoin
+        from wiiready import wiijoin
         original = wiijoin._chunks
         calls = 0
         def corrupt(sources):
@@ -117,13 +117,13 @@ class JoinTests(unittest.TestCase):
         self.assertEqual(list(self.dest.iterdir()), [])
 
     def test_stream_rejects_growth_truncation_and_identity_change(self):
-        from wiiforge.wiijoin import _chunks
+        from wiiready.wiijoin import _chunks
         identity = {'bytes': 4, 'inode': 1}
         for data, actual in [(b'abc', identity), (b'abcde', identity), (b'abcd', {'bytes': 4, 'inode': 2})]:
             @contextmanager
             def fake_part(path):
                 yield io.BytesIO(data), actual
-            with patch('wiiforge.wiijoin._part', fake_part):
+            with patch('wiiready.wiijoin._part', fake_part):
                 with self.assertRaises(ValueError):
                     list(_chunks([{'path': 'synthetic', 'identity': identity}]))
 
@@ -139,7 +139,7 @@ class JoinTests(unittest.TestCase):
         common = ['--model', 'original', '--dump-sha1', self.sha1, '--destination', str(self.dest)]
         for part in self.parts: common += ['--part', str(part)]
         def cli(command, *extra):
-            return subprocess.run([sys.executable, '-m', 'wiiforge', command] + common + list(extra),
+            return subprocess.run([sys.executable, '-m', 'wiiready', command] + common + list(extra),
                                   env=env, text=True, capture_output=True)
         planned = cli('wii-join-plan'); self.assertEqual(planned.returncode, 0, planned.stderr)
         plan = json.loads(planned.stdout)
@@ -151,6 +151,6 @@ class JoinTests(unittest.TestCase):
 
 class HostGateTests(unittest.TestCase):
     def test_non_posix_rejected_before_source_access(self):
-        with patch('wiiforge.wiijoin.os.name', 'nt'):
+        with patch('wiiready.wiijoin.os.name', 'nt'):
             with self.assertRaisesRegex(ValueError, 'POSIX'):
                 plan_wii_join([], '0' * 40, 'missing', 'original')

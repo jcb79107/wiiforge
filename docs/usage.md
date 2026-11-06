@@ -8,22 +8,22 @@ macOS/Linux:
 
 ```sh
 export PYTHONPATH="$PWD/src"
-python3 -m wiiforge start
+python3 -m wiiready start
 ```
 
 Windows PowerShell:
 
 ```powershell
 $env:PYTHONPATH="$PWD/src"
-py -3 -m wiiforge start
+py -3 -m wiiready start
 ```
 
 Add `--shopping` if you do not own a console, or `--help` for commands. If Python/Git is missing,
 your agent can still use the guide while you review tool installation separately. Check `python3 --version`
-or `py -3 --version`. For `No module named wiiforge`, return to the checkout and set `PYTHONPATH` again
+or `py -3 --version`. For `No module named wiiready`, return to the checkout and set `PYTHONPATH` again
 in the same terminal. Repeat that line after opening a new terminal.
 
-Begin with `python3 -m wiiforge start`. It asks what you own and gives a guide route without inspecting hardware or writing files. `demo` is a separate invented-data example, not your setup.
+Begin with `python3 -m wiiready start`. It asks what you own and gives a guide route without inspecting hardware or writing files. `demo` is a separate invented-data example, not your setup.
 
 **Keep raw plans/reports local.** They can contain paths, device identities, game IDs and hashes.
 An agent should redirect full output to a **new private local file outside this checkout**, check the exit code,
@@ -32,7 +32,7 @@ Do not overwrite an existing report or redirect onto an input file. The examples
 For a package or GameCube preparation plan, share only aggregate totals using:
 
 ```sh
-python3 -m wiiforge plan-summary --plan /private/saved-plan.json
+python3 -m wiiready plan-summary --plan /private/saved-plan.json
 ```
 
 This checks saved-plan consistency and reports counts/bytes without paths, IDs or hashes. It does not
@@ -57,7 +57,7 @@ An assistant can collect answers conversationally and keep this JSON privately o
 }
 ```
 
-Run `python3 -m wiiforge start --answers /private/intake.json` for readable guidance; add `--json` for profile/evidence drafts. No arguments prints questions. Omitted fields remain unknown. Exit 0 means the intake was processed, not that a setup is ready. Invalid input exits 2.
+Run `python3 -m wiiready start --answers /private/intake.json` for readable guidance; add `--json` for profile/evidence drafts. No arguments prints questions. Omitted fields remain unknown. Exit 0 means the intake was processed, not that a setup is ready. Invalid input exits 2.
 
 Values: `model` = original/family/mini/vwii/unknown; `menu` = observed version and letter (such as 4.3E) or unknown; `computer` = windows/macos/linux/unknown; `homebrew`, `sd`, `gamecube` = yes/no/unknown; `storage` = sd/usb-hdd/usb-ssd/usb-flash/unknown. Display and cable use the choices below. No serials, MAC addresses, paths or freeform private notes belong in this file.
 
@@ -81,7 +81,7 @@ Keep `schema` at `1`. Model evidence comes from the console label/physical inspe
 Identify the intended whole disk in Disk Utility yourself. Replace `diskN` below with that exact identifier. Replace the private paths with existing directories you own; these are placeholders, not runnable defaults.
 
 ```sh
-python3 -m wiiforge inspect --device diskN > /your/private/folder/inspection.json
+python3 -m wiiready inspect --device diskN > /your/private/folder/inspection.json
 ```
 
 The command only runs `diskutil list -plist` and `diskutil info -plist`. It does not mount, inspect game contents or write media. Missing metadata, internal/virtual targets and ambiguous layouts are rejected. Reports omit raw labels, UUIDs, serials and mount paths but contain a device number and fingerprint: keep them private.
@@ -93,7 +93,7 @@ Exit `2` means blocked or invalid. Do not edit an inspection report to remove bl
 Start with [original-wii.yaml](../profiles/original-wii.yaml); customize a private copy if needed.
 
 ```sh
-python3 -m wiiforge plan --profile profiles/original-wii.yaml \
+python3 -m wiiready plan --profile profiles/original-wii.yaml \
   --evidence /your/private/folder/evidence.yaml \
   --inspection /your/private/folder/inspection.json
 ```
@@ -118,7 +118,7 @@ An accepted result is `manual-review-only` with `execution_supported: false`. Fo
 Run `resume` with the same three input arguments. With no state or checkpoint it emits empty state. To acknowledge the first step **after actually reviewing it**:
 
 ```sh
-python3 -m wiiforge resume --profile profiles/original-wii.yaml \
+python3 -m wiiready resume --profile profiles/original-wii.yaml \
   --evidence /your/private/folder/evidence.yaml \
   --inspection /your/private/folder/inspection.json \
   --checkpoint review --level user-confirmed
@@ -133,7 +133,7 @@ Changed profile, evidence, disk identity, device number or capacity invalidates 
 ## Rehearse file preparation without media
 
 ```sh
-python3 -m wiiforge rehearse
+python3 -m wiiready rehearse
 ```
 
 This command uses two built-in text fixtures, validates their ZIP metadata, writes them exclusively inside
@@ -166,11 +166,11 @@ console write or overwrite operation exists. The model must be explicitly `origi
 Package licensing and console-installation blockers remain in every result. Preparing files does not clear them.
 
 Use an already downloaded pinned ZIP and a trusted reviewed manifest. Choose the destination yourself;
-WiiForge does not automatically choose a disk or certify its suitability. Paths below are placeholders.
+WiiReady does not automatically choose a disk or certify its suitability. Paths below are placeholders.
 Keep the plan outside the destination and repository: it includes private path/device metadata.
 
 ```sh
-python3 -m wiiforge prepare-plan --manifest packages/usb-loader-gx.yaml \
+python3 -m wiiready prepare-plan --manifest packages/usb-loader-gx.yaml \
   --artifact /private/usbloadergx_r1283.zip --model original \
   --destination /chosen/existing/directory > /private/preparation-plan.json
 ```
@@ -183,7 +183,7 @@ Preflight reads and hashes all package members; it writes nothing. Do not approv
 After explicit approval for that destination and those writes, copy its `digest` into the command:
 
 ```sh
-python3 -m wiiforge prepare --manifest packages/usb-loader-gx.yaml \
+python3 -m wiiready prepare --manifest packages/usb-loader-gx.yaml \
   --artifact /private/usbloadergx_r1283.zip --model original \
   --destination /chosen/existing/directory --plan /private/preparation-plan.json \
   --approve-plan DIGEST_FROM_REVIEWED_PLAN
@@ -218,9 +218,9 @@ matching them is not proof of the same physical drive. No reconnect, power-loss 
 On a POSIX host, obtain these three files from the exact [pinned upstream commit](https://github.com/FIX94/Nintendont/tree/c683db301c941a64e6fe5cef6ac079bd1a726074), following the upstream README: `loader/loader.dol`, `nintendont/meta.xml`, `nintendont/icon.png`. Keep their basenames together in a private host folder. Do not substitute current `master` files or change hashes to make a mismatch pass. The CLI does not download them.
 
 ```sh
-python3 -m wiiforge verify-package --manifest packages/nintendont.yaml \
+python3 -m wiiready verify-package --manifest packages/nintendont.yaml \
   --artifact /private/nintendont --model original --check-archive
-python3 -m wiiforge prepare-plan --manifest packages/nintendont.yaml \
+python3 -m wiiready prepare-plan --manifest packages/nintendont.yaml \
   --artifact /private/nintendont --model original \
   --destination /chosen/existing/directory > /private/nintendont-plan.json
 ```
@@ -228,7 +228,7 @@ python3 -m wiiforge prepare-plan --manifest packages/nintendont.yaml \
 Verification exit 2 with `content-verified` is expected: installation/licensing/hardware blockers remain. Inspect the plan. After separate approval for that exact destination and inventory:
 
 ```sh
-python3 -m wiiforge prepare --manifest packages/nintendont.yaml \
+python3 -m wiiready prepare --manifest packages/nintendont.yaml \
   --artifact /private/nintendont --model original --destination /chosen/existing/directory \
   --plan /private/nintendont-plan.json --approve-plan DIGEST_FROM_REVIEWED_PLAN
 ```
@@ -240,13 +240,13 @@ Only `apps/Nintendont/boot.dol`, `meta.xml` and `icon.png` are prepared. Existin
 For an original Wii 4.3U with computer, homebrew and storage observations, `journey` provides a manual checklist on Windows, macOS or Linux without pretending to inspect a disk:
 
 ```sh
-python3 -m wiiforge journey --answers /private/intake.json > /private/progress-1.json
+python3 -m wiiready journey --answers /private/intake.json > /private/progress-1.json
 ```
 
 Read `guide_route`, `next_checkpoint` and its `required_evidence`. After the user actually completes that step, acknowledge it into a **new** file:
 
 ```sh
-python3 -m wiiforge journey --answers /private/intake.json \
+python3 -m wiiready journey --answers /private/intake.json \
   --state /private/progress-1.json --checkpoint review --level user-confirmed \
   > /private/progress-2.json
 ```
@@ -283,23 +283,23 @@ Use the same `verify-package` → `prepare-plan` → explicit digest-approved `p
 Pass `--model original`, the exact private artifact path, and the specifically approved destination. Example preflight:
 
 ```sh
-python3 -m wiiforge prepare-plan --manifest packages/nanddumper-ios.yaml \
+python3 -m wiiready prepare-plan --manifest packages/nanddumper-ios.yaml \
   --artifact /private/nanddumper_ios.zip --model original \
   --destination /chosen/existing/directory > /private/nand-tool-plan.json
 ```
 
-HackMii preparation places `boot.elf` at the destination root and retains notices under `wiiforge-notices/hackmii`. It excludes `bootmini.elf` and PC tools. A different existing `boot.elf` blocks preparation; do not overwrite an exploit or app to force a match. This does not create Wilbrand's personalized `private` directory. Download directly from the publisher, never a WiiForge mirror or repacked bundle.
+HackMii preparation places `boot.elf` at the destination root and retains notices under `wiiready-notices/hackmii`. It excludes `bootmini.elf` and PC tools. A different existing `boot.elf` blocks preparation; do not overwrite an exploit or app to force a match. This does not create Wilbrand's personalized `private` directory. Download directly from the publisher, never a WiiReady mirror or repacked bundle.
 
 On the console, follow the selected guide and confirm actual results. For NAND backup, verify the dumper's checksums locally and keep the backup, keys and verification files in two private locations under your control; do not send them to the agent's hosted chat or commit them. A matching copy is not proof that restoration will succeed.
 
-For cIOS, review the **Wii/Family Edition tab for this original Wii** in the live guide. The pinned package is the installer, not installed cIOS. Online installation and offline base-IOS acquisition remain console/guide-specific work; WiiForge does not fetch Nintendo IOS WADs or keys. Explain the exact proposed console changes and get approval before the user runs the installer. If the expected d2x version is absent or the screen differs, stop. Do not substitute vWii/mini files, guess a slot or automatically repeat writes after an error.
+For cIOS, review the **Wii/Family Edition tab for this original Wii** in the live guide. The pinned package is the installer, not installed cIOS. Online installation and offline base-IOS acquisition remain console/guide-specific work; WiiReady does not fetch Nintendo IOS WADs or keys. Explain the exact proposed console changes and get approval before the user runs the installer. If the expected d2x version is absent or the screen differs, stop. Do not substitute vWii/mini files, guess a slot or automatically repeat writes after an error.
 
 ## Partially check a private Wilbrand ZIP
 
 After the user obtains their personalized archive using the current official guide:
 
 ```sh
-python3 -m wiiforge check-exploit --artifact /private/generated.zip --model original --menu 4.3U
+python3 -m wiiready check-exploit --artifact /private/generated.zip --model original --menu 4.3U
 ```
 
 This command reads only a regular local ZIP (maximum 16 MiB), applies the existing bounded archive checks,
@@ -326,12 +326,12 @@ Offline output lists only its four base-IOS versions and expected filenames and 
 Review the correct host build and publisher/signature information, then obtain specific approval before running it.
 Do not disable security controls or treat a guide's antivirus reassurance as an authorization to bypass them.
 Use the guide's original-Wii choices, keep acquired files private, and review any copying/renaming separately.
-WiiForge does not validate WAD contents or acquire/distribute Nintendo files. Never substitute the vWii versions.
+WiiReady does not validate WAD contents or acquire/distribute Nintendo files. Never substitute the vWii versions.
 
 ## Check a local GameCube dump before first launch
 
 ```sh
-python3 -m wiiforge check-gamecube --disc1 /private/own-dump.iso
+python3 -m wiiready check-gamecube --disc1 /private/own-dump.iso
 # For a two-disc game, add: --disc2 /private/own-disc-two.iso
 ```
 
@@ -359,7 +359,7 @@ No upstream code or game data was copied. Test controls and a real save/reload i
 On POSIX, with explicitly identified original-Wii hardware and an existing dedicated destination folder:
 
 ```sh
-python3 -m wiiforge gamecube-plan --disc1 /private/own-disc.iso --model original --destination /chosen/folder
+python3 -m wiiready gamecube-plan --disc1 /private/own-disc.iso --model original --destination /chosen/folder
 ```
 
 Add `--disc2 /private/own-disc-two.iso` for a two-disc game. The command reads and hashes each **entire**
@@ -369,7 +369,7 @@ The plan contains source paths/identity/hashes and exact writes to `games/<six-c
 and optionally `disc2.iso`. Review those paths and obtain explicit approval for that destination and digest.
 
 ```sh
-python3 -m wiiforge gamecube-copy --disc1 /private/own-disc.iso --model original --destination /chosen/folder --plan /private/game-plan.json --approve-plan EXACT_APPROVED_DIGEST
+python3 -m wiiready gamecube-copy --disc1 /private/own-disc.iso --model original --destination /chosen/folder --plan /private/game-plan.json --approve-plan EXACT_APPROVED_DIGEST
 ```
 
 Repeat the same `--disc2` option if planned. No files are moved, deleted or overwritten. Identical destination
@@ -398,8 +398,8 @@ If you already have a lawful verified dump, skip this. Otherwise obtain your own
 [pinned Wii release](https://github.com/emukidid/cleanrip/releases/tag/2.4), then use the same approved preparation flow:
 
 ```sh
-python3 -m wiiforge verify-package --manifest packages/cleanrip.yaml --artifact /private/CleanRip-v2.4.zip --model original --check-archive
-python3 -m wiiforge prepare-plan --manifest packages/cleanrip.yaml --artifact /private/CleanRip-v2.4.zip --model original --destination /chosen/folder
+python3 -m wiiready verify-package --manifest packages/cleanrip.yaml --artifact /private/CleanRip-v2.4.zip --model original --check-archive
+python3 -m wiiready prepare-plan --manifest packages/cleanrip.yaml --artifact /private/CleanRip-v2.4.zip --model original --destination /chosen/folder
 ```
 
 Successful byte verification still exits 2 for licensing/hardware blockers. Review the exact plan and use
@@ -414,7 +414,7 @@ converting formats remains a separately reviewed task; never rename extensions a
 
 Use the [current backup guide](https://wii.hacks.guide/backups) and
 [TinyWiiBackupManager upstream releases](https://github.com/mq1/TinyWiiBackupManager/releases).
-This is an agent-guided external-tool handoff, not a WiiForge copy command:
+This is an agent-guided external-tool handoff, not a WiiReady copy command:
 
 1. Keep the original dump and checksum record unchanged. For CleanRip PART files, join only the explicitly
    reviewed, numbered parts of one game into a new file on host storage that supports large files.
@@ -427,7 +427,7 @@ This is an agent-guided external-tool handoff, not a WiiForge copy command:
    filesystem. Do not normalize an existing library, delete originals or accept replacements.
 4. Inspect the resulting `wbfs/<game folder>/` files, including all split parts, and use the tool's integrity check.
    An integrity result does not establish lawful provenance or console compatibility. Review the final media
-   destination and conflicts separately before approving transfer; WiiForge does not yet copy Wii backups.
+   destination and conflicts separately before approving transfer; WiiReady does not yet copy Wii backups.
 5. Safely eject after the approved transfer, launch the one game in USB Loader GX and test play/save before
    acknowledging the journey's Wii-game checkpoint. Report an error rather than changing cIOS or video settings at random.
 
@@ -455,12 +455,12 @@ folder. Before a media transfer, inventory every generated part and existing des
 The [v6.1.11 import source](https://github.com/mq1/TinyWiiBackupManager/blob/v6.1.11/src/games/import.rs)
 supports configurable Wii output and splitting; its
 [conversion code](https://github.com/mq1/TinyWiiBackupManager/blob/v6.1.11/src/games/convert.rs) can replace output files.
-Do not assume it has WiiForge's no-overwrite guarantees. This route was source-reviewed, not executed or
+Do not assume it has WiiReady's no-overwrite guarantees. This route was source-reviewed, not executed or
 hardware-tested here. No converter binary or game content is included in this repository.
 
 Automation assessment: this reviewed release starts a graphical application; no documented headless
 conversion interface was established. [Wiimm's official COPY documentation](https://wit.wiimm.de/wit/cmd-copy.html)
-describes a CLI with preview, splitting and no overwrite by default, but WiiForge has not validated a host
+describes a CLI with preview, splitting and no overwrite by default, but WiiReady has not validated a host
 binary or its failure behavior. Neither tool is installed, launched or wrapped automatically. A future adapter
 needs an approved exact binary, isolated conversion/failure tests and verified output inventory before
 claiming controlled conversion. The current handoff remains the supported route.
@@ -469,14 +469,14 @@ claiming controlled conversion. The current handoff remains the supported route.
 ### Join CleanRip parts without overwriting
 
 On POSIX, choose an existing dedicated **host staging folder** with enough space and a filesystem
-supporting the full ISO size (not FAT32). WiiForge does not classify its backing device or filesystem.
+supporting the full ISO size (not FAT32). WiiReady does not classify its backing device or filesystem.
 Read the original private dump record's SHA-1; never calculate a new expected checksum just to pass a failed check.
 The [guide](https://wii.hacks.guide/backups#joining-part-files-from-a-wii-disc-on-a-fat32-device) requires the
 joined checksum to match. [CleanRip source](https://github.com/emukidid/cleanrip/blob/master/source/main.c)
 records SHA-1 when checksum calculation is enabled and numbers parts from zero.
 
 ```sh
-python3 -m wiiforge wii-join-plan --model original \
+python3 -m wiiready wii-join-plan --model original \
   --part /private/own-game.part0.iso --part /private/own-game.part1.iso \
   --dump-sha1 SHA1_FROM_ORIGINAL_DUMP_RECORD --destination /chosen/host-staging
 ```
@@ -503,7 +503,7 @@ with the one-game conversion workflow above, with separate execution/transfer ap
 ## Support status
 
 Guide assistance and tool support are different. Follow [Wii Hacks Guide](https://wii.hacks.guide/get-started)
-for the console's current route; never invent observations to pass a WiiForge check.
+for the console's current route; never invent observations to pass a WiiReady check.
 
 | Tool | Current scope |
 | --- | --- |
@@ -515,7 +515,7 @@ for the console's current route; never invent observations to pass a WiiForge ch
 | Wii format conversion | External-tool handoff; execution needs separate approval |
 | Formatting, repair, console operations | Not implemented |
 
-Tests use synthetic fixtures, including interruption and conflict cases. WiiForge has no completed
+Tests use synthetic fixtures, including interruption and conflict cases. WiiReady has no completed
 end-to-end console or physical-media validation; there is no certified storage, controller or display matrix.
 Inspection does not check filesystem integrity. Partial game-header checks and matching copy hashes do not
 establish dump authenticity or gameplay. Temporary storage follows the host configuration; see
@@ -523,4 +523,14 @@ establish dump authenticity or gameplay. Temporary storage follows the host conf
 
 Package verification/preparation does not clear upstream licensing. No games, keys, backups, IOS/WADs or
 upstream binaries are distributed. GameTDB contents must not be republished or served on a website.
-WiiForge's MIT license covers its own code; the linked guide and tools retain their own notices and licenses.
+WiiReady's MIT license covers its own code; the linked guide and tools retain their own notices and licenses.
+
+
+## Renamed commands
+
+Use `python -m wiiready` (or the installed `wiiready` command). The former `python -m wiiforge`
+and console command remain forwarding aliases; new integrations should use the new name.
+Public Python imports have moved to `wiiready`. Keep private sessions and source files where they are.
+Existing journey state can still be resumed when its inputs match. Regenerate and review old preparation
+plans: the HackMii notice directory is now `wiiready-notices/hackmii/`. Do not rename/delete an old
+notice directory or reuse approval to make a plan pass. No private files are migrated automatically.

@@ -1,4 +1,4 @@
-# Contributing to WiiForge
+# Contributing to WiiReady
 
 Thanks for helping make homebrew planning easier to inspect and safer to resume. Read [AGENTS.md](AGENTS.md) for the shared human/agent boundaries and [the roadmap](docs/roadmap.md) before broadening scope.
 
@@ -8,7 +8,7 @@ Use Python 3.10+ and the standard library. From the checkout, in a POSIX shell:
 
 ```sh
 export PYTHONPATH="$PWD/src"
-python3 -m wiiforge demo
+python3 -m wiiready demo
 python3 -m unittest discover -s tests -v
 python3 -m compileall -q src
 git diff --check

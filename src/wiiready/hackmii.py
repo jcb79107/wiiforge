@@ -23,7 +23,7 @@ def hackmii_snapshot(data):
                 with source.open(entry) as stream:
                     payload = stream.read(entry.file_size + 1)
                 require(len(payload) == entry.file_size, 'Incomplete HackMii member')
-                destination = name if name == 'boot.elf' else 'wiiforge-notices/hackmii/' + name
+                destination = name if name == 'boot.elf' else 'wiiready-notices/hackmii/' + name
                 info = zipfile.ZipInfo(destination, date_time=(1980, 1, 1, 0, 0, 0))
                 info.create_system = 3
                 info.external_attr = 0o100600 << 16

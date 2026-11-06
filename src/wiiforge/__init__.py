@@ -1,1 +1,1 @@
-"""WiiForge: read-only evidence and manual installation planning."""
+"""Legacy command namespace; use wiiready for new integrations."""

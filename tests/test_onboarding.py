@@ -6,8 +6,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from wiiforge.onboarding import start, render, shopping
-from wiiforge.__main__ import profile, evidence
+from wiiready.onboarding import start, render, shopping
+from wiiready.__main__ import profile, evidence
 
 
 class OnboardingTests(unittest.TestCase):
@@ -27,7 +27,7 @@ class OnboardingTests(unittest.TestCase):
     def test_cli_shopping_plain_json_and_conflicting_mode(self):
         with tempfile.TemporaryDirectory() as folder:
             env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / 'src'))
-            command = [sys.executable, '-m', 'wiiforge', 'start', '--shopping']
+            command = [sys.executable, '-m', 'wiiready', 'start', '--shopping']
             for extra in [[], ['--json']]:
                 result = subprocess.run(command + extra, cwd=folder, env=env, capture_output=True, text=True)
                 self.assertEqual(result.returncode, 0, result.stderr)
@@ -141,14 +141,14 @@ class OnboardingTests(unittest.TestCase):
             path.write_text(json.dumps({'model': 'original', 'menu': '4.3U'}))
             before = path.read_bytes()
             env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / 'src'))
-            run = subprocess.run([sys.executable, '-m', 'wiiforge', 'start', '--answers', str(path), '--json'],
+            run = subprocess.run([sys.executable, '-m', 'wiiready', 'start', '--answers', str(path), '--json'],
                                  cwd=folder, env=env, text=True, capture_output=True)
             self.assertEqual(run.returncode, 0, run.stderr)
             self.assertFalse(json.loads(run.stdout)['write_authorized'])
             self.assertEqual(path.read_bytes(), before)
             self.assertEqual(list(Path(folder).iterdir()), [path])
             path.write_text('{"model":"original","model":"mini"}')
-            run = subprocess.run([sys.executable, '-m', 'wiiforge', 'start', '--answers', str(path)],
+            run = subprocess.run([sys.executable, '-m', 'wiiready', 'start', '--answers', str(path)],
                                  cwd=folder, env=env, text=True, capture_output=True)
             self.assertEqual(run.returncode, 2)
             self.assertNotIn('Traceback', run.stderr)
@@ -160,7 +160,7 @@ class JourneyTests(unittest.TestCase):
                         'sd': 'yes', 'storage': 'sd', 'display': 'hd', 'cable': 'component', 'gamecube': 'yes'}
 
     def test_complete_portable_session_requires_observed_checkpoints(self):
-        from wiiforge.__main__ import journey
+        from wiiready.__main__ import journey
         result = journey(self.answers)
         expected = [('review', 'user-confirmed'), ('storage-review', 'user-confirmed'),
                     ('homebrew', 'console-tested'), ('backup', 'user-confirmed'),
@@ -176,7 +176,7 @@ class JourneyTests(unittest.TestCase):
         self.assertEqual(result['status'], 'manual-checkpoints-complete')
 
     def test_session_rejects_skips_changed_answers_and_other_models(self):
-        from wiiforge.__main__ import journey
+        from wiiready.__main__ import journey
         result = journey(self.answers)
         with self.assertRaises(ValueError): journey(self.answers, result, 'loader', 'console-tested')
         result = journey(self.answers, result, 'review', 'user-confirmed')
@@ -189,7 +189,7 @@ class JourneyTests(unittest.TestCase):
         self.assertEqual(len(result['state']['completed']), 1)
 
     def test_unknown_video_and_optional_gamecube_do_not_block_start(self):
-        from wiiforge.__main__ import journey
+        from wiiready.__main__ import journey
         answers = dict(self.answers, display='unknown', cable='unknown', gamecube='unknown')
         result = journey(answers)
         self.assertEqual(result['next_checkpoint']['id'], 'review')
@@ -198,7 +198,7 @@ class JourneyTests(unittest.TestCase):
         self.assertEqual(len([line for line in render(start()).split('For this setup:')[0].splitlines() if line.startswith('- ')]), 3)
 
     def test_computer_and_completed_installation_progress_preserve_session(self):
-        from wiiforge.__main__ import journey
+        from wiiready.__main__ import journey
         answers = dict(self.answers, homebrew='no')
         result = journey(answers)
         original_route = result['guide_route']
@@ -217,7 +217,7 @@ class JourneyTests(unittest.TestCase):
         with self.assertRaises(ValueError): journey(dict(answers, cable='adapter'), result)
 
     def test_homebrew_transition_requires_checkpoint_and_legacy_state_resumes(self):
-        from wiiforge.__main__ import journey
+        from wiiready.__main__ import journey
         answers = dict(self.answers, homebrew='no')
         result = journey(answers)
         del result['baseline_answers']  # Previous CLI output had no explicit baseline.
@@ -229,7 +229,7 @@ class JourneyTests(unittest.TestCase):
             journey(dict(answers, homebrew='yes'), result, 'homebrew', 'console-tested')
 
     def test_identifying_unknown_display_and_cable_preserves_progress(self):
-        from wiiforge.__main__ import journey
+        from wiiready.__main__ import journey
         answers = dict(self.answers, display='unknown', cable='unknown')
         saved = journey(answers, checkpoint='review', level='user-confirmed')
         original = copy.deepcopy(saved)
@@ -243,7 +243,7 @@ class JourneyTests(unittest.TestCase):
             with self.assertRaises(ValueError): journey(dict(answers, **changes), result)
 
     def test_gamecube_can_be_added_after_wii_completion_without_repeating_setup(self):
-        from wiiforge.__main__ import journey
+        from wiiready.__main__ import journey
         for initial_goal in ['no', 'unknown']:
             answers = dict(self.answers, gamecube=initial_goal)
             saved = journey(answers)
@@ -264,7 +264,7 @@ class JourneyTests(unittest.TestCase):
             with self.assertRaises(ValueError): journey(dict(answers, gamecube='no'), complete)
 
     def test_extension_validates_existing_evidence_and_never_skips_pending_steps(self):
-        from wiiforge.__main__ import journey
+        from wiiready.__main__ import journey
         answers = dict(self.answers, gamecube='no')
         saved = journey(answers, checkpoint='review', level='user-confirmed')
         added = dict(answers, gamecube='yes')
@@ -278,7 +278,7 @@ class JourneyTests(unittest.TestCase):
         with self.assertRaises(ValueError): journey(dict(added, homebrew='no'), corrupt)
 
     def test_network_observation_is_retained_overridden_and_clearable(self):
-        from wiiforge.__main__ import journey
+        from wiiready.__main__ import journey
         saved = journey(self.answers, wii_network='online')
         self.assertEqual(journey(self.answers, saved)['wii_network'], 'online')
         changed = journey(self.answers, saved, wii_network='offline')
@@ -295,7 +295,7 @@ class JourneyTests(unittest.TestCase):
             saved = Path(folder) / 'progress.json'
             answers.write_text(json.dumps(self.answers))
             env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / 'src'))
-            command = [sys.executable, '-m', 'wiiforge', 'journey', '--answers', str(answers)]
+            command = [sys.executable, '-m', 'wiiready', 'journey', '--answers', str(answers)]
             first = subprocess.run(command + ['--wii-network', 'online'], cwd=folder, env=env, text=True, capture_output=True)
             self.assertEqual(first.returncode, 0, first.stderr)
             saved.write_text(first.stdout)
@@ -310,7 +310,7 @@ class JourneyTests(unittest.TestCase):
 
 class CheckpointPreparationTests(unittest.TestCase):
     def test_working_homebrew_skips_installer_and_first_game_offers_optional_dumper(self):
-        from wiiforge.__main__ import checkpoint_preparation, journey
+        from wiiready.__main__ import checkpoint_preparation, journey
         self.assertEqual(checkpoint_preparation('homebrew', 'unknown', 'yes')['manifests'], [])
         self.assertEqual(checkpoint_preparation('homebrew', 'unknown', 'no')['manifests'], ['packages/hackmii.yaml'])
         first_game = checkpoint_preparation('wii-test', 'online')
@@ -328,7 +328,7 @@ class CheckpointPreparationTests(unittest.TestCase):
         self.assertEqual(session['status'], 'manual-checkpoints-complete')
 
     def test_cios_guidance_only_requests_offline_files_when_needed(self):
-        from wiiforge.__main__ import checkpoint_preparation
+        from wiiready.__main__ import checkpoint_preparation
         unknown = checkpoint_preparation('cios', 'unknown')
         self.assertIn('Ask one question', unknown['instruction'])
         online = checkpoint_preparation('cios', 'online')
@@ -340,7 +340,7 @@ class CheckpointPreparationTests(unittest.TestCase):
         self.assertEqual(offline['manifests'], ['packages/d2x-cios-installer.yaml'])
 
     def test_current_checkpoint_points_to_real_manifests_without_advancing(self):
-        from wiiforge.__main__ import checkpoint_preparation, journey
+        from wiiready.__main__ import checkpoint_preparation, journey
         root = Path(__file__).resolve().parents[1]
         for checkpoint in ['homebrew', 'backup', 'recovery', 'cios', 'loader', 'wii-test', 'gamecube-test']:
             for manifest in checkpoint_preparation(checkpoint, 'unknown')['manifests']:

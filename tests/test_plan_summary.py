@@ -7,7 +7,7 @@ import sys
 import tempfile
 import unittest
 
-from wiiforge.prepare import digest, summarize_plan
+from wiiready.prepare import digest, summarize_plan
 
 
 def fixture(kind=None):
@@ -50,7 +50,7 @@ class PlanSummaryTests(unittest.TestCase):
             path = Path(folder) / 'sensitive-private-plan.json'
             data = json.dumps(fixture('gamecube-copy'))
             path.write_text(data)
-            command = [sys.executable, '-m', 'wiiforge', 'plan-summary', '--plan', str(path)]
+            command = [sys.executable, '-m', 'wiiready', 'plan-summary', '--plan', str(path)]
             success = subprocess.run(command, env=env, capture_output=True, text=True)
             self.assertEqual(success.returncode, 0, success.stderr)
             self.assertNotIn(str(path), success.stdout)

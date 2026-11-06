@@ -11,6 +11,7 @@ If they are shopping, use `start --shopping` and [buying.md](docs/buying.md) ins
 menu/region, storage and TV/cable as needed. Never invent observations. Existing homebrew means inventory first.
 
 Follow [playbook.md](docs/playbook.md). Keep the conversation on the next action, not the CLI internals.
+Offer [video.md](docs/video.md) once for cable/picture help; accept a skip without asking for more TV details or blocking setup. Keep unknown display/cable values and preserve output when skipped.
 Manage JSON yourself; do not ask the user to edit it. Give one console action and expected screen, then
 wait for what they see. If it differs, inspect the error. Preserve working video settings; first game before autoboot.
 

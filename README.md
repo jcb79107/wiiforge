@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/wiiforge.svg" alt="WiiForge" width="100%">
+  <img src="docs/assets/wiiready.png" alt="WiiReady" width="100%">
 </p>
 
 # Your Wii, ready for game night
@@ -12,12 +12,12 @@ USB Loader GX for Wii games. Nintendont if you want GameCube. Your own lawful ga
 
 Paste this into your agent:
 
-> Help me set up my Wii using https://github.com/jcb79107/wiiforge. Read AGENTS.md. Ask what I own, help with the computer work, and walk me through Wii Hacks Guide one step at a time. Use USB Loader GX. Ask before changing my storage or console, and keep my private files local.
+> Help me set up my Wii using https://github.com/jcb79107/wiiready. Read AGENTS.md. Ask what I own, help with the computer work, and walk me through Wii Hacks Guide one step at a time. Use USB Loader GX. Ask before changing my storage or console, and keep my private files local.
 
 No console yet? Tell it your budget and what you want to play. Already modded? Tell it what works.
 You handle the Wii remote; your agent handles the supported computer work and explains the rest.
 
-**[What to buy](docs/buying.md)** · **[Setup flow](docs/playbook.md)** · **[Commands](docs/usage.md)**
+**[What to buy](docs/buying.md)** · **[Optional picture setup](docs/video.md)** · **[Setup flow](docs/playbook.md)** · **[Commands](docs/usage.md)**
 
 ## What it handles
 
@@ -34,13 +34,13 @@ own guide. See [support details](docs/usage.md#support-status) and [safety](SECU
 With Python 3.10+ and Git:
 
 ```sh
-git clone https://github.com/jcb79107/wiiforge.git
-cd wiiforge
-PYTHONPATH=src python3 -m wiiforge start
+git clone https://github.com/jcb79107/wiiready.git
+cd wiiready
+PYTHONPATH=src python3 -m wiiready start
 ```
 
 Add `--shopping` if you do not own a Wii. No pip dependencies.
 [Windows and command setup](docs/usage.md#run-the-tools) · [Contributing](CONTRIBUTING.md)
 
 Modding instructions: [Wii Hacks Guide](https://wii.hacks.guide/) / [Guide_Wii](https://github.com/hacks-guide/Guide_Wii).
-WiiForge is independent of those projects and Nintendo. [MIT license](LICENSE); upstream tools retain their own licenses.
+WiiReady is independent of those projects and Nintendo. [MIT license](LICENSE); upstream tools retain their own licenses.

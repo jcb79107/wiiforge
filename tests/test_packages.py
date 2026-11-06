@@ -9,7 +9,7 @@ import tempfile
 import unittest
 import zipfile
 from unittest.mock import patch
-from wiiforge.__main__ import read, verify_package
+from wiiready.__main__ import read, verify_package
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -42,7 +42,7 @@ class PackageTests(unittest.TestCase):
         self.assertIn('license-review-pending', result['blockers'])
         self.assertFalse(result['execution_supported'])
         self.manifest['sha256'] = 'a' * 64
-        with patch('wiiforge.__main__.check_zip', side_effect=AssertionError('Unverified bytes parsed')):
+        with patch('wiiready.__main__.check_zip', side_effect=AssertionError('Unverified bytes parsed')):
             with self.assertRaisesRegex(ValueError, 'SHA-256'):
                 verify_package(self.manifest, self.artifact, 'original', check_archive=True)
 
@@ -59,11 +59,11 @@ class PackageTests(unittest.TestCase):
         self.assertIn('license-review-pending', result['blockers'])
         self.assertIn('hardware-untested', result['blockers'])
         self.assertEqual(self.artifact.read_bytes(), original)
-        with patch('wiiforge.__main__._stage_zip', return_value={}) as stage:
+        with patch('wiiready.__main__._stage_zip', return_value={}) as stage:
             verify_package(self.manifest, self.artifact, 'original', experimental_stage=True)
             stage.assert_called_once_with(original, synthetic=False)
         self.manifest['sha256'] = 'a' * 64
-        with patch('wiiforge.__main__._stage_zip') as stage:
+        with patch('wiiready.__main__._stage_zip') as stage:
             with self.assertRaisesRegex(ValueError, 'SHA-256'):
                 verify_package(self.manifest, self.artifact, 'original', experimental_stage=True)
             stage.assert_not_called()
@@ -112,7 +112,7 @@ class PackageTests(unittest.TestCase):
                         os.utime(self.artifact, ns=(info.st_atime_ns, info.st_mtime_ns + 2000000000))
                 return info
 
-            with self.subTest(change=change), patch('wiiforge.__main__.os.fstat', mutate_after_initial_stat):
+            with self.subTest(change=change), patch('wiiready.__main__.os.fstat', mutate_after_initial_stat):
                 with self.assertRaisesRegex(ValueError, message):
                     verify_package(self.manifest, self.artifact, 'original')
 
@@ -122,7 +122,7 @@ class PackageTests(unittest.TestCase):
         os.mkfifo(fifo)
         manifest = Path(self.tmp.name) / 'manifest.json'
         manifest.write_text(json.dumps(self.manifest))
-        result = subprocess.run([sys.executable, '-m', 'wiiforge', 'verify-package',
+        result = subprocess.run([sys.executable, '-m', 'wiiready', 'verify-package',
                                  '--manifest', str(manifest), '--artifact', str(fifo),
                                  '--model', 'original'], capture_output=True, text=True, timeout=5,
                                 env=dict(os.environ, PYTHONPATH=str(ROOT / 'src')))
@@ -149,7 +149,7 @@ class PackageTests(unittest.TestCase):
             self.manifest.update(size=len(data), sha256=hashlib.sha256(data).hexdigest())
             manifest = Path(self.tmp.name) / 'manifest.json'
             manifest.write_text(json.dumps(self.manifest))
-            result = subprocess.run([sys.executable, '-m', 'wiiforge', 'verify-package',
+            result = subprocess.run([sys.executable, '-m', 'wiiready', 'verify-package',
                                      '--manifest', str(manifest), '--artifact', str(self.artifact),
                                      '--model', 'original', '--experimental-stage'], capture_output=True, text=True,
                                     env=dict(os.environ, PYTHONPATH=str(ROOT / 'src'), TMPDIR=str(scratch)))
@@ -168,7 +168,7 @@ class PackageTests(unittest.TestCase):
         self.manifest.update(size=len(data), sha256=hashlib.sha256(data).hexdigest())
         manifest = Path(self.tmp.name) / 'manifest.json'
         manifest.write_text(json.dumps(self.manifest))
-        result = subprocess.run([sys.executable, '-m', 'wiiforge', 'verify-package',
+        result = subprocess.run([sys.executable, '-m', 'wiiready', 'verify-package',
                                  '--manifest', str(manifest), '--artifact', str(self.artifact),
                                  '--model', 'original', '--experimental-stage'], capture_output=True, text=True,
                                 env=dict(os.environ, PYTHONPATH=str(ROOT / 'src')))
@@ -180,7 +180,7 @@ class PackageTests(unittest.TestCase):
     def test_cli_reports_verified_but_blocked(self):
         manifest = Path(self.tmp.name) / 'manifest.json'
         manifest.write_text(json.dumps(self.manifest))
-        result = subprocess.run([sys.executable, '-m', 'wiiforge', 'verify-package',
+        result = subprocess.run([sys.executable, '-m', 'wiiready', 'verify-package',
                                  '--manifest', str(manifest), '--artifact', str(self.artifact),
                                  '--model', 'original'], capture_output=True, text=True,
                                 env=dict(os.environ, PYTHONPATH=str(ROOT / 'src')))

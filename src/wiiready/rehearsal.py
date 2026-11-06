@@ -50,7 +50,7 @@ def _stage_zip(data, *, synthetic=True):
         raise ValueError('Staging expanded size exceeds limit')
     files = {}
     try:
-        with zipfile.ZipFile(stream) as archive, tempfile.TemporaryDirectory(prefix='wiiforge-rehearsal-') as folder:
+        with zipfile.ZipFile(stream) as archive, tempfile.TemporaryDirectory(prefix='wiiready-rehearsal-') as folder:
             root = Path(folder)
             if shutil.disk_usage(root).free < metadata['declared_bytes'] + 1024 * 1024:
                 raise ValueError('Insufficient temporary storage space')
@@ -71,6 +71,6 @@ def _stage_zip(data, *, synthetic=True):
 def rehearse():
     stream = io.BytesIO()
     with zipfile.ZipFile(stream, 'w') as archive:
-        archive.writestr('apps/wiiforge-demo/readme.txt', b'Synthetic WiiForge fixture. Not homebrew.\n')
-        archive.writestr('apps/wiiforge-demo/settings.json', b'{"synthetic":true}\n')
+        archive.writestr('apps/wiiready-demo/readme.txt', b'Synthetic WiiReady fixture. Not homebrew.\n')
+        archive.writestr('apps/wiiready-demo/settings.json', b'{"synthetic":true}\n')
     return _stage_zip(stream.getvalue())

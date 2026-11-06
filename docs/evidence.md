@@ -9,9 +9,9 @@ Two supplied blueprint copies were byte-identical, as were two recovery copies. 
 - Priiloader installation/recovery steps were acknowledged together. Forwarder completion and installed-file autoboot success were reported.
 - The recovered cIOS arrangement was d2x-v11-beta3, revision 65535: 248/38, 249/56, 250/57, 251/58. This is evidence, not an automatic install specification.
 - SD FAT32 and USB MBR/FAT32/32 KiB geometry were historical inspection reports, not checks of currently attached hardware.
-- A private backup was checksum-checked in the recovery process; that does not establish restore viability. WiiForge neither imports nor distributes it.
+- A private backup was checksum-checked in the recovery process; that does not establish restore viability. WiiReady neither imports nor distributes it.
 
-The user also reports completing manual setup on two different Wiis. This is process experience, not evidence that WiiForge ran on either console; model-specific and display compatibility remain unverified.
+The user also reports completing manual setup on two different Wiis. This is process experience, not evidence that WiiReady ran on either console; model-specific and display compatibility remain unverified.
 
 ## Provisional settings
 
@@ -26,7 +26,7 @@ Reviewed 2026-11-04:
 - https://wii.hacks.guide/cios — explicit model separation; do not mix Wii, mini and vWii IOS/System Menu payloads.
 - https://wii.hacks.guide/wii-loaders — USB Loader GX prerequisites, upstream links and storage considerations.
 
-The MVP links to these procedures rather than reproducing a fixed console-write recipe. The pinned USB Loader GX package has since passed host-side integrity checks and disposable experimental staging; see [package evidence](../packages/README.md). No package has been executed or tested on a console by WiiForge. Licensing and installation remain blocked.
+The MVP links to these procedures rather than reproducing a fixed console-write recipe. The pinned USB Loader GX package has since passed host-side integrity checks and disposable experimental staging; see [package evidence](../packages/README.md). No package has been executed or tested on a console by WiiReady. Licensing and installation remain blocked.
 
 ## Gamer journey review — 2026-11-06
 

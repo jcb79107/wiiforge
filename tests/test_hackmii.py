@@ -5,9 +5,9 @@ from pathlib import Path
 import tempfile
 import unittest
 import zipfile
-from wiiforge.hackmii import MEMBERS, hackmii_snapshot
-from wiiforge.__main__ import package_bytes, verify_package
-from wiiforge.prepare import plan_preparation, execute_preparation
+from wiiready.hackmii import MEMBERS, hackmii_snapshot
+from wiiready.__main__ import package_bytes, verify_package
+from wiiready.prepare import plan_preparation, execute_preparation
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,10 +30,10 @@ class HackMiiTests(unittest.TestCase):
         snapshot = hackmii_snapshot(data)
         self.assertEqual(snapshot, hackmii_snapshot(data))
         with zipfile.ZipFile(io.BytesIO(snapshot)) as archive:
-            expected = {'boot.elf'} | {'wiiforge-notices/hackmii/' + name for name in MEMBERS if name != 'boot.elf'}
+            expected = {'boot.elf'} | {'wiiready-notices/hackmii/' + name for name in MEMBERS if name != 'boot.elf'}
             self.assertEqual(set(archive.namelist()), expected)
             for name in MEMBERS:
-                destination = name if name == 'boot.elf' else 'wiiforge-notices/hackmii/' + name
+                destination = name if name == 'boot.elf' else 'wiiready-notices/hackmii/' + name
                 self.assertEqual(archive.read(destination), ('Synthetic: ' + name).encode())
 
     def test_missing_notices_and_traversal_rejected(self):

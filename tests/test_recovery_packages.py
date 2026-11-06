@@ -5,8 +5,8 @@ from pathlib import Path
 import tempfile
 import unittest
 import zipfile
-from wiiforge.__main__ import verify_package, package_bytes
-from wiiforge.prepare import plan_preparation, execute_preparation
+from wiiready.__main__ import verify_package, package_bytes
+from wiiready.prepare import plan_preparation, execute_preparation
 
 ROOT = Path(__file__).resolve().parents[1]
 

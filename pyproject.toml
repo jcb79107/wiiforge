@@ -3,9 +3,9 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "wiiforge"
-version = "0.1.0"
-description = "Wii homebrew evidence, resumable planning and controlled file preparation"
+name = "wiiready"
+version = "0.2.0"
+description = "Agent-guided Wii setup, local file preparation and game organization"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 dependencies = []
@@ -13,12 +13,13 @@ readme = "README.md"
 keywords = ["wii", "homebrew", "usb-loader-gx", "read-only", "planning"]
 
 [project.urls]
-Repository = "https://github.com/jcb79107/wiiforge"
-Issues = "https://github.com/jcb79107/wiiforge/issues"
-Documentation = "https://github.com/jcb79107/wiiforge/blob/main/docs/usage.md"
+Repository = "https://github.com/jcb79107/wiiready"
+Issues = "https://github.com/jcb79107/wiiready/issues"
+Documentation = "https://github.com/jcb79107/wiiready/blob/main/docs/usage.md"
 
 [project.scripts]
-wiiforge = "wiiforge.__main__:main"
+wiiready = "wiiready.__main__:main"
+wiiforge = "wiiready.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -5,7 +5,7 @@ import unittest
 import warnings
 import zipfile
 from unittest.mock import Mock, patch
-from wiiforge.archive import check_zip
+from wiiready.archive import check_zip
 
 
 def archive(entries):
@@ -59,7 +59,7 @@ class ArchiveTests(unittest.TestCase):
     def test_input_size_checked_before_zip_parser(self):
         stream = Mock()
         stream.tell.return_value = 64 * 1024 * 1024 + 1
-        with patch('wiiforge.archive.zipfile.ZipFile') as parser:
+        with patch('wiiready.archive.zipfile.ZipFile') as parser:
             with self.assertRaisesRegex(ValueError, '64 MiB'):
                 check_zip(stream)
             parser.assert_not_called()

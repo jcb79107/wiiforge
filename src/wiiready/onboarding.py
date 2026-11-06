@@ -42,9 +42,9 @@ def start(answers=None):
     elif values['homebrew'] == 'unknown':
         route = 'Check whether Homebrew Channel already opens before choosing a fresh-install route.'
     elif model in ('mini', 'vwii', 'family'):
-        route = {'mini': 'Wii mini: use the dedicated BlueBomb guide; WiiForge installation and package preparation stay blocked.',
+        route = {'mini': 'Wii mini: use the dedicated BlueBomb guide; WiiReady installation and package preparation stay blocked.',
                  'vwii': 'Wii U: use the dedicated vWii route; never use original-Wii IOS or recovery instructions.',
-                 'family': 'Family Edition: review its route in Get Started; WiiForge installation and package preparation stay blocked.'}[model]
+                 'family': 'Family Edition: review its route in Get Started; WiiReady installation and package preparation stay blocked.'}[model]
         if model == 'mini':
             url = GUIDE + 'bluebomb'
     elif model == 'original':
@@ -63,7 +63,7 @@ def start(answers=None):
     if menu != 'unknown' and int(menu[0]) < 4 and model in ('original', 'family'):
         notes.append('Before System Menu 4.0, the stock menu needs an SD card of 2 GB or less; do not buy a larger card for the exploit stage.')
     if model == 'mini':
-        notes.append('Wii mini has no SD slot. SD storage cannot be used directly; use its dedicated USB-based guide. WiiForge preparation remains blocked.')
+        notes.append('Wii mini has no SD slot. SD storage cannot be used directly; use its dedicated USB-based guide. WiiReady preparation remains blocked.')
         if values['storage'] == 'sd':
             notes.append('Your SD choice does not fit a stock Wii mini; revise the storage choice before proceeding.')
     if values['storage'] == 'usb-flash':
@@ -72,7 +72,7 @@ def start(answers=None):
     if values['storage'] == 'sd' and model != 'mini':
         notes.append('Current USB Loader GX supports Wii games on SD. The existing disk planner is USB-oriented; do not fabricate a passing inspection for SD.')
     if values['computer'] == 'windows':
-        notes.append('WiiForge destination preparation requires POSIX; Windows users use the reviewed guide/ModMii workflow, not a guessed drive mapping.')
+        notes.append('WiiReady destination preparation requires POSIX; Windows users use the reviewed guide/ModMii workflow, not a guessed drive mapping.')
     if values['gamecube'] == 'yes':
         notes.append('Review Nintendont, controller support and saves separately. A stock Family Edition, mini or vWii cannot dump GameCube discs.')
     if values['cable'] == 'adapter':
@@ -110,7 +110,7 @@ def shopping():
 
 
 def render(result):
-    lines = ['WiiForge — start here', '', result['route']['instruction'], result['route']['source']]
+    lines = ['WiiReady — start here', '', result['route']['instruction'], result['route']['source']]
     if result['questions']:
         lines += ['', 'Ask next:'] + ['- ' + q for q in result['questions'][:3]]
         if len(result['questions']) > 3:

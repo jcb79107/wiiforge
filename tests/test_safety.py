@@ -7,7 +7,7 @@ import os
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from wiiforge.__main__ import demo, evidence, inspect, normalize, plan, profile, read, resume
+from wiiready.__main__ import demo, evidence, inspect, normalize, plan, profile, read, resume
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -25,7 +25,7 @@ class SafetyTests(unittest.TestCase):
                        'VolumeAllocationBlockSize': 32768}]
         self.d = normalize(self.info, self.parts)
 
-    @patch('wiiforge.__main__.diskutil', side_effect=AssertionError('Demo accessed hardware'))
+    @patch('wiiready.__main__.diskutil', side_effect=AssertionError('Demo accessed hardware'))
     def test_demo_is_synthetic_and_has_no_completed_checkpoints(self, diskutil):
         result = demo()
         self.assertTrue(result['demo'])
@@ -38,11 +38,11 @@ class SafetyTests(unittest.TestCase):
 
     def test_demo_cli_and_help(self):
         env = dict(os.environ, PYTHONPATH=str(ROOT / 'src'))
-        result = subprocess.run([sys.executable, '-m', 'wiiforge', 'demo'],
+        result = subprocess.run([sys.executable, '-m', 'wiiready', 'demo'],
                                 capture_output=True, text=True, env=env)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(json.loads(result.stdout)['demo'])
-        result = subprocess.run([sys.executable, '-m', 'wiiforge', '--help'],
+        result = subprocess.run([sys.executable, '-m', 'wiiready', '--help'],
                                 capture_output=True, text=True, env=env)
         self.assertEqual(result.returncode, 0)
         self.assertIn('Try synthetic plans', result.stdout)
@@ -142,16 +142,16 @@ class SafetyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             resume(plan(self.p, dict(self.e, model='unknown'), self.d))
 
-    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
-    @patch('wiiforge.__main__.diskutil')
+    @patch('wiiready.__main__.platform.system', return_value='Darwin')
+    @patch('wiiready.__main__.diskutil')
     def test_live_inspection_only_calls_list_and_info(self, diskutil, system):
         listing = {'AllDisksAndPartitions': [{'DeviceIdentifier': 'disk9', 'Partitions': [{'DeviceIdentifier': 'disk9s1'}]}]}
         diskutil.side_effect = [listing, self.info, self.parts[0]] * 2
         self.assertEqual(inspect('disk9'), self.d)
         self.assertEqual([c.args for c in diskutil.call_args_list], [('list', '-plist'), ('info', '-plist', 'disk9'), ('info', '-plist', 'disk9s1')] * 2)
 
-    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
-    @patch('wiiforge.__main__.diskutil')
+    @patch('wiiready.__main__.platform.system', return_value='Darwin')
+    @patch('wiiready.__main__.diskutil')
     def test_ambiguous_and_changed_devices(self, diskutil, system):
         row = {'DeviceIdentifier': 'disk9', 'Partitions': []}
         diskutil.return_value = {'AllDisksAndPartitions': [row, row]}
@@ -169,7 +169,7 @@ class SafetyTests(unittest.TestCase):
             root = Path(tmp)
             for name, value in [('profile', self.p), ('evidence', dict(self.e, model='unknown')), ('inspection', self.d)]:
                 (root / name).write_text(json.dumps(value))
-            cmd = [sys.executable, '-m', 'wiiforge', 'plan']
+            cmd = [sys.executable, '-m', 'wiiready', 'plan']
             for name in ['profile', 'evidence', 'inspection']:
                 cmd += ['--' + name, str(root / name)]
             env = dict(os.environ, PYTHONPATH=str(ROOT / 'src'))
@@ -179,7 +179,7 @@ class SafetyTests(unittest.TestCase):
             (root / 'profile').write_text('invalid')
             result = subprocess.run(cmd, capture_output=True, text=True, env=env)
             self.assertEqual(result.returncode, 2)
-            self.assertIn('WiiForge:', result.stderr)
+            self.assertIn('WiiReady:', result.stderr)
             self.assertNotIn('Traceback', result.stderr)
 
     def test_rejected_resume_does_not_mutate_input(self):
@@ -240,8 +240,8 @@ class SafetyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             resume(plan(self.p, self.e, second), state)
 
-    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
-    @patch('wiiforge.__main__.diskutil')
+    @patch('wiiready.__main__.platform.system', return_value='Darwin')
+    @patch('wiiready.__main__.diskutil')
     def test_disk_info_identity_mismatch_blocks(self, diskutil, system):
         listing = {'AllDisksAndPartitions': [{'DeviceIdentifier': 'disk9', 'Partitions': [{'DeviceIdentifier': 'disk9s1'}]}]}
         for responses in [[listing, dict(self.info, DeviceIdentifier='disk8')],
@@ -250,8 +250,8 @@ class SafetyTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'identity mismatch'):
                 inspect('disk9')
 
-    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
-    @patch('wiiforge.__main__.diskutil')
+    @patch('wiiready.__main__.platform.system', return_value='Darwin')
+    @patch('wiiready.__main__.diskutil')
     def test_volatile_metadata_does_not_break_identity(self, diskutil, system):
         listing = {'AllDisksAndPartitions': [{'DeviceIdentifier': 'disk9', 'Partitions': [{'DeviceIdentifier': 'disk9s1'}]}]}
         diskutil.side_effect = [listing, dict(self.info, FreeSpace=100), self.parts[0],
@@ -266,8 +266,8 @@ class SafetyTests(unittest.TestCase):
             self.assertIn('no-stable-identity',
                           normalize(dict(self.info, DiskUUID=identity), self.parts)['blockers'])
 
-    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
-    @patch('wiiforge.__main__.diskutil')
+    @patch('wiiready.__main__.platform.system', return_value='Darwin')
+    @patch('wiiready.__main__.diskutil')
     def test_partition_changes_during_inspection_block(self, diskutil, system):
         listing = {'AllDisksAndPartitions': [{'DeviceIdentifier': 'disk9', 'Partitions': [{'DeviceIdentifier': 'disk9s1'}]}]}
         diskutil.side_effect = [listing, self.info, self.parts[0], listing, self.info,
@@ -275,8 +275,8 @@ class SafetyTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'changed'):
             inspect('disk9')
 
-    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
-    @patch('wiiforge.__main__.diskutil')
+    @patch('wiiready.__main__.platform.system', return_value='Darwin')
+    @patch('wiiready.__main__.diskutil')
     def test_untrusted_partition_identifiers_not_queried(self, diskutil, system):
         for ids in [['disk8s1'], ['-plist'], ['disk9s1', 'disk9s1'], [None]]:
             diskutil.reset_mock()
@@ -286,8 +286,8 @@ class SafetyTests(unittest.TestCase):
                 inspect('disk9')
             self.assertEqual(diskutil.call_count, 1)
 
-    @patch('wiiforge.__main__.platform.system', return_value='Darwin')
-    @patch('wiiforge.__main__.diskutil')
+    @patch('wiiready.__main__.platform.system', return_value='Darwin')
+    @patch('wiiready.__main__.diskutil')
     def test_malformed_disk_listing_fails_cleanly(self, diskutil, system):
         for value in [None, [], {}, {'AllDisksAndPartitions': [None]},
                       {'AllDisksAndPartitions': [{'DeviceIdentifier': 'disk9'}]}]:
@@ -295,7 +295,7 @@ class SafetyTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 inspect('disk9')
 
-    @patch('wiiforge.__main__.platform.system', return_value='Linux')
+    @patch('wiiready.__main__.platform.system', return_value='Linux')
     def test_unsupported_host_fails_closed(self, system):
         with self.assertRaises(ValueError):
             inspect('disk9')

@@ -10,10 +10,10 @@ import sys
 import unittest
 import zipfile
 
-from wiiforge.__main__ import journey
-from wiiforge.games import check_gamecube
-from wiiforge.onboarding import start
-from wiiforge.hackmii import MEMBERS
+from wiiready.__main__ import journey
+from wiiready.games import check_gamecube
+from wiiready.onboarding import start
+from wiiready.hackmii import MEMBERS
 from test_games import synthetic_header
 from test_hackmii import fixture as hackmii_fixture
 
@@ -37,7 +37,7 @@ def synthetic_package(root, manifest_path):
     else:
         if package == 'hackmii':
             data = hackmii_fixture()
-            expected = {(name if name == 'boot.elf' else 'wiiforge-notices/hackmii/' + name):
+            expected = {(name if name == 'boot.elf' else 'wiiready-notices/hackmii/' + name):
                         ('Synthetic: ' + name).encode() for name in MEMBERS}
         else:
             app = {'usb-loader-gx': 'usbloader_gx', 'loadpriiloader': 'LoadPriiloader',
@@ -80,7 +80,7 @@ class WalkthroughTests(unittest.TestCase):
             (destination / 'keep.txt').write_bytes(expected_files['keep.txt'])
             env = dict(os.environ, PYTHONPATH=str(ROOT / 'src'))
             def cli(command, *args, expected=0):
-                run = subprocess.run([sys.executable, '-m', 'wiiforge', command, *map(str, args)],
+                run = subprocess.run([sys.executable, '-m', 'wiiready', command, *map(str, args)],
                                      cwd=root, env=env, capture_output=True, text=True)
                 self.assertEqual(run.returncode, expected, run.stderr)
                 return json.loads(run.stdout) if run.stdout else None

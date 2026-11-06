@@ -1,6 +1,6 @@
 # Safety and private reporting
 
-WiiForge provides read-only inspection/planning, temporary preparation experiments and explicitly approved file copying. Its test suite does not certify console safety or hardware compatibility. Do not use a generated plan as approval to write to storage or a console.
+WiiReady provides read-only inspection/planning, temporary preparation experiments and explicitly approved file copying. Its test suite does not certify console safety or hardware compatibility. Do not use a generated plan as approval to write to storage or a console.
 
 ## Reporting a problem
 

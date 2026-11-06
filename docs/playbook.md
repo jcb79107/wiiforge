@@ -2,7 +2,7 @@
 
 The agent prepares files; the user operates the Wii. Use the live
 [Wii Hacks Guide](https://wii.hacks.guide/get-started) ([source](https://github.com/hacks-guide/Guide_Wii))
-for the actual modding instructions. This page connects that guide to WiiForge's computer tools.
+for the actual modding instructions. This page connects that guide to WiiReady's computer tools.
 
 ## 1. Identify or shop
 
@@ -20,7 +20,7 @@ never infer them from an SD card. Already modded? Inventory before changing anyt
 
 Follow ModMii's generated guide if selected. Otherwise follow the chosen live guide, including its menu,
 region and storage requirements. Wilbrand covers 3.0–4.3; pre-4.0 needs an SD card of 2 GB or less.
-WiiForge's own preparation remains limited to original Wii; [tool support](usage.md#support-status) is narrower than guide coverage.
+WiiReady's own preparation remains limited to original Wii; [tool support](usage.md#support-status) is narrower than guide coverage.
 
 ## 3. Prepare, then do the next console step
 
@@ -46,7 +46,7 @@ for joining/conversion. Verify actual play, controls, audio/video and save/reloa
 
 Want GameCube? Follow [Nintendont upstream](https://github.com/FIX94/Nintendont), prepare its local files,
 and test directly before GX integration. Stock Family Edition, mini and vWii cannot dump GameCube discs.
-Keep current video settings. Offer autoboot only after recovery and gameplay work.
+Offer [optional picture setup](video.md) if wanted; skipping it keeps current settings and does not block gameplay. Offer autoboot only after recovery and gameplay work.
 
 Finish with how to launch games, save, safely eject and reach recovery, plus a private record of versions
 and confirmed results. If something fails, inspect that error before changing global settings.

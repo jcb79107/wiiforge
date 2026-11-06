@@ -11,8 +11,8 @@ import unittest
 import zipfile
 from unittest.mock import patch
 from types import SimpleNamespace
-from wiiforge.nintendont import nintendont_bytes
-from wiiforge.prepare import plan_preparation, execute_preparation
+from wiiready.nintendont import nintendont_bytes
+from wiiready.prepare import plan_preparation, execute_preparation
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -91,7 +91,7 @@ class NintendontTests(unittest.TestCase):
                 return SimpleNamespace(st_size=info.st_size, st_mtime_ns=info.st_mtime_ns + 1,
                                        st_ctime_ns=info.st_ctime_ns)
             return info
-        with patch('wiiforge.nintendont.os.fstat', side_effect=changing), self.assertRaisesRegex(ValueError, 'changed'):
+        with patch('wiiready.nintendont.os.fstat', side_effect=changing), self.assertRaisesRegex(ValueError, 'changed'):
             self.snapshot()
 
     def test_source_directory_symlink_rejected(self):
@@ -103,14 +103,14 @@ class NintendontTests(unittest.TestCase):
     def test_prepare_resume_conflict_and_interruption(self):
         data = self.snapshot()
         plan = plan_preparation(data, self.dest, 'original')
-        from wiiforge import prepare
+        from wiiready import prepare
         real_copy = prepare._copy_new
         calls = []
         def interrupted(archive, item, root):
             calls.append(item['path'])
             if len(calls) == 2: raise KeyboardInterrupt()
             return real_copy(archive, item, root)
-        with patch('wiiforge.prepare._copy_new', side_effect=interrupted), self.assertRaises(KeyboardInterrupt):
+        with patch('wiiready.prepare._copy_new', side_effect=interrupted), self.assertRaises(KeyboardInterrupt):
             execute_preparation(data, self.dest, 'original', plan, plan['digest'])
         result = execute_preparation(data, self.dest, 'original', plan, plan['digest'])
         self.assertEqual(len(result['verified_existing']), 1)
@@ -129,7 +129,7 @@ class NintendontTests(unittest.TestCase):
         planpath = self.root / 'plan.json'
         common = ['--manifest', str(manifest), '--artifact', str(self.source), '--model', 'original']
         def cli(command, *extra):
-            return subprocess.run([sys.executable, '-m', 'wiiforge', command, *common, *extra],
+            return subprocess.run([sys.executable, '-m', 'wiiready', command, *common, *extra],
                                   cwd=ROOT, env=dict(os.environ, PYTHONPATH=str(ROOT / 'src')),
                                   capture_output=True, text=True)
         verified = cli('verify-package', '--check-archive')

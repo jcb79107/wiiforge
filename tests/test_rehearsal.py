@@ -8,7 +8,7 @@ import tempfile
 import unittest
 import zipfile
 from unittest.mock import Mock, patch
-from wiiforge.rehearsal import _copy_member, _stage_zip, rehearse
+from wiiready.rehearsal import _copy_member, _stage_zip, rehearse
 
 
 def fixture(name='apps/demo/a.txt'):
@@ -23,7 +23,7 @@ class RehearsalTests(unittest.TestCase):
         self.parent = tempfile.TemporaryDirectory()
         self.addCleanup(self.parent.cleanup)
         original = tempfile.TemporaryDirectory
-        self.patch = patch('wiiforge.rehearsal.tempfile.TemporaryDirectory',
+        self.patch = patch('wiiready.rehearsal.tempfile.TemporaryDirectory',
                            side_effect=lambda **kw: original(dir=self.parent.name, **kw))
         self.patch.start()
         self.addCleanup(self.patch.stop)
@@ -47,7 +47,7 @@ class RehearsalTests(unittest.TestCase):
             def interrupted(source, target, expected):
                 target.write_bytes(b'partial')
                 raise error
-            with self.subTest(error=type(error)), patch('wiiforge.rehearsal._copy_member', interrupted):
+            with self.subTest(error=type(error)), patch('wiiready.rehearsal._copy_member', interrupted):
                 with self.assertRaises(type(error)):
                     rehearse()
             self.assert_clean()
@@ -67,7 +67,7 @@ class RehearsalTests(unittest.TestCase):
         def interrupted(source, target, expected):
             target.write_bytes(b'partial')
             raise KeyboardInterrupt()
-        with patch('wiiforge.rehearsal._copy_member', interrupted):
+        with patch('wiiready.rehearsal._copy_member', interrupted):
             with self.assertRaises(KeyboardInterrupt):
                 _stage_zip(fixture(), synthetic=False)
         self.assert_clean()
@@ -76,8 +76,8 @@ class RehearsalTests(unittest.TestCase):
         self.assert_clean()
 
     def test_capacity_rejection_writes_no_payload_and_cleans_directory(self):
-        with patch('wiiforge.rehearsal.shutil.disk_usage', return_value=Mock(free=0)):
-            with patch('wiiforge.rehearsal._copy_member') as copy:
+        with patch('wiiready.rehearsal.shutil.disk_usage', return_value=Mock(free=0)):
+            with patch('wiiready.rehearsal._copy_member') as copy:
                 with self.assertRaisesRegex(ValueError, 'Insufficient'):
                     _stage_zip(fixture(), synthetic=False)
                 copy.assert_not_called()
@@ -104,6 +104,6 @@ class RehearsalTests(unittest.TestCase):
     def test_cli_rejects_destination_or_artifact_arguments(self):
         root = Path(__file__).resolve().parents[1]
         for option in ['--destination', '--artifact']:
-            result = subprocess.run([sys.executable, '-m', 'wiiforge', 'rehearse', option, 'unused'],
+            result = subprocess.run([sys.executable, '-m', 'wiiready', 'rehearse', option, 'unused'],
                                     capture_output=True, env=dict(os.environ, PYTHONPATH=str(root / 'src')))
             self.assertEqual(result.returncode, 2)

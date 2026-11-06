@@ -23,9 +23,9 @@ jobs:
         run: |
           python3 --version
           python3 -m unittest discover -s tests -v
-          python3 -m wiiforge start
-          python3 -m wiiforge demo
-          python3 -m wiiforge rehearse
+          python3 -m wiiready start
+          python3 -m wiiready demo
+          python3 -m wiiready rehearse
           python3 -m compileall -q src
   windows-readonly:
     strategy:
@@ -44,6 +44,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Windows intake and session tests
         run: python -m unittest discover -s tests -p test_onboarding.py -v
+      - name: Command compatibility and optional picture flow
+        run: python -m unittest discover -s tests -p test_identity.py -v
       - name: Windows private ZIP checks
         run: python -m unittest discover -s tests -p test_exploit.py -v
       - name: Windows game header checks
@@ -55,6 +57,6 @@ jobs:
       - name: Windows private plan summaries
         run: python -m unittest discover -s tests -p test_plan_summary.py -v
       - name: Intake smoke test
-        run: python -m wiiforge start
+        run: python -m wiiready start
       - name: Synthetic plan smoke test
-        run: python -m wiiforge demo
+        run: python -m wiiready demo

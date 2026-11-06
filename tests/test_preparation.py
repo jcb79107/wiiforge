@@ -11,8 +11,8 @@ from types import SimpleNamespace
 import unittest
 import zipfile
 from unittest.mock import Mock, patch
-from wiiforge.prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation, _copy_new, root_directory, parent_directory
-from wiiforge.__main__ import read
+from wiiready.prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation, _copy_new, root_directory, parent_directory
+from wiiready.__main__ import read
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -97,7 +97,7 @@ class PreparationTests(unittest.TestCase):
             if count == 2:
                 raise KeyboardInterrupt()
             _copy_new(archive, item, root)
-        with patch('wiiforge.prepare._copy_new', interrupt), self.assertRaises(KeyboardInterrupt):
+        with patch('wiiready.prepare._copy_new', interrupt), self.assertRaises(KeyboardInterrupt):
             self.execute(plan)
         result = self.execute(plan)
         self.assertEqual(result['verified_existing'], ['apps/demo/a.txt'])
@@ -105,7 +105,7 @@ class PreparationTests(unittest.TestCase):
 
     def test_failure_during_copy_removes_only_new_file(self):
         plan = plan_preparation(self.data, self.dest, 'original')
-        with patch('wiiforge.prepare.os.fsync', side_effect=OSError('simulated full disk')):
+        with patch('wiiready.prepare.os.fsync', side_effect=OSError('simulated full disk')):
             with self.assertRaises(OSError):
                 self.execute(plan)
         self.assertFalse((self.dest / 'apps/demo/a.txt').exists())
@@ -156,7 +156,7 @@ class PreparationTests(unittest.TestCase):
             if info.st_ino == inode:
                 return SimpleNamespace(st_dev=info.st_dev + 1)
             return info
-        with patch('wiiforge.prepare.os.fstat', different_device):
+        with patch('wiiready.prepare.os.fstat', different_device):
             with self.assertRaisesRegex(ValueError, 'device boundary'):
                 self.execute(plan)
             with root_directory(self.dest) as (root, _):
@@ -176,14 +176,14 @@ class PreparationTests(unittest.TestCase):
             if info.st_ino == inode:
                 return SimpleNamespace(st_dev=info.st_dev + 1)
             return info
-        with patch('wiiforge.prepare.os.fstat', different_device):
+        with patch('wiiready.prepare.os.fstat', different_device):
             with self.assertRaisesRegex(ValueError, 'device boundary'):
                 plan_preparation(self.data, self.dest, 'original')
         self.assertEqual(target.read_bytes(), b'beta')
         self.assertFalse((self.dest / 'apps/demo/a.txt').exists())
 
     def test_space_and_models_fail_closed(self):
-        with patch('wiiforge.prepare.os.fstatvfs', return_value=Mock(f_bavail=0, f_frsize=4096)):
+        with patch('wiiready.prepare.os.fstatvfs', return_value=Mock(f_bavail=0, f_frsize=4096)):
             with self.assertRaisesRegex(ValueError, 'space'):
                 plan_preparation(self.data, self.dest, 'original')
         for model in ['mini', 'vwii', 'family', 'unknown']:
@@ -202,7 +202,7 @@ class PreparationTests(unittest.TestCase):
         args = ['--manifest', str(manifest_path), '--artifact', str(artifact), '--model', 'original',
                 '--destination', str(self.dest)]
         env = dict(os.environ, PYTHONPATH=str(ROOT / 'src'))
-        result = subprocess.run([sys.executable, '-m', 'wiiforge', 'prepare-plan', *args],
+        result = subprocess.run([sys.executable, '-m', 'wiiready', 'prepare-plan', *args],
                                 env=env, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertGreater(len(result.stdout.encode()), 1048576)
@@ -211,14 +211,14 @@ class PreparationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             read(plan_path)  # Other input types keep the original limit.
         plan = read(plan_path, PREPARATION_PLAN_LIMIT)
-        result = subprocess.run([sys.executable, '-m', 'wiiforge', 'prepare', *args,
+        result = subprocess.run([sys.executable, '-m', 'wiiready', 'prepare', *args,
                                  '--plan', str(plan_path), '--approve-plan', plan['digest']],
                                 env=env, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len(json.loads(result.stdout)['written']), 2500)
 
     def test_plan_limit_is_enforced_at_generation_and_read(self):
-        with patch('wiiforge.prepare.PREPARATION_PLAN_LIMIT', 100):
+        with patch('wiiready.prepare.PREPARATION_PLAN_LIMIT', 100):
             with self.assertRaisesRegex(ValueError, 'plan exceeds'):
                 plan_preparation(self.data, self.dest, 'original')
         self.assertEqual(list(self.dest.iterdir()), [])
@@ -237,7 +237,7 @@ class PreparationTests(unittest.TestCase):
         args = ['--manifest', str(manifest_path), '--artifact', str(artifact), '--model', 'original', '--destination', str(self.dest)]
         env = dict(os.environ, PYTHONPATH=str(ROOT / 'src'))
         def run(command, extra=()):
-            return subprocess.run([sys.executable, '-m', 'wiiforge', command, *args, *extra], env=env, capture_output=True, text=True)
+            return subprocess.run([sys.executable, '-m', 'wiiready', command, *args, *extra], env=env, capture_output=True, text=True)
         reviewed = run('prepare-plan')
         self.assertEqual(reviewed.returncode, 0, reviewed.stderr)
         plan = json.loads(reviewed.stdout)

@@ -10,8 +10,8 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from wiiforge.gamecopy import plan_game_copy, execute_game_copy
-from wiiforge import prepare
+from wiiready.gamecopy import plan_game_copy, execute_game_copy
+from wiiready import prepare
 from test_games import synthetic_header
 
 
@@ -85,7 +85,7 @@ class GameCopyTests(unittest.TestCase):
             calls += 1
             if calls == 2: raise KeyboardInterrupt()
             return original(*args)
-        with patch('wiiforge.prepare._copy_new', side_effect=interrupted), self.assertRaises(KeyboardInterrupt):
+        with patch('wiiready.prepare._copy_new', side_effect=interrupted), self.assertRaises(KeyboardInterrupt):
             self.execute(plan, self.second)
         result = self.execute(plan, self.second)
         self.assertEqual(len(result['verified_existing']), 1)
@@ -98,12 +98,12 @@ class GameCopyTests(unittest.TestCase):
             # After revalidation, before copying: the source identity check must stop it.
             self.source.write_bytes(self.source.read_bytes() + b'changed')
             return original(archive, item, root)
-        with patch('wiiforge.prepare._copy_new', side_effect=mutate), self.assertRaises(ValueError):
+        with patch('wiiready.prepare._copy_new', side_effect=mutate), self.assertRaises(ValueError):
             self.execute(plan)
         self.assertFalse((self.destination / 'games/TEST00/game.iso').exists())
 
     def test_interruption_inside_copy_removes_partial_output_and_keeps_source(self):
-        from wiiforge import gamecopy
+        from wiiready import gamecopy
         source_bytes = self.source.read_bytes()
         plan = self.plan()
         class Interrupted:
@@ -136,7 +136,7 @@ class GameCopyTests(unittest.TestCase):
                                        st_size=info.st_size, st_mtime_ns=info.st_mtime_ns + 1,
                                        st_ctime_ns=info.st_ctime_ns)
             return info
-        with patch('wiiforge.gamecopy.os.fstat', side_effect=changed), self.assertRaisesRegex(ValueError, 'changed'):
+        with patch('wiiready.gamecopy.os.fstat', side_effect=changed), self.assertRaisesRegex(ValueError, 'changed'):
             self.plan()
         self.assertEqual(list(self.destination.iterdir()), [])
 
@@ -152,7 +152,7 @@ class GameCopyTests(unittest.TestCase):
         (self.destination / 'games').symlink_to(self.root, target_is_directory=True)
         with self.assertRaises(OSError): self.plan()
         (self.destination / 'games').unlink()
-        with patch('wiiforge.prepare.os.fstatvfs', return_value=SimpleNamespace(f_bavail=0, f_frsize=4096)):
+        with patch('wiiready.prepare.os.fstatvfs', return_value=SimpleNamespace(f_bavail=0, f_frsize=4096)):
             with self.assertRaises(ValueError): self.plan()
         self.assertEqual(list(self.destination.iterdir()), [])
 
@@ -160,7 +160,7 @@ class GameCopyTests(unittest.TestCase):
         env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / 'src'))
         common = ['--disc1', str(self.source), '--destination', str(self.destination), '--model', 'original']
         def cli(command, *args):
-            return subprocess.run([sys.executable, '-m', 'wiiforge', command, *common, *args],
+            return subprocess.run([sys.executable, '-m', 'wiiready', command, *common, *args],
                                   env=env, capture_output=True, text=True)
         planned = cli('gamecube-plan')
         self.assertEqual(planned.returncode, 0, planned.stderr)
@@ -175,5 +175,5 @@ class GameCopyTests(unittest.TestCase):
 
 class GameCopyHostTests(unittest.TestCase):
     def test_windows_is_blocked_before_source_or_destination_access(self):
-        with patch('wiiforge.gamecopy.os.name', 'nt'), self.assertRaisesRegex(ValueError, 'POSIX'):
+        with patch('wiiready.gamecopy.os.name', 'nt'), self.assertRaisesRegex(ValueError, 'POSIX'):
             plan_game_copy('missing.iso', None, 'missing-destination', 'original')

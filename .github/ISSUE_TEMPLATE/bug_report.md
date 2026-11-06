@@ -13,7 +13,7 @@ Command, exit code, and the smallest invented input that reproduces the problem:
 
 ## Environment
 
-Python version, OS version, and WiiForge commit (no device identifiers):
+Python version, OS version, and WiiReady commit (no device identifiers):
 
 ## Privacy check
 

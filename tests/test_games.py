@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from wiiforge.games import HEADER_BYTES, check_gamecube
+from wiiready.games import HEADER_BYTES, check_gamecube
 
 
 def synthetic_header(game_id=b'TEST00', disc=0):
@@ -99,7 +99,7 @@ class GameTests(unittest.TestCase):
                 return SimpleNamespace(st_size=result.st_size + 1,
                                        st_mtime_ns=result.st_mtime_ns, st_ctime_ns=result.st_ctime_ns)
             return result
-        with patch('wiiforge.games.os.fstat', side_effect=changed):
+        with patch('wiiready.games.os.fstat', side_effect=changed):
             with self.assertRaisesRegex(ValueError, 'changed'): check_gamecube(self.first)
         # Trailing bytes do not affect a header-only result and are not consumed.
         with self.first.open('ab') as file: file.write(b'Not executable game content' * 1000)
@@ -113,13 +113,13 @@ class GameTests(unittest.TestCase):
             def read(self, count):
                 reads.append(count)
                 return self.file.read(count)
-        with patch('wiiforge.games.os.fdopen', side_effect=lambda *a, **k: Reader(original(*a, **k))):
+        with patch('wiiready.games.os.fdopen', side_effect=lambda *a, **k: Reader(original(*a, **k))):
             check_gamecube(self.first)
         self.assertEqual(reads, [HEADER_BYTES])
 
     def test_cli_has_actionable_report_and_clean_errors(self):
         env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / 'src'))
-        command = [sys.executable, '-m', 'wiiforge', 'check-gamecube', '--disc1', str(self.first)]
+        command = [sys.executable, '-m', 'wiiready', 'check-gamecube', '--disc1', str(self.first)]
         success = subprocess.run(command, env=env, capture_output=True, text=True)
         self.assertEqual(success.returncode, 0, success.stderr)
         self.assertEqual(json.loads(success.stdout)['suggested_layout'], ['games/<your-game-folder>/game.iso'])

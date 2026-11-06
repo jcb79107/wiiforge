@@ -18,7 +18,7 @@ These observations do not establish licensing for the complete release or all bu
 If you already have the exact release ZIP in a private host folder:
 
 ```sh
-PYTHONPATH=src python3 -m wiiforge verify-package \
+PYTHONPATH=src python3 -m wiiready verify-package \
   --manifest packages/usb-loader-gx.yaml \
   --artifact /your/private/folder/usbloadergx_r1283.zip --model original --check-archive
 ```
@@ -44,7 +44,7 @@ stages `boot.dol`, `icon.png` and `meta.xml` under `apps/usbloader_gx`. The read
 A match returns `content-verified` **and exit 2**, because license review, archive content and hardware validation
 still block installation. A mismatch also exits 2 with an error. The manifest itself must be trusted/reviewed;
 editing its hash can make arbitrary bytes match. This checker is not a signature verifier or malware scanner.
-The model list is WiiForge's limited review scope, not an upstream compatibility claim.
+The model list is WiiReady's limited review scope, not an upstream compatibility claim.
 
 Before staging: review licensing, recheck release metadata, verify archive content/layout and capacity, then test preservation and interrupted copies in temporary directories. Media writes remain separate.
 
@@ -65,7 +65,7 @@ component and distribution-obligation review is still outstanding.
 
 The hash-verified ZIP’s `wiitdb.xml` header identifies GameTDB and describes Wii-related project use,
 but requires permission for website use. This component notice does not resolve the complete package’s
-license. WiiForge does not bundle this database, publish its records or provide a web viewer. Package
+license. WiiReady does not bundle this database, publish its records or provide a web viewer. Package
 commands operate on user-supplied local files and report paths, sizes and hashes rather than database
 contents. Keep prepared files private; do not use this workflow to redistribute the package or place
 the database in a website’s served directory. The destination checker cannot determine whether another
@@ -131,19 +131,19 @@ The current [Wii Hacks Guide](https://wii.hacks.guide/priiloader) links the Prii
 
 The manifest version identifies the release containing the assets; Load Priiloader's own app version is 1.0. GitHub's API returned no asset digest. SHA-256 values were therefore calculated locally from the official downloads; they are not upstream-supplied digests or signatures. Both actual ZIPs passed bounded metadata and streamed CRC/size inspection without extraction or execution. Only synthetic fixtures have exercised destination writes.
 
-The installer contains a GPL version 2 notice, which the preparation engine preserves unchanged at its original root `LICENSE` path. An existing conflicting file blocks preparation; do not remove it automatically. Complete distribution obligations are not cleared by finding one notice: licensing remains pending and no upstream binaries are redistributed. The Wii U forwarder is not accepted. All WiiForge preparation remains restricted to explicit original-Wii selection.
+The installer contains a GPL version 2 notice, which the preparation engine preserves unchanged at its original root `LICENSE` path. An existing conflicting file blocks preparation; do not remove it automatically. Complete distribution obligations are not cleared by finding one notice: licensing remains pending and no upstream binaries are redistributed. The Wii U forwarder is not accepted. All WiiReady preparation remains restricted to explicit original-Wii selection.
 
 ## HackMii, NAND dumper and d2x files — 2026-11-06
 
 | Manifest | Publisher source | Integrity evidence | Preparation |
 | --- | --- | --- | --- |
-| `hackmii.yaml` | [BootMii download page](https://bootmii.org/download/) → HackMii 1.2 | 4,427,097 bytes; locally calculated SHA-256 | Root `boot.elf` plus six unchanged notice/readme files under `wiiforge-notices/hackmii/` |
+| `hackmii.yaml` | [BootMii download page](https://bootmii.org/download/) → HackMii 1.2 | 4,427,097 bytes; locally calculated SHA-256 | Root `boot.elf` plus six unchanged notice/readme files under `wiiready-notices/hackmii/` |
 | `nanddumper-ios.yaml` | [Naim2000 release 1.1](https://github.com/Naim2000/nanddumper_ios/releases/tag/1.1) | 1,168,703 bytes; GitHub release SHA-256 matched | Four files under `apps/nanddumper_ios` |
 | `d2x-cios-installer.yaml` | [wiidev d2x-v11-beta3](https://github.com/wiidev/d2x-cios/releases/tag/d2x-v11-beta3) | 670,538 bytes; locally calculated SHA-256 | Twelve installer/config/module files under `apps/d2x-cios-installer` |
 
 The [NAND guide](https://wii.hacks.guide/nand-backup) and [cIOS guide](https://wii.hacks.guide/cios) link Open Shop Channel pages identifying these upstream projects. The OSC download endpoint returned HTTP 403 during review; these pins use the primary authors' GitHub assets, not an assumed identical OSC ZIP. All actual inputs passed bounded archive and streamed CRC/size inspection in memory. No payload was executed or prepared onto media.
 
-HackMii's publisher forbids redistribution. WiiForge neither bundles nor hosts it: users obtain their own copy from the publisher. The preparation snapshot excludes `bootmini.elf` and all `wiiload` PC executables, preserves selected files byte-for-byte, and leaves the private source ZIP untouched. This does not generate a personalized exploit or establish BootMii eligibility. The local-use workflow is not a legal clearance; redistribution remains prohibited.
+HackMii's publisher forbids redistribution. WiiReady neither bundles nor hosts it: users obtain their own copy from the publisher. The preparation snapshot excludes `bootmini.elf` and all `wiiload` PC executables, preserves selected files byte-for-byte, and leaves the private source ZIP untouched. This does not generate a personalized exploit or establish BootMii eligibility. The local-use workflow is not a legal clearance; redistribution remains prohibited.
 
 The d2x ZIP contains installer code, configuration and d2x modules; it supplies no Nintendo base-IOS WADs. Original-Wii selection is mandatory; the differently named vWii package is rejected. Preparing files does not install cIOS or select slots. NAND-dumper preparation supplies an app, not a backup: actual backups and unique keys stay private. Complete component licensing and real hardware validation remain outstanding for these paths.
 
@@ -155,5 +155,5 @@ The [disc-dumping guide](https://wii.hacks.guide/dump-games) links CleanRip thro
 inspection found only `apps/CleanRip/boot.dol`, `icon.png` and `meta.xml`, without extraction or execution.
 The separate `-gc.zip` build is rejected. The upstream repository has a [GPL-2.0 license](https://github.com/emukidid/cleanrip/blob/master/LICENSE),
 but the app ZIP contains no license file; complete distribution review remains pending. No binaries are bundled.
-WiiForge prepares only an explicitly selected original-Wii app. It does not dump discs, obtain games or
+WiiReady prepares only an explicitly selected original-Wii app. It does not dump discs, obtain games or
 authorize console/storage operations. Skip this package when a lawful verified dump already exists.

@@ -1,8 +1,8 @@
 # What to buy (and what to keep)
 
-No console yet? Your assistant can run `python3 -m wiiforge start --shopping` from the configured checkout (add `--json` for structured output). This asks three shopping questions without requesting a console label/menu or creating installation evidence.
+No console yet? Your assistant can run `python3 -m wiiready start --shopping` from the configured checkout (add `--json` for structured output). This asks three shopping questions without requesting a console label/menu or creating installation evidence.
 
-First tell your assistant your country, budget, TV inputs, what you already own, and whether you want GameCube discs/controllers. Ask it to check current listings and returns before recommending an exact product. No model of card, enclosure or HDMI adapter has been hardware-certified by WiiForge. Avoid paying for a seller's preloaded game library.
+First tell your assistant your country, budget, TV inputs, what you already own, and whether you want GameCube discs/controllers. Ask it to check current listings and returns before recommending an exact product. No model of card, enclosure or HDMI adapter has been hardware-certified by WiiReady. Avoid paying for a seller's preloaded game library.
 
 ## A practical starting basket
 
@@ -15,7 +15,7 @@ First tell your assistant your country, budget, TV inputs, what you already own,
 | TV connection | Keep a working cable while setting up | Check actual sockets and accepted resolutions before buying component cables, an HDMI adapter or a scaler. |
 | GameCube controls | Original controller if using RVL-001 ports; otherwise a specifically supported Nintendont controller | Check the exact controller/adapter against upstream; do not assume any USB gamepad works. |
 
-The original Wii recommendation favors a straightforward disc-dumping and controller path. Stock Family Edition, mini and vWii cannot dump GameCube discs; this does **not** mean every model is incapable of playing backups through homebrew. See the [disc-dumping guide](https://wii.hacks.guide/dump-games) and [Nintendont upstream](https://github.com/FIX94/Nintendont). WiiForge's own Family/mini/vWii installation paths remain blocked.
+The original Wii recommendation favors a straightforward disc-dumping and controller path. Stock Family Edition, mini and vWii cannot dump GameCube discs; this does **not** mean every model is incapable of playing backups through homebrew. See the [disc-dumping guide](https://wii.hacks.guide/dump-games) and [Nintendont upstream](https://github.com/FIX94/Nintendont). WiiReady's own Family/mini/vWii installation paths remain blocked.
 
 ## Storage tradeoffs
 
@@ -24,6 +24,8 @@ SD keeps the setup tidy; USB HDD provides room without buying a high-capacity ca
 Use FAT32 for the shared Wii/GameCube starting setup. A card sold as exFAT needs separate formatting review and data backup; never format just because an assistant selected a drive. FAT32's file-size limit means large Wii backups need proper splitting, not renaming. An old WBFS **partition** is different from `.wbfs` game files. See the current [storage FAQ](https://wii.hacks.guide/faq#storage-device-faq) and [loader layout](https://wii.hacks.guide/wii-loaders).
 
 ## CRT or modern TV?
+
+Want help choosing cables and settings? Use [optional picture setup](video.md), or skip it and keep what works.
 
 For a CRT, retain its known-working signal and aspect ratio. For a modern TV, check whether it accepts the console's existing signal directly; an adapter or scaler is a separate purchase decision. Ask for the TV model and adapter model, not just “HDMI.” Do not force progressive output, widescreen patches or deflicker changes globally. Test one game and change one setting at a time. These are conservative setup choices, not a display compatibility matrix.
 
