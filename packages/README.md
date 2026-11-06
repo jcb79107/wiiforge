@@ -101,3 +101,21 @@ or that redistribution obligations have been satisfied.
 For explicitly approved, persistent file preparation, see [controlled preparation](../docs/usage.md#controlled-file-preparation).
 It uses the same package pin and original-Wii restriction, preserves installation blockers, and refuses overwrites.
 Only isolated synthetic destination fixtures have been tested for that path; the real ZIP was tested only in disposable staging.
+
+## Nintendont local files — 2026-11-06
+
+`nintendont.yaml` pins the [official tree at c683db3](https://github.com/FIX94/Nintendont/tree/c683db301c941a64e6fe5cef6ac079bd1a726074).
+The [upstream instructions at that commit](https://github.com/FIX94/Nintendont/blob/c683db301c941a64e6fe5cef6ac079bd1a726074/README.md)
+map `loader/loader.dol` to `apps/Nintendont/boot.dol`, with `nintendont/meta.xml` and `nintendont/icon.png` beside it.
+The three files total 1,649,855 bytes. Their Git blob IDs were obtained from GitHub's tree API; fetched bytes matched those IDs before local SHA-256 calculation. These are **locally calculated pins**, not publisher signatures or independently supplied upstream SHA-256 digests.
+
+The CLI accepts an existing private folder containing `loader.dol`, `meta.xml` and `icon.png`.
+It checks sizes, SHA-256, Git blob identities and metadata stability, then builds a deterministic ZIP only in memory
+for the existing preparation engine. Fixed names prevent manifest-selected output paths; extra files are ignored.
+Nothing is fetched, executed or bundled by the CLI. The default verification path writes nothing.
+This path currently requires POSIX and explicitly confirmed original-Wii selection, regardless of upstream's wider support.
+
+The source tree contains component-specific COPYING/LICENSE files; that is not a complete distribution review.
+`license_review` stays pending. No game, BIOS, save, key or upstream binary is included in this repo.
+Read-only verification of the actual pinned files passed; destination preparation and resume were tested with synthetic files only.
+See [Nintendont preparation](../docs/usage.md#prepare-nintendont-from-local-files) for commands.

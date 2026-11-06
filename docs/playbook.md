@@ -12,7 +12,7 @@ The assistant runs `python3 -m wiiforge start` after setting `PYTHONPATH=src`. A
 - Computer OS, SD card/reader, game storage, TV inputs/cable, controllers, Wii-only or also GameCube.
 - If shopping: country, budget and existing equipment. Use [the buying guide](buying.md), not a fixed shopping cart.
 
-Keep observations and progress in a private folder outside the repo. Do not collect serial numbers, MAC addresses, keys or backups into chat. If an exploit needs a MAC address, have the user enter it directly in the reviewed tool. Unknown is a valid answer.
+Keep observations and progress in a private folder outside the repo. For the supported original-Wii 4.3U path, use [journey](usage.md#resume-the-guided-journey-across-computers) to persist and resume ordered manual checkpoints. Do not collect serial numbers, MAC addresses, keys or backups into chat. If an exploit needs a MAC address, have the user enter it directly in the reviewed tool. Unknown is a valid answer.
 
 The optional `start --answers /private/intake.json --json` command turns observations into a route, questions, and profile/evidence drafts. [Input format](usage.md#begin-with-your-own-setup). It never certifies a drive or console. Different hardware can have an official guide even when WiiForge's stricter planner does not support it.
 
@@ -37,7 +37,7 @@ The assistant owns the inventory, source checks, file layout and verification. T
 1. Identify the exact storage and preserve existing files. Review capacity, filesystem and backup needs. Never auto-format, repair, repartition or overwrite. Do not use a folder as proof of physical-drive identity.
 2. Obtain needed tools only from links in the selected current guide or primary upstream. Record source and version privately. Do not execute unfamiliar downloads without approval or disable antivirus to make them run.
 3. For the reviewed local GX ZIP, use [verify-package and controlled preparation](usage.md#controlled-file-preparation): preflight → show exact writes → approve digest → prepare → read-back verification. This supports POSIX hosts, not Windows destinations. Package licensing stays unresolved; no redistribution or website hosting of bundled GameTDB data.
-4. Other apps/exploits still need guide-specific preparation. **Do not change the GX manifest to pretend they are reviewed.** Review their archive, source, layout and destination separately before any explicitly authorized copy. Never silently replace `apps`, `private`, saves or loader configuration.
+4. Nintendont has a [local-file preparation path](usage.md#prepare-nintendont-from-local-files) using the same engine. Other apps/exploits still need guide-specific preparation. **Do not change the GX manifest to pretend they are reviewed.** Review their archive, source, layout and destination separately before any explicitly authorized copy. Never silently replace `apps`, `private`, saves or loader configuration.
 5. Show the resulting layout and safe-eject instructions. Reinspect and approve a new plan after reconnect. The agent should identify what it completed and what still needs manual work.
 
 Windows users should be offered the current ModMii workflow rather than asked to install a POSIX environment just to run WiiForge. The `start` command itself runs with Python 3.10+; CI includes a Windows intake/smoke job, separate from POSIX preparation tests.
@@ -59,7 +59,7 @@ BootMii as boot2 is only offered on eligible hardware. BootMii as IOS plus Priil
 
 ## 5. Add GameCube, then convenience
 
-Use [Nintendont upstream](https://github.com/FIX94/Nintendont) for app files and controller options. Test Nintendont directly before integrating it into GX. A simple disc layout is `games/Your Game/game.iso`; for two-disc titles put `disc2.iso` beside it. These are destination examples, not files supplied by WiiForge. Keep Wii backups in the loader's documented `wbfs` layout; changing an extension is not conversion. The current [backup-management guide](https://wii.hacks.guide/backups) uses TinyWiiBackupManager for conversion/organization. Review its exact release and proposed operations before approving execution; do not automatically normalize existing paths or bypass operating-system security warnings.
+Use [Nintendont upstream](https://github.com/FIX94/Nintendont) for app files and controller options; the assistant can verify and prepare the three [pinned local files](usage.md#prepare-nintendont-from-local-files). Test Nintendont directly before integrating it into GX. A simple disc layout is `games/Your Game/game.iso`; for two-disc titles put `disc2.iso` beside it. These are destination examples, not files supplied by WiiForge. Keep Wii backups in the loader's documented `wbfs` layout; changing an extension is not conversion. The current [backup-management guide](https://wii.hacks.guide/backups) uses TinyWiiBackupManager for conversion/organization. Review its exact release and proposed operations before approving execution; do not automatically normalize existing paths or bypass operating-system security warnings.
 
 Confirm controller mapping, memory-card choice, a real save/reload and return behavior. Preserve video defaults at first. Use only games you can lawfully dump/use; ownership is not an instruction to download someone else's copy. No ROM sites, keys or copyrighted bundles are provided.
 

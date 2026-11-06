@@ -28,7 +28,10 @@ def start(answers=None):
     if not isinstance(menu, str) or not re.fullmatch(r'unknown|[1-4]\.[0-3][UEJK]', menu):
         raise ValueError('Menu must be the observed version and region, such as 4.3U, or unknown')
     values['menu'] = menu
-    questions = [question for key, (_, question) in FIELDS.items() if values[key] == 'unknown']
+    questions = [question for key, (_, question) in FIELDS.items()
+                 if values[key] == 'unknown' and not (values['model'] == 'mini' and key in ('sd', 'storage'))]
+    if values['model'] == 'mini' and values['storage'] == 'unknown':
+        questions.append('What USB storage do you have for the Wii mini? It has no SD slot.')
     if menu == 'unknown':
         questions.insert(1, 'What full version appears at the top right of Wii Settings (for example 4.3E)? Do not update just to match an example.')
     route, url = 'Identify your console before choosing an exploit.', GUIDE + 'get-started'
@@ -44,6 +47,8 @@ def start(answers=None):
     elif model == 'original':
         if values['homebrew'] == 'unknown' or menu == 'unknown':
             route = 'Confirm menu and existing homebrew before choosing a fresh-install route.'
+        elif int(menu[0]) < 3:
+            route = 'This pre-3.0 menu is outside the reviewed Wilbrand route. Review the current guide; do not update or run an exploit automatically.'
         elif values['computer'] == 'windows':
             route, url = 'Review ModMii for guided Windows preparation; approve running it separately and follow its generated guide.', GUIDE + 'modmii'
         elif values['computer'] in ('macos', 'linux') and values['sd'] == 'yes' and int(menu[0]) >= 3:
@@ -54,9 +59,14 @@ def start(answers=None):
              'Preserve current video settings. Optional autoboot comes after recovery and actual gameplay tests.']
     if menu != 'unknown' and int(menu[0]) < 4 and model in ('original', 'family'):
         notes.append('Before System Menu 4.0, the stock menu needs an SD card of 2 GB or less; do not buy a larger card for the exploit stage.')
+    if model == 'mini':
+        notes.append('Wii mini has no SD slot. SD storage cannot be used directly; use its dedicated USB-based guide. WiiForge preparation remains blocked.')
+        if values['sd'] == 'yes' or values['storage'] == 'sd':
+            notes.append('Your SD choice does not fit a stock Wii mini; revise the storage choice before proceeding.')
     if values['storage'] == 'usb-flash':
-        notes.append('Choose SD or a USB hard drive instead if possible: USB flash-drive reliability is unpredictable.')
-    if values['storage'] == 'sd':
+        alternative = 'a USB hard drive' if model == 'mini' else 'SD or a USB hard drive'
+        notes.append('Choose ' + alternative + ' instead if possible: USB flash-drive reliability is unpredictable.')
+    if values['storage'] == 'sd' and model != 'mini':
         notes.append('Current USB Loader GX supports Wii games on SD. The existing disk planner is USB-oriented; do not fabricate a passing inspection for SD.')
     if values['computer'] == 'windows':
         notes.append('WiiForge destination preparation requires POSIX; Windows users use the reviewed guide/ModMii workflow, not a guessed drive mapping.')

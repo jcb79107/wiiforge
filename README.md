@@ -55,9 +55,9 @@ python3 -m unittest discover -s tests -v
 
 ## What works today
 
-WiiForge includes a tested intake/router, read-only macOS metadata inspection, resumable manual checkpoints, local package verification, archive checks, and **explicitly approved no-overwrite file preparation**. It can resume completed files by checking their contents. [Commands and limits](docs/usage.md).
+WiiForge includes a tested intake/router, read-only macOS metadata inspection, resumable manual checkpoints, local GX/Nintendont verification, archive checks, and **explicitly approved no-overwrite file preparation**. It can resume completed files by checking their contents. [Commands and limits](docs/usage.md).
 
-It is **not a one-click exploit installer**. The guided journey uses current [Wii Hacks Guide](https://wii.hacks.guide/get-started) procedures; the CLI's checked recipe and package support are narrower. Exploit files, recovery tools, cIOS and Nintendont still need guide-specific preparation and manual console actions. The agent must explain these handoffs instead of pretending automation exists.
+It is **not a one-click exploit installer**. The guided journey uses current [Wii Hacks Guide](https://wii.hacks.guide/get-started) procedures; the CLI's checked recipe and package support are narrower. Exploit files, recovery tools and cIOS still need guide-specific preparation. GX and Nintendont have local-file preparation paths; console actions remain manual. `journey` resumes original-Wii 4.3U checkpoints across computers without claiming disk inspection. The agent must explain these handoffs instead of pretending automation exists.
 
 Current GX supports Wii games on SD as well as USB; a USB drive is not mandatory. The existing storage planner is conservative and USB-oriented, so SD-only users follow the guide without a fabricated inspection report. No end-to-end WiiForge hardware run has been completed.
 

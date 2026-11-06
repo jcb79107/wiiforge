@@ -66,6 +66,23 @@ class OnboardingTests(unittest.TestCase):
         self.assertIn('supports Wii games on SD', ' '.join(result['notes']))
         self.assertIn('does not prove', ' '.join(result['notes']))
 
+    def test_mini_does_not_recommend_sd(self):
+        for storage in ['unknown', 'sd', 'usb-flash']:
+            result = start({'model': 'mini', 'storage': storage, 'sd': 'yes'})
+            notes = ' '.join(result['notes'])
+            self.assertIn('no SD slot', notes)
+            self.assertIn('does not fit', notes)
+            self.assertNotIn('supports Wii games on SD', notes)
+            self.assertNotIn('Choose SD', notes)
+            self.assertNotIn('Do you have an SD card', ' '.join(result['questions']))
+
+    def test_pre_3_menu_gets_review_not_identification_or_exploit(self):
+        for computer in ['windows', 'macos', 'linux']:
+            result = start({'model': 'original', 'menu': '2.2U', 'homebrew': 'no', 'sd': 'yes', 'computer': computer})
+            self.assertIn('pre-3.0', result['route']['instruction'])
+            self.assertTrue(result['route']['source'].endswith('get-started'))
+            self.assertFalse(result['reference_plan_scope'])
+
     def test_invalid_fields_types_and_values_rejected(self):
         for answers in [[], {'serial': 'private'}, {'model': []}, {'menu': None}, {'menu': '4.3'},
                         {'gamecube': True}, {'computer': 'Windows'}, {'menu': '4.3U\n'}]:
@@ -89,3 +106,55 @@ class OnboardingTests(unittest.TestCase):
                                  cwd=folder, env=env, text=True, capture_output=True)
             self.assertEqual(run.returncode, 2)
             self.assertNotIn('Traceback', run.stderr)
+
+
+class JourneyTests(unittest.TestCase):
+    def setUp(self):
+        self.answers = {'model': 'original', 'menu': '4.3U', 'computer': 'windows', 'homebrew': 'yes',
+                        'sd': 'yes', 'storage': 'sd', 'display': 'hd', 'cable': 'component', 'gamecube': 'yes'}
+
+    def test_complete_portable_session_requires_observed_checkpoints(self):
+        from wiiforge.__main__ import journey
+        result = journey(self.answers)
+        expected = [('review', 'user-confirmed'), ('storage-review', 'user-confirmed'),
+                    ('homebrew', 'console-tested'), ('backup', 'user-confirmed'),
+                    ('recovery', 'console-tested'), ('cios', 'user-confirmed'),
+                    ('loader', 'console-tested'), ('wii-test', 'console-tested'), ('gamecube-test', 'console-tested')]
+        for checkpoint, level in expected:
+            self.assertEqual(result['next_checkpoint']['id'], checkpoint)
+            result = journey(self.answers, result, checkpoint, level)
+            self.assertFalse(result['write_authorized'])
+            self.assertFalse(result['inspection_performed'])
+            self.assertFalse(result['installation_supported'])
+        self.assertIsNone(result['next_checkpoint'])
+        self.assertEqual(result['status'], 'manual-checkpoints-complete')
+
+    def test_session_rejects_skips_changed_answers_and_other_models(self):
+        from wiiforge.__main__ import journey
+        result = journey(self.answers)
+        with self.assertRaises(ValueError): journey(self.answers, result, 'loader', 'console-tested')
+        result = journey(self.answers, result, 'review', 'user-confirmed')
+        with self.assertRaises(ValueError): journey(dict(self.answers, storage='usb-hdd'), result)
+        with self.assertRaises(ValueError): journey(self.answers, result, 'storage-review', 'console-tested')
+        for model in ['family', 'mini', 'vwii', 'unknown']:
+            with self.assertRaises(ValueError): journey(dict(self.answers, model=model))
+        with self.assertRaises(ValueError): journey(dict(self.answers, menu='4.3E'))
+        with self.assertRaises(ValueError): journey({})
+        self.assertEqual(len(result['state']['completed']), 1)
+
+    def test_cli_can_resume_saved_output_on_any_host_without_inspection(self):
+        with tempfile.TemporaryDirectory() as folder:
+            answers = Path(folder) / 'answers.json'
+            saved = Path(folder) / 'progress.json'
+            answers.write_text(json.dumps(self.answers))
+            env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / 'src'))
+            command = [sys.executable, '-m', 'wiiforge', 'journey', '--answers', str(answers)]
+            first = subprocess.run(command, cwd=folder, env=env, text=True, capture_output=True)
+            self.assertEqual(first.returncode, 0, first.stderr)
+            saved.write_text(first.stdout)
+            second = subprocess.run(command + ['--state', str(saved), '--checkpoint', 'review', '--level', 'user-confirmed'],
+                                    cwd=folder, env=env, text=True, capture_output=True)
+            self.assertEqual(second.returncode, 0, second.stderr)
+            self.assertEqual(json.loads(second.stdout)['next_checkpoint']['id'], 'storage-review')
+            self.assertEqual(saved.read_text(), first.stdout)
+            self.assertEqual(set(p.name for p in Path(folder).iterdir()), {'answers.json', 'progress.json'})

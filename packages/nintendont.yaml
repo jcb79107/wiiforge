@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "package": "nintendont",
+  "repository": "https://github.com/FIX94/Nintendont",
+  "commit": "c683db301c941a64e6fe5cef6ac079bd1a726074",
+  "digest_source": "local-sha256-verified-git-blob",
+  "models": ["original"],
+  "license_review": "pending",
+  "files": [
+    {
+      "source": "loader/loader.dol",
+      "destination": "apps/Nintendont/boot.dol",
+      "size": 1648128,
+      "sha256": "f8d242de28ae9a0ea7974cb7f3e52e79019ff694a6355d3567c2e1ebbf9741e0",
+      "git_blob": "be8abece142e01a27eab8c7d867a9d2297bfa8ac"
+    },
+    {
+      "source": "nintendont/meta.xml",
+      "destination": "apps/Nintendont/meta.xml",
+      "size": 571,
+      "sha256": "32daae1ee5d0d38b0b5e5bbcdc9485d4c30de8b33164b06cbce6717010aa0008",
+      "git_blob": "906d76d9266cfa91c230466e5496c470a1ee5a12"
+    },
+    {
+      "source": "nintendont/icon.png",
+      "destination": "apps/Nintendont/icon.png",
+      "size": 1156,
+      "sha256": "419d3c533dc53cc6c4228d7dd3e273cbf18082c5362e70b061c9af64180b4dc6",
+      "git_blob": "f09460ac641471b7b0777f86f44806286e334aa0"
+    }
+  ]
+}

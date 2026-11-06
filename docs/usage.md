@@ -182,3 +182,45 @@ to a drive serial number. Free-space checks are not reservations.
 After any reconnect, unmount/remount or changed hardware, inspect the target again and obtain a newly reviewed
 plan and approval, even if the tool would accept the previous path/device/inode values. Those values can be reused;
 matching them is not proof of the same physical drive. No reconnect, power-loss or real-media safety claim is made.
+
+## Prepare Nintendont from local files
+
+On a POSIX host, obtain these three files from the exact [pinned upstream commit](https://github.com/FIX94/Nintendont/tree/c683db301c941a64e6fe5cef6ac079bd1a726074), following the upstream README: `loader/loader.dol`, `nintendont/meta.xml`, `nintendont/icon.png`. Keep their basenames together in a private host folder. Do not substitute current `master` files or change hashes to make a mismatch pass. The CLI does not download them.
+
+```sh
+python3 -m wiiforge verify-package --manifest packages/nintendont.yaml \
+  --artifact /private/nintendont --model original --check-archive
+python3 -m wiiforge prepare-plan --manifest packages/nintendont.yaml \
+  --artifact /private/nintendont --model original \
+  --destination /chosen/existing/directory > /private/nintendont-plan.json
+```
+
+Verification exit 2 with `content-verified` is expected: installation/licensing/hardware blockers remain. Inspect the plan. After separate approval for that exact destination and inventory:
+
+```sh
+python3 -m wiiforge prepare --manifest packages/nintendont.yaml \
+  --artifact /private/nintendont --model original --destination /chosen/existing/directory \
+  --plan /private/nintendont-plan.json --approve-plan DIGEST_FROM_REVIEWED_PLAN
+```
+
+Only `apps/Nintendont/boot.dol`, `meta.xml` and `icon.png` are prepared. Existing differing files block rather than overwrite; existing matching files are verified and retained. Rerunning the same approved command resumes completed files. All controlled-preparation identity, concurrency and interruption limits above apply. No GameCube games, saves, controller configuration or BIOS files are copied. Test Nintendont directly on the Wii before integrating it with GX; preparation is not a console checkpoint.
+
+## Resume the guided journey across computers
+
+For fully answered intake describing an original Wii 4.3U, `journey` provides a manual checklist on Windows, macOS or Linux without pretending to inspect a disk:
+
+```sh
+python3 -m wiiforge journey --answers /private/intake.json > /private/progress-1.json
+```
+
+Read `guide_route`, `next_checkpoint` and its `required_evidence`. After the user actually completes that step, acknowledge it into a **new** file:
+
+```sh
+python3 -m wiiforge journey --answers /private/intake.json \
+  --state /private/progress-1.json --checkpoint review --level user-confirmed \
+  > /private/progress-2.json
+```
+
+Pass the entire previous successful output as `--state`; do not redirect onto an input. Check exit 0 before retaining new progress. The next step appears automatically; skipped steps and changed answers are rejected. Use `user-confirmed` for review, storage-review, backup and cIOS; `console-tested` for Homebrew Channel, recovery, loader and game tests. File preparation does not acknowledge any of these.
+
+This reuses the ordered checkpoint validator. It is a portable record of user attestations, not an inspection, write permission, signed proof or automatic installer. Keep the file private. Revisit storage after every reconnect; never reuse a preparation approval on that basis. Other models/menus remain guide handoffs, and `start` still helps collect their observations. For ModMii follow its generated instructions; use the checklist only to record outcomes, not to substitute a different recipe.

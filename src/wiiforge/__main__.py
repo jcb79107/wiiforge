@@ -1,5 +1,6 @@
 import argparse
 import hashlib
+import io
 import json
 import math
 import os
@@ -12,6 +13,7 @@ import sys
 import zipfile
 
 from .onboarding import start, render
+from .nintendont import nintendont_bytes
 from .archive import check_zip
 from .rehearsal import rehearse, _stage_zip
 from .prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation
@@ -169,6 +171,21 @@ def inspect(device):
     return after
 
 
+def manual_steps(p):
+    steps = [
+        ('review', 'Review current model-specific guide and inspect media after every reconnect', GUIDE),
+        ('backup', 'Manually establish Homebrew Channel and model-appropriate recovery; verify private NAND backup', GUIDE),
+        ('recovery', 'Manually verify Priiloader recovery before optional autoboot', GUIDE + 'priiloader'),
+        ('cios', 'Review current original-Wii cIOS instructions; separately approve console changes', GUIDE + 'cios'),
+        ('loader', 'Review upstream USB Loader GX package/version/hash before any staging; manually test loader launch', GUIDE + 'wii-loaders'),
+        ('wii-test', 'Manually test a lawfully dumped Wii game; loader launch alone is insufficient', GUIDE + 'wii-loaders')]
+    if p['gamecube'] == 'review':
+        steps.append(('gamecube-test', 'Prepare reviewed Nintendont files; test direct launch, gameplay and save/reload before GX integration', 'https://github.com/FIX94/Nintendont'))
+    if p['autoboot'] == 'review':
+        steps.append(('autoboot-test', 'Separately review Wii forwarder/autoboot and retest Priiloader recovery', GUIDE + 'priiloader'))
+    return steps
+
+
 def plan(p, e, d):
     profile(p)
     evidence(e)
@@ -188,22 +205,16 @@ def plan(p, e, d):
         blocked.append('menu-or-region-conflict')
     if e['menu'] != '4.3U':
         blocked.append('outside-initial-4.3U-reference-scope')
-    steps = [
-        ('review', 'Review current model-specific guide and inspect media after every reconnect', GUIDE),
-        ('backup', 'Manually establish Homebrew Channel and model-appropriate recovery; verify private NAND backup', GUIDE),
-        ('recovery', 'Manually verify Priiloader recovery before optional autoboot', GUIDE + 'priiloader'),
-        ('cios', 'Review current original-Wii cIOS instructions; separately approve console changes', GUIDE + 'cios'),
-        ('loader', 'Review upstream USB Loader GX package/version/hash before any staging; manually test loader launch', GUIDE + 'wii-loaders'),
-        ('wii-test', 'Manually test a lawfully dumped Wii game; loader launch alone is insufficient', GUIDE + 'wii-loaders')]
-    if p['gamecube'] == 'review':
-        steps.append(('gamecube-test', 'Separately review Nintendont and manually test GameCube launch; unverified', GUIDE))
-    if p['autoboot'] == 'review':
-        steps.append(('autoboot-test', 'Separately review Wii forwarder/autoboot and retest Priiloader recovery', GUIDE + 'priiloader'))
+    steps = manual_steps(p)
     body = {'schema': 1, 'inputs': digest([p, e, d]), 'blockers': blocked,
             'status': 'blocked' if blocked else 'manual-review-only',
             'steps': [] if blocked else [{'id': i, 'instruction': t, 'source': u} for i, t, u in steps],
             'execution_supported': False}
     return dict(body, digest=digest(body))
+
+
+def checkpoint_level(checkpoint):
+    return 'console-tested' if checkpoint in ['homebrew', 'recovery', 'loader', 'wii-test', 'gamecube-test', 'autoboot-test'] else 'user-confirmed'
 
 
 def resume(current, state=None, checkpoint=None, level=None):
@@ -224,13 +235,41 @@ def resume(current, state=None, checkpoint=None, level=None):
     for index, item in enumerate(state['completed']):
         keys(item, 'id evidence')
         require(index < len(ids) and item['id'] == ids[index], 'Invalid checkpoint order')
-        require(item['evidence'] == ('console-tested' if item['id'] in ['recovery', 'loader', 'wii-test', 'gamecube-test', 'autoboot-test'] else 'user-confirmed'), 'Insufficient checkpoint evidence')
+        require(item['evidence'] == checkpoint_level(item['id']), 'Insufficient checkpoint evidence')
     if checkpoint:
         n = len(state['completed'])
         require(n < len(ids) and checkpoint == ids[n], 'Only the next checkpoint can be acknowledged')
         updated = dict(state, completed=[*state['completed'], {'id': checkpoint, 'evidence': level}])
         return resume(current, updated)
     return state
+
+
+def journey(answers, saved=None, checkpoint=None, level=None):
+    intake = start(answers)
+    require(intake['reference_plan_scope'] and not intake['questions'],
+            'Guided sessions require complete intake for original Wii 4.3U; use start and the model-specific guide otherwise')
+    p = intake['profile_draft']
+    steps = manual_steps(p)
+    steps[1:1] = [
+        ('storage-review', 'Review actual storage, backups and the selected current guide. No writes authorized.', GUIDE + 'get-started'),
+        ('homebrew', 'Verify Homebrew Channel opens after the selected guide, or confirm the existing installation.', GUIDE + 'hbc')]
+    body = {'schema': 1, 'inputs': digest(intake['observations']), 'blockers': [],
+            'status': 'manual-review-only', 'execution_supported': False,
+            'steps': [{'id': i, 'instruction': instruction, 'source': url} for i, instruction, url in steps]}
+    current = dict(body, digest=digest(body))
+    state = None
+    if saved is not None:
+        require(isinstance(saved, dict) and saved.get('kind') == 'guided-session', 'Expected a saved guided-session result')
+        state = saved.get('state')
+        require(isinstance(state, dict), 'Missing guided-session state')
+    state = resume(current, state, checkpoint, level)
+    pending = current['steps'][len(state['completed']):]
+    return {'kind': 'guided-session', 'observations': intake['observations'], 'state': state,
+            'guide_route': intake['route'],
+            'next_checkpoint': dict(pending[0], required_evidence=checkpoint_level(pending[0]['id'])) if pending else None,
+            'status': 'manual-checkpoints-complete' if not pending else 'awaiting-user',
+            'write_authorized': False, 'inspection_performed': False, 'installation_supported': False,
+            'notice': 'User attestations only. File preparation does not complete a console checkpoint; changed answers invalidate progress.'}
 
 
 def demo():
@@ -255,6 +294,14 @@ def demo():
 
 def verify_package(manifest, artifact, model, check_archive=False, experimental_stage=False):
     """Check a reviewed pin; optionally stage a verified snapshot in disposable host storage."""
+    if isinstance(manifest, dict) and manifest.get('package') == 'nintendont':
+        data = nintendont_bytes(manifest, artifact, model)
+        return {'package': 'nintendont', 'commit': manifest['commit'], 'status': 'content-verified',
+                'sha256': hashlib.sha256(data).hexdigest(),
+                'archive': check_zip(io.BytesIO(data)) if check_archive else None,
+                'staging': _stage_zip(data, synthetic=False) if experimental_stage else None,
+                'blockers': ['license-review-pending', 'console-installation-not-implemented', 'hardware-untested'],
+                'execution_supported': False}
     keys(manifest, 'schema package version asset url size sha256 digest_source models license_review')
     require(type(manifest['schema']) is int and manifest['schema'] == 1, 'Invalid package schema')
     require(manifest['package'] == 'usb-loader-gx', 'Unreviewed package')
@@ -303,6 +350,8 @@ def verify_package(manifest, artifact, model, check_archive=False, experimental_
 
 
 def package_bytes(manifest, artifact, model):
+    if isinstance(manifest, dict) and manifest.get('package') == 'nintendont':
+        return nintendont_bytes(manifest, artifact, model)
     verify_package(manifest, artifact, model)
     fd = os.open(artifact, os.O_RDONLY | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_NOFOLLOW', 0))
     with os.fdopen(fd, 'rb') as source:
@@ -319,6 +368,11 @@ def main():
     welcome = sub.add_parser('start', help='Get beginner questions and a tailored guide route; no writes')
     welcome.add_argument('--answers', help='Private JSON intake file; omitted fields stay unknown')
     welcome.add_argument('--json', action='store_true', help='Include draft profile/evidence for your assistant')
+    session = sub.add_parser('journey', help='Resume a portable manual checklist for a confirmed original Wii 4.3U')
+    session.add_argument('--answers', required=True)
+    session.add_argument('--state', help='Previous successful journey JSON output, saved privately')
+    session.add_argument('--checkpoint')
+    session.add_argument('--level', choices=['user-confirmed', 'console-tested'])
     sub.add_parser('rehearse', help='Copy synthetic fixtures into a temporary host directory, verify, then remove')
     sub.add_parser('demo', help='Try synthetic plans; no media or network access')
     sub.add_parser('inspect', help='Read macOS whole-disk metadata').add_argument('--device', required=True)
@@ -350,6 +404,8 @@ def main():
             result = start(read(args.answers) if args.answers else None)
             print(json.dumps(result, indent=2, sort_keys=True) if args.json else render(result))
             return 0
+        elif args.command == 'journey':
+            result = journey(read(args.answers), read(args.state) if args.state else None, args.checkpoint, args.level)
         elif args.command == 'demo':
             result = demo()
         elif args.command == 'rehearse':

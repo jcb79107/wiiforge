@@ -8,7 +8,8 @@ are shopping, ask country/budget and reuse what they own. Never invent observati
 
 Run `PYTHONPATH=src python3 -m wiiforge start` for the intake questions. Optional private JSON answers
 produce a tailored route and profile/evidence drafts with `start --answers PATH --json`. You manage these
-files; the beginner should not need to edit JSON. Keep a private progress note with observations,
+files; the beginner should not need to edit JSON. For complete original-Wii 4.3U intake, use `journey`
+to save/resume console outcomes privately, with no invented disk inspection. Keep a private progress note with observations,
 current step, completed outcomes, exact versions, approval scope and next action. Resume from evidence,
 not memory of a generic tutorial. Existing homebrew means inventory first, not reinstall everything.
 
@@ -19,7 +20,7 @@ run or install it. On other hosts, review the appropriate guide route. WiiForge'
 is not the full guide's compatibility list. Never forge macOS inspection data for Windows or SD storage.
 
 Do the authorized computer work, rather than handing the user a wall of terminal commands. Explain
-what will change and show the exact target/write plan before media writes. For unsupported packages,
+what will change and show the exact target/write plan before media writes. Use the reviewed GX and Nintendont manifests with the existing verify/prepare flow. For unsupported packages,
 say what review/preparation is still manual; never edit the GX pin to bypass package validation.
 Give one console action and its expected outcome at a time, then wait for what the user actually sees.
 Do not mark a checkpoint passed because files were copied. Finish with launch/save/recovery instructions
