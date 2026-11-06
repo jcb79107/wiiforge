@@ -406,19 +406,48 @@ This is an agent-guided external-tool handoff, not a WiiForge copy command:
 2. Select the official build for the computer's OS/architecture and check its release digest when supplied.
    Obtain specific approval before executing it. Stop on security warnings; do not disable protections.
 3. Start with one game and a new empty host staging folder, with enough space for both source and output.
-   Review the exact destination before importing. Select WBFS for Wii output and enable splitting for FAT32
-   even when host staging uses another filesystem. Do not normalize an existing library, delete originals or accept replacements.
+   Review the selected destination immediately before importing: the application can remember a previous folder.
+   Use the reviewed settings below, including forced splitting for FAT32 even when host staging uses another
+   filesystem. Do not normalize an existing library, delete originals or accept replacements.
 4. Inspect the resulting `wbfs/<game folder>/` files, including all split parts, and use the tool's integrity check.
    An integrity result does not establish lawful provenance or console compatibility. Review the final media
    destination and conflicts separately before approving transfer; WiiForge does not yet copy Wii backups.
 5. Safely eject after the approved transfer, launch the one game in USB Loader GX and test play/save before
    acknowledging the journey's Wii-game checkpoint. Report an error rather than changing cIOS or video settings at random.
 
+For **v6.1.11**, check these controls in the application's settings before adding a game:
+
+| Setting | Choice for this first-game staging workflow |
+| --- | --- |
+| Wii output format | WBFS |
+| Split output | Always 4GB-32KB |
+| Remove update partition on WBFS/CISO | No |
+| Delete sources when adding games | No |
+
+These labels are checked against the [upstream settings source](https://github.com/mq1/TinyWiiBackupManager/blob/v6.1.11/src/config/ui/settings.rs).
+Recheck them for another version. Do not assume a prior installation has default settings. The
+[stored configuration](https://github.com/mq1/TinyWiiBackupManager/blob/v6.1.11/src/config/mod.rs) includes the
+previous destination and deletion preference. Ask the user to confirm the visible selected folder when the
+agent cannot inspect the app. Import the selected ISO into the empty staging folder; a generic Convert action
+is not interchangeable with this import path's splitting and folder layout.
+
+A successful conversion does not mean its WBFS bytes should hash identically to the source ISO. Preserve
+source checksum records, check the tool's verification result, and keep any partial/failed output separate.
+Do not retry into a failed staging folder or delete its contents automatically; use a newly approved empty
+folder. Before a media transfer, inventory every generated part and existing destination conflict locally.
+
 The [v6.1.11 import source](https://github.com/mq1/TinyWiiBackupManager/blob/v6.1.11/src/games/import.rs)
 supports configurable Wii output and splitting; its
 [conversion code](https://github.com/mq1/TinyWiiBackupManager/blob/v6.1.11/src/games/convert.rs) can replace output files.
 Do not assume it has WiiForge's no-overwrite guarantees. This route was source-reviewed, not executed or
 hardware-tested here. No converter binary or game content is included in this repository.
+
+Automation assessment: this reviewed release starts a graphical application; no documented headless
+conversion interface was established. [Wiimm's official COPY documentation](https://wit.wiimm.de/wit/cmd-copy.html)
+describes a CLI with preview, splitting and no overwrite by default, but WiiForge has not validated a host
+binary or its failure behavior. Neither tool is installed, launched or wrapped automatically. A future adapter
+needs an approved exact binary, isolated conversion/failure tests and verified output inventory before
+claiming controlled conversion. The current handoff remains the supported route.
 
 
 ### Join CleanRip parts without overwriting
