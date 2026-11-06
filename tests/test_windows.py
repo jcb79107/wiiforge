@@ -55,7 +55,6 @@ class WindowsTests(unittest.TestCase):
 
     def test_copy_failure_keeps_partial_without_overwrite(self):
         from unittest.mock import patch
-        from wiiready.windows import verify_stream
         data = io.BytesIO()
         with zipfile.ZipFile(data, 'w') as z: z.writestr('apps/demo/boot.dol', b'synthetic')
         with tempfile.TemporaryDirectory() as folder:

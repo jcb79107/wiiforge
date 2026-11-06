@@ -26,7 +26,7 @@ You handle the Wii remote; your agent handles the supported computer work and ex
 - Resuming setup checkpoints, organizing raw GameCube files and joining CleanRip parts.
 
 Console steps stay manual. Wii format conversion uses a guided external tool.
-File preparation currently needs Windows/macOS/Linux and original-Wii selection; other models follow their
+File preparation works on Windows, macOS and Linux with original-Wii selection; other models follow their
 own guide. See [support details](docs/usage.md#support-status) and [safety](SECURITY.md).
 
 ## Run it yourself

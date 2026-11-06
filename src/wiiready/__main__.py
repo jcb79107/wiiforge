@@ -291,7 +291,7 @@ def checkpoint_preparation(checkpoint, wii_network, homebrew='unknown'):
         result['guide'] = 'docs/gamecube.md'
     elif checkpoint == 'wii-test':
         result['source'] = GUIDE + 'dump-games'
-        result['instruction'] = 'Already have a lawful verified dump? Skip CleanRip preparation. Otherwise prepare the reviewed Wii CleanRip package and guide the user through dumping their own disc, including checksum verification and space checks. Dumping writes storage and requires separate approval. Keep games and dump records private. For split CleanRip dumps on POSIX, wii-join-plan matches the original dump SHA-1; wii-join requires separate destination/digest approval. WiiReady does not dump discs or convert Wii backup formats. Follow docs/usage.md for the TinyWiiBackupManager handoff: confirm an empty host staging destination, WBFS output, forced FAT32 splitting and source deletion disabled before separately approved import.'
+        result['instruction'] = 'Already have a lawful verified dump? Skip CleanRip preparation. Otherwise prepare the reviewed Wii CleanRip package and guide the user through dumping their own disc, including checksum verification and space checks. Dumping writes storage and requires separate approval. Keep games and dump records private. For split CleanRip dumps on Windows/macOS/Linux, wii-join-plan matches the original dump SHA-1; wii-join requires separate destination/digest approval. WiiReady does not dump discs or convert Wii backup formats. Follow docs/usage.md for the TinyWiiBackupManager handoff: confirm an empty host staging destination, WBFS output, forced FAT32 splitting and source deletion disabled before separately approved import.'
     return result
 
 
@@ -501,7 +501,7 @@ def main():
     game.add_argument('--disc1', required=True)
     game.add_argument('--disc2', help='Optional second disc of the same game')
     for name in ['gamecube-plan', 'gamecube-copy']:
-        copying = sub.add_parser(name, help='Plan or explicitly approve a no-overwrite raw GameCube copy; POSIX only')
+        copying = sub.add_parser(name, help='Plan or explicitly approve a no-overwrite raw GameCube copy')
         for arg in ['disc1', 'destination', 'model']:
             copying.add_argument('--' + arg, required=True)
         copying.add_argument('--disc2', help='Optional second disc of the same game')
@@ -509,7 +509,7 @@ def main():
             copying.add_argument('--plan', required=True)
             copying.add_argument('--approve-plan', required=True)
     for name in ['wii-join-plan', 'wii-join']:
-        joining = sub.add_parser(name, help='Plan or approve joining explicit CleanRip parts on POSIX; no conversion')
+        joining = sub.add_parser(name, help='Plan or approve joining explicit CleanRip parts; no conversion')
         joining.add_argument('--part', action='append', required=True, help='Repeat for each part, ordered from part0')
         for arg in ['dump-sha1', 'destination', 'model']:
             joining.add_argument('--' + arg, required=True)
