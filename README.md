@@ -10,12 +10,13 @@ Give WiiForge to your AI coding assistant. It helps you choose hardware, figure 
 
 ## Start here
 
-This walkthrough is currently on **`feature/gamer-onboarding`**, pending integration review.
-`main` does not yet contain these commands. Use this branch explicitly below.
+1. Open your AI coding assistant on the computer you will use for setup.
+2. Paste the prompt below. Start with what you own; if you are shopping, say so.
+3. Let the assistant handle the supported computer steps and guide you through one Wii screen at a time.
 
-Paste this into your assistant:
+Copy this prompt:
 
-> Help me set up my Wii using https://github.com/jcb79107/wiiforge/tree/feature/gamer-onboarding. Check out feature/gamer-onboarding, read AGENTS.md and follow the playbook. Ask what I own first, help me buy only what I need, do the computer work you can verify, and walk me through the console steps. Keep my files private and ask before changing my media or console.
+> Help me set up my Wii using https://github.com/jcb79107/wiiforge. Read AGENTS.md and follow the playbook. Ask what I own first, help me buy only what I need, do the computer work you can verify, and walk me through the console steps. Keep my files private and ask before changing my media or console.
 
 You don't need to know Python or write configuration files to start the conversation. Your assistant needs repository access, a way to read current guides, and permission to run local commands. It cannot press buttons on your Wii or verify a game works without your observations.
 
@@ -39,7 +40,7 @@ The first milestone is a working game, not a theme pack. Defaults preserve video
 With Git and Python 3.10+ already installed, on macOS/Linux:
 
 ```sh
-git clone --branch feature/gamer-onboarding --single-branch https://github.com/jcb79107/wiiforge.git
+git clone https://github.com/jcb79107/wiiforge.git
 cd wiiforge
 export PYTHONPATH="$PWD/src"
 python3 -m wiiforge start
@@ -52,7 +53,7 @@ No Wii yet? Run `python3 -m wiiforge start --shopping` for budget, existing gear
 On Windows, with Git and Python 3.10+ installed, use PowerShell:
 
 ```powershell
-git clone --branch feature/gamer-onboarding --single-branch https://github.com/jcb79107/wiiforge.git
+git clone https://github.com/jcb79107/wiiforge.git
 cd wiiforge
 $env:PYTHONPATH="$PWD/src"
 py -3 -m wiiforge start
@@ -65,7 +66,7 @@ separately. Check `python3 --version` (or `py -3 --version`) before running; Pyt
 If Python reports `No module named wiiforge`, return to the repository folder and repeat the `PYTHONPATH`
 line in that same terminal. This variable must be set again in a new terminal.
 
- CI includes Windows intake, private ZIP and smoke checks; the destination-writing tool requires POSIX. The official guide's **ModMii** route is the Windows preparation option to review with your assistant.
+CI includes Windows intake, private ZIP and smoke checks; the destination-writing tool requires POSIX. The official guide's **ModMii** route is the Windows preparation option to review with your assistant.
 
 For a hardware-free demonstration or developer check:
 
