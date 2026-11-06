@@ -150,7 +150,7 @@ class JoinTests(unittest.TestCase):
 
 
 class HostGateTests(unittest.TestCase):
-    def test_non_posix_rejected_before_source_access(self):
-        with patch('wiiready.wiijoin.os.name', 'nt'):
+    def test_unknown_host_rejected_before_source_access(self):
+        with patch('wiiready.wiijoin.os.name', 'unsupported'):
             with self.assertRaisesRegex(ValueError, 'POSIX'):
                 plan_wii_join([], '0' * 40, 'missing', 'original')

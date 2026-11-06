@@ -18,7 +18,7 @@ normally remove them on completion or failure. The tool does not verify the back
 running either command. Forced termination or cleanup failure can leave files behind. Neither command
 accepts a destination argument. Default package verification and inspection remain read-only.
 
-`prepare`, `gamecube-copy` and `wii-join` are write-capable commands with an explicit destination and saved plan approval.
+`prepare`, `batch-prepare`, `gamecube-copy` and `wii-join` are write-capable commands with an explicit destination and saved plan approval.
 They never overwrite an existing file: matching content is verified and skipped; mismatches block preparation.
 Run it only after reviewing every planned path and authorizing that destination. Keep exclusive access to
 the destination while it runs; directory descriptors and no-follow opens do not protect against an adversary
@@ -33,7 +33,13 @@ do not publish or transmit them through chats, remote-agent/tool transcripts, te
 sources/destinations or replace the user's local review of the exact plan before approval.
 Source files are read-only and size-bounded; keep exclusive access to both sources and destination.
 Copy hashes prove byte equality to the supplied files, not a complete/correct dump, lawful provenance or gameplay.
-Handled failures remove only a newly created partial file. Power loss or forced termination can leave a partial
+On POSIX, handled failures remove only a newly created partial file. Windows leaves newly created partial files for explicit review. Power loss or forced termination can leave a partial
 file that blocks resume; inspect it and obtain separate approval before any cleanup. Nothing is auto-repaired.
 
 The CLI has no package execution, formatting, filesystem-repair or console-write path. Future changes that introduce these capabilities require a separate safety review and explicit target-specific approval. Unsupported or uncertain model paths must stay blocked.
+
+Windows writes use native handles denying write/delete sharing, reject reparse points in source/destination
+ancestors, and create files only with CREATE_NEW. Existing sources are held read-only while accessed.
+Root identity uses volume serial/file index and path; it is not persistent physical-media identity.
+Volume inspection does not prove USB bus type or Wii layout. No elevation, raw disk writes or formatting is used.
+API reference: [CreateFileW](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew).

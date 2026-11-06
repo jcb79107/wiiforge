@@ -14,8 +14,13 @@ MAX_BYTES = 9 * 1024 ** 3
 
 @contextmanager
 def _part(path):
-    fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW)
-    with os.fdopen(fd, 'rb') as source:
+    if os.name == 'nt':
+        from .windows import source_file
+        opened_source = source_file(path)
+    else:
+        fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW)
+        opened_source = os.fdopen(fd, 'rb')
+    with opened_source as source:
         before = os.fstat(source.fileno())
         require(stat.S_ISREG(before.st_mode) and 0 < before.st_size <= MAX_BYTES,
                 'Select nonempty bounded regular parts')
@@ -40,7 +45,7 @@ def _chunks(sources):
 
 def plan_wii_join(parts, expected_sha1, destination, model):
     require(model == 'original', 'Joining currently requires explicit original-Wii selection')
-    require(os.name == 'posix' and hasattr(os, 'O_NOFOLLOW'), 'Joining requires a POSIX host')
+    require(os.name == 'nt' or (os.name == 'posix' and hasattr(os, 'O_NOFOLLOW')), 'Joining requires Windows or a POSIX host')
     require(isinstance(expected_sha1, str) and re.fullmatch('[a-fA-F0-9]{40}', expected_sha1),
             'Provide the SHA-1 from the original dump record')
     require(2 <= len(parts) <= 16, 'Select 2 to 16 ordered parts explicitly')
@@ -51,7 +56,7 @@ def plan_wii_join(parts, expected_sha1, destination, model):
         require(match is not None and match[2] == str(number), 'Parts must be ordered consecutively from part0.iso')
         prefix = match[1] if prefix is None else prefix
         require(match[1] == prefix and not selected.is_symlink(), 'Parts must share a basename and must not be links')
-        path = str(selected.resolve(strict=True))
+        path = os.path.abspath(selected) if os.name == 'nt' else str(selected.resolve(strict=True))
         with _part(path) as (_, identity):
             total += identity['bytes']
             require(total <= MAX_BYTES, 'Joined file exceeds 9 GiB bound')

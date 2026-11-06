@@ -22,7 +22,7 @@ wait for what they see. If it differs, inspect the error. Preserve working video
 Run from the checkout with Python 3.10+ and `PYTHONPATH=src`; no pip dependencies.
 Use `start --answers PATH --json` for routing. `journey` saves original-Wii 4.3U manual checkpoints.
 Other models/menus use their current guide; never fake inspection data to pass a blocker.
-On Windows, review the guide's ModMii option rather than requiring a POSIX environment.
+On Windows, use PowerShell and the native preparation path; review the guide's ModMii option for console setup. Use `inspect-windows` for volume observations, then have the user confirm the physical card/drive and letter. It does not verify MBR/cluster size.
 
 At each checkpoint, prepare only its needed files using [usage.md](docs/usage.md) and reviewed manifests.
 Use `verify-package`, then `prepare-plan`; review exact writes locally and obtain destination/digest approval

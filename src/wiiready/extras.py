@@ -74,6 +74,6 @@ def render_extras(result):
         lines += [path['title'] + ' — ' + path['candidate'], path['source'], path['limitation'], path['model_note']]
         lines += [str(n) + '. ' + step for n, step in enumerate(path['steps'], 1)]
         if path['batch_manifest']:
-            lines.append('Optional batch file preparation (original Wii, macOS/Linux): ' + path['batch_manifest'])
+            lines.append('Optional batch file preparation (original Wii, Windows/macOS/Linux): ' + path['batch_manifest'])
         lines.append('')
     return '\n'.join(lines + [result['notice']])

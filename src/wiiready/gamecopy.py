@@ -16,10 +16,15 @@ def _identity(info):
 
 @contextmanager
 def _source(path):
-    require(os.name == 'posix' and hasattr(os, 'O_NOFOLLOW'), 'Game copying requires a POSIX host')
+    require(os.name == 'nt' or (os.name == 'posix' and hasattr(os, 'O_NOFOLLOW')), 'Game copying requires Windows or a POSIX host')
     require(Path(path).suffix.lower() in ('.iso', '.gcm'), 'Select a raw ISO/GCM file; conversion is not implemented')
-    fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW)
-    with os.fdopen(fd, 'rb') as source:
+    if os.name == 'nt':
+        from .windows import source_file
+        opened_source = source_file(path)
+    else:
+        fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW)
+        opened_source = os.fdopen(fd, 'rb')
+    with opened_source as source:
         before = os.fstat(source.fileno())
         require(stat.S_ISREG(before.st_mode) and HEADER_BYTES <= before.st_size <= DISC_BYTES,
                 'Game source must be a bounded regular raw image')
@@ -32,7 +37,7 @@ def _inventory(disc1, disc2):
     for number, selected in enumerate([disc1] + ([disc2] if disc2 is not None else [])):
         selected = Path(selected)
         require(not selected.is_symlink(), 'Game source must not be a symlink')
-        path = str(selected.resolve(strict=True))
+        path = os.path.abspath(selected) if os.name == 'nt' else str(selected.resolve(strict=True))
         with _source(path) as (source, identity):
             header = source.read(HEADER_BYTES)
             game_id, _ = _parse_header(header, identity['bytes'], number)
@@ -58,7 +63,7 @@ def _inventory(disc1, disc2):
 
 def plan_game_copy(disc1, disc2, destination, model):
     require(model == 'original', 'Game preparation currently requires explicit original-Wii selection')
-    require(os.name == 'posix' and hasattr(os, 'O_NOFOLLOW'), 'Game copying requires a POSIX host')
+    require(os.name == 'nt' or (os.name == 'posix' and hasattr(os, 'O_NOFOLLOW')), 'Game copying requires Windows or a POSIX host')
     files, sources = _inventory(disc1, disc2)
     return _plan_files(files, ['games', files[0]['path'].rsplit('/', 1)[0]], destination,
                        {'kind': 'gamecube-copy', 'model': model, 'sources': sources,

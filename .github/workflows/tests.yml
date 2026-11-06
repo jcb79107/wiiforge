@@ -27,7 +27,7 @@ jobs:
           python3 -m wiiready demo
           python3 -m wiiready rehearse
           python3 -m compileall -q src
-  windows-readonly:
+  windows:
     strategy:
       matrix:
         python: ["3.10", "3.13"]
@@ -56,9 +56,9 @@ jobs:
         run: python -m unittest discover -s tests -p test_exploit.py -v
       - name: Windows game header checks
         run: python -m unittest discover -s tests -p test_games.py -v
-      - name: Windows game-copy host restriction
+      - name: Windows game-copy validation
         run: python -m unittest discover -s tests -p test_gamecopy.py -v
-      - name: Windows join host restriction
+      - name: Windows join validation
         run: python -m unittest discover -s tests -p test_wiijoin.py -v
       - name: Windows private plan summaries
         run: python -m unittest discover -s tests -p test_plan_summary.py -v

@@ -174,6 +174,6 @@ class GameCopyTests(unittest.TestCase):
 
 
 class GameCopyHostTests(unittest.TestCase):
-    def test_windows_is_blocked_before_source_or_destination_access(self):
-        with patch('wiiready.gamecopy.os.name', 'nt'), self.assertRaisesRegex(ValueError, 'POSIX'):
+    def test_unknown_host_is_blocked_before_source_or_destination_access(self):
+        with patch('wiiready.gamecopy.os.name', 'unsupported'), self.assertRaisesRegex(ValueError, 'POSIX'):
             plan_game_copy('missing.iso', None, 'missing-destination', 'original')

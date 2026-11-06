@@ -73,6 +73,15 @@ def opened(path, directory=False, create=False):
         api().CloseHandle(handle)
 
 
+def volume_information(anchor):
+    fs, label = ctypes.create_unicode_buffer(64), ctypes.create_unicode_buffer(261)
+    serial, maximum, flags = W.DWORD(), W.DWORD(), W.DWORD()
+    if not api().GetVolumeInformationW(anchor, label, len(label), ctypes.byref(serial),
+                                       ctypes.byref(maximum), ctypes.byref(flags), fs, len(fs)):
+        raise ctypes.WinError(ctypes.get_last_error())
+    return fs.value, flags.value
+
+
 class Root:
     def __init__(self, destination, validate=True):
         self.path = local_path(destination)
@@ -84,7 +93,11 @@ class Root:
             self.device, self.inode = identity(info)
             drive_type = api().GetDriveTypeW(self.path.anchor)
             require(drive_type in (2, 3), 'Only local removable/fixed volumes are accepted')
+            self.filesystem, flags = volume_information(self.path.anchor)
             if validate:
+                require(self.filesystem in ('NTFS', 'FAT32', 'exFAT') and not flags & 0x80000,
+                        'Destination must be a writable NTFS/FAT32/exFAT volume')
+                require(self.inode != 0, 'Destination file identity is unavailable')
                 require(self.path != Path.home() and
                         (self.path != Path(self.path.anchor) or drive_type == 2),
                         'Use a dedicated directory, or the root of a confirmed removable drive')
@@ -202,13 +215,8 @@ def source_file(path):
 def inspect_volume(path):
     root = Root(path, validate=False)
     try:
-        fs, label = ctypes.create_unicode_buffer(64), ctypes.create_unicode_buffer(261)
-        serial, maximum, flags = W.DWORD(), W.DWORD(), W.DWORD()
-        if not api().GetVolumeInformationW(root.path.anchor, label, len(label), ctypes.byref(serial),
-                                           ctypes.byref(maximum), ctypes.byref(flags), fs, len(fs)):
-            raise ctypes.WinError(ctypes.get_last_error())
         drive_type = api().GetDriveTypeW(root.path.anchor)
-        return {'platform': 'windows', 'path': str(root.path), 'filesystem': fs.value,
+        return {'platform': 'windows', 'path': str(root.path), 'filesystem': root.filesystem,
                 'drive_type': 'removable' if drive_type == 2 else 'fixed',
                 'free_bytes': shutil.disk_usage(root.path).free,
                 'write_authorized': False, 'physical_identity_verified': False,

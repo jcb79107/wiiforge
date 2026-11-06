@@ -28,7 +28,7 @@ Launch through Homebrew Channel, test controls and save/reload, then decide whet
 
 ## One computer-side pass
 
-For **original Wii on macOS/Linux**, the agent can prepare FCE Ultra GX 4.0.4, Snes9x GX 5.0.5,
+For **original Wii on Windows/macOS/Linux**, the agent can prepare FCE Ultra GX 4.0.4, Snes9x GX 5.0.5,
 and VBA GX 3.0.5 together with selected existing WiiReady packages, including GX and Nintendont.
 GB and GBA use one VBA GX package, not two copies. Other models remain guide-only.
 

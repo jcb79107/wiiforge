@@ -154,6 +154,8 @@ def plan_preparation(data, destination, model):
 def _plan_files(files, directories, destination, metadata):
     # Internal callers supply validated relative paths and bounded content hashes.
     with root_directory(destination) as (root, identity):
+        if os.name == 'nt' and root.filesystem == 'FAT32':
+            require(all(item['bytes'] < 2 ** 32 for item in files), 'FAT32 cannot hold this file; use suitable host staging')
         dirs = [{'path': p, 'action': directory_state(root, p)} for p in directories]
         files = [dict(item, action=file_state(root, item)) for item in files]
         required = sum(item['bytes'] for item in files if item['action'] == 'create')

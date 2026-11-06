@@ -65,7 +65,7 @@ def read(path, max_bytes=1048576):
     def constant(value):
         raise ValueError('Non-finite JSON numbers are not supported')
     try:
-        value = json.loads(raw.decode('utf-8'), object_pairs_hook=unique, parse_constant=constant)
+        value = json.loads(raw.decode('utf-8-sig'), object_pairs_hook=unique, parse_constant=constant)
         pending = [(value, 0)]
         while pending:
             item, depth = pending.pop()
@@ -284,7 +284,7 @@ def checkpoint_preparation(checkpoint, wii_network, homebrew='unknown'):
         else:
             result['instruction'] = 'Ask one question now: can this Wii connect to the internet? Rerun journey with --wii-network online or offline. This selects guidance only; no download or install is authorized.'
     elif checkpoint == 'gamecube-test':
-        result['instruction'] = 'Prepare Nintendont only if needed. Use check-gamecube on the user\'s own raw ISO/GCM files to catch disc-order and layout issues. On POSIX, gamecube-plan hashes full files and proposes exact paths; gamecube-copy requires separate destination/digest approval. Copy verification does not establish dump integrity. Test Nintendont directly, controls and save/reload before GX integration.'
+        result['instruction'] = 'Prepare Nintendont only if needed. Use check-gamecube on the user\'s own raw ISO/GCM files to catch disc-order and layout issues. On Windows/macOS/Linux, gamecube-plan hashes full files and proposes exact paths; gamecube-copy requires separate destination/digest approval. Copy verification does not establish dump integrity. Test Nintendont directly, controls and save/reload before GX integration.'
         result['completion_checks'] = ['Nintendont launches directly and the chosen game plays with the intended controller.',
                                        'The selected memory-card mode saves and reloads correctly; existing saves are preserved.',
                                        'GX uses Nintendont and its actual app/game paths; the same game launches and reloads its save from GX.']

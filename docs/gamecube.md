@@ -19,7 +19,7 @@ Follow [Nintendont upstream](https://github.com/FIX94/Nintendont) and keep worki
 Use `journey`'s `gamecube-test` checkpoint only after that console test succeeds. Preparing files alone
 never completes it. Family Edition, mini and vWii lack native GameCube controller/memory-card ports
 and cannot read GameCube discs; check upstream controller and storage support for the actual model.
-WiiReady's own file preparation remains original-Wii/macOS/Linux only.
+WiiReady's own file preparation remains original-Wii/Windows/macOS/Linux only.
 
 GX setting names: [upstream paths](https://github.com/wiidev/usbloadergx/blob/enhanced/source/settings/menus/CustomPathsSM.cpp)
 and [GameCube settings](https://github.com/wiidev/usbloadergx/blob/enhanced/source/settings/menus/GCGameLoadSM.cpp).

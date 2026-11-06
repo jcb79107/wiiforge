@@ -160,7 +160,7 @@ If a bug remains, use a synthetic reproducer in an issue. Never attach raw disk 
 
 ## Controlled file preparation
 
-`prepare-plan` and `prepare` support a caller-selected **existing, dedicated directory** on POSIX hosts.
+`prepare-plan` and `prepare` support a caller-selected **existing, dedicated directory** on Windows, macOS and Linux. Windows also accepts a confirmed removable-drive root; fixed-drive roots are blocked.
 They are tested only against isolated temporary fixtures, not SD/USB hardware. No formatting, package execution,
 console write or overwrite operation exists. The model must be explicitly `original`; other paths remain blocked.
 Package licensing and console-installation blockers remain in every result. Preparing files does not clear them.
@@ -215,7 +215,7 @@ matching them is not proof of the same physical drive. No reconnect, power-loss 
 
 ## Prepare Nintendont from local files
 
-On a POSIX host, obtain these three files from the exact [pinned upstream commit](https://github.com/FIX94/Nintendont/tree/c683db301c941a64e6fe5cef6ac079bd1a726074), following the upstream README: `loader/loader.dol`, `nintendont/meta.xml`, `nintendont/icon.png`. Keep their basenames together in a private host folder. Do not substitute current `master` files or change hashes to make a mismatch pass. The CLI does not download them.
+On Windows, macOS or Linux, obtain these three files from the exact [pinned upstream commit](https://github.com/FIX94/Nintendont/tree/c683db301c941a64e6fe5cef6ac079bd1a726074), following the upstream README: `loader/loader.dol`, `nintendont/meta.xml`, `nintendont/icon.png`. Keep their basenames together in a private host folder. Do not substitute current `master` files or change hashes to make a mismatch pass. The CLI does not download them.
 
 ```sh
 python3 -m wiiready verify-package --manifest packages/nintendont.yaml \
@@ -356,7 +356,7 @@ No upstream code or game data was copied. Test controls and a real save/reload i
 
 ## Copy your own raw GameCube files
 
-On POSIX, with explicitly identified original-Wii hardware and an existing dedicated destination folder:
+On Windows, macOS or Linux, with explicitly identified original-Wii hardware and an existing dedicated destination folder:
 
 ```sh
 python3 -m wiiready gamecube-plan --disc1 /private/own-disc.iso --model original --destination /chosen/folder
@@ -381,7 +381,7 @@ partial file; cleanup needs separate review/approval. Keep exclusive access whil
 
 The full-file SHA-256 verifies copy equality, **not** correctness/completeness of the original dump,
 lawful provenance, disc compatibility or gameplay. No trusted dump database is queried. Only synthetic
-files have tested this path; no physical-media validation. Windows copy, compressed/converted images,
+files have tested this path; no physical-media validation. Compressed/converted images,
 multi-game images and Wii backup copying/conversion are not implemented. Existing games with another
 folder name are not discovered or deduplicated; inspect your destination before approving a plan.
 
@@ -468,7 +468,7 @@ claiming controlled conversion. The current handoff remains the supported route.
 
 ### Join CleanRip parts without overwriting
 
-On POSIX, choose an existing dedicated **host staging folder** with enough space and a filesystem
+On Windows, macOS or Linux, choose an existing dedicated **host staging folder** with enough space and a filesystem
 supporting the full ISO size (not FAT32). WiiReady does not classify its backing device or filesystem.
 Read the original private dump record's SHA-1; never calculate a new expected checksum just to pass a failed check.
 The [guide](https://wii.hacks.guide/backups#joining-part-files-from-a-wii-disc-on-a-fat32-device) requires the
@@ -496,7 +496,7 @@ The same device-identity, concurrency and reconnect limits as controlled prepara
 This accepts 2–16 consecutive same-basename parts, totaling at most 9 GiB. It does **not** parse an image,
 check full-disc size, validate the supplied record's authenticity, establish lawful provenance, convert to
 WBFS or prove gameplay. Even invented bytes can match an invented checksum. Tests use only such synthetic
-fixtures. Windows joining remains blocked; use the reviewed guide handoff there. After joining, continue
+fixtures. Windows checks FAT32 file-size limits before joining; use suitable host staging. After joining, continue
 with the one-game conversion workflow above, with separate execution/transfer approval.
 
 
@@ -509,7 +509,7 @@ for the console's current route; never invent observations to pass a WiiReady ch
 | --- | --- |
 | `start`, shopping and routing | Windows, macOS, Linux; all listed console models recognized |
 | `journey` manual checkpoints | Original Wii 4.3U; portable between computers |
-| Package preparation / game copying / joining | POSIX hosts; original-Wii selection; user-supplied local files |
+| Package preparation / game copying / joining | Windows, macOS, Linux; original-Wii selection; user-supplied local files |
 | Disk inspection and checked `plan` | macOS USB reference path: original Wii 4.3U, external physical disk with known identity/capacity, one MBR/FAT32 partition, 32 KiB clusters |
 | Other menus/regions, Family, mini, vWii | Guide assistance only; installation planning/preparation blocked |
 | Wii format conversion | External-tool handoff; execution needs separate approval |
@@ -534,3 +534,29 @@ Public Python imports have moved to `wiiready`. Keep private sessions and source
 Existing journey state can still be resumed when its inputs match. Regenerate and review old preparation
 plans: the HackMii notice directory is now `wiiready-notices/hackmii/`. Do not rename/delete an old
 notice directory or reuse approval to make a plan pass. No private files are migrated automatically.
+
+## Windows storage and preparation
+
+In PowerShell, set `$env:PYTHONPATH = "src"` and use `py -m wiiready` in place of the Unix command prefix.
+No administrator access or pip dependencies are needed. Example read-only observation:
+
+```powershell
+py -m wiiready inspect-windows --destination E:\
+```
+
+Confirm the letter against the actual SD/USB device in Windows first. The report gives drive type,
+filesystem and free space; it does **not** establish physical identity, partition scheme, cluster size,
+or Wii compatibility. Never select a disk automatically. Recheck after reconnecting.
+
+`prepare`, `batch-prepare`, `gamecube-copy` and `wii-join` use the same exact-plan approval flow on Windows.
+For a batch, use one line or PowerShell backticks for continuation (not Unix backslashes).
+`py -m wiiready batch-plan --package packages/fceugx.yaml C:\private\FCEUltraGX-4.0.4-Wii.zip --model original --destination E:\ > C:\private\plan.json`
+uses placeholders: review the real destination and every file before `batch-prepare` with the saved digest.
+Keep plans private. In Windows PowerShell 5, use `| Out-File -Encoding utf8 C:\private\plan.json` instead of
+`>` (which defaults to UTF-16); current PowerShell uses UTF-8. WiiReady accepts UTF-8 with a BOM.
+
+Network paths, alternate data streams, reparse points/junctions, long paths and fixed-drive roots are rejected.
+File preparation accepts writable NTFS/FAT32/exFAT volumes for staging; that is not a Wii filesystem recommendation.
+FAT32 files of 4 GiB or larger are blocked. Existing files are never replaced. Windows failures retain new partial
+files for explicit review rather than deleting them by path; completed matching files can be resumed.
+Native Windows CI exercises temporary fixtures, not removable media or console gameplay.
