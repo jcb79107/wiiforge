@@ -106,6 +106,10 @@ class WalkthroughTests(unittest.TestCase):
                         plan = cli('prepare-plan', *common, '--destination', destination)
                         self.assertEqual(files(), expected_files)
                         plan_path = root / (package + '-plan.json'); plan_path.write_text(json.dumps(plan))
+                        summary = cli('plan-summary', '--plan', plan_path)
+                        self.assertEqual(summary['files_to_create'], len(payloads))
+                        self.assertFalse(summary['write_authorized'])
+                        self.assertNotIn(str(root), json.dumps(summary))
                         apply = [*common, '--destination', destination, '--plan', plan_path, '--approve-plan']
                         cli('prepare', *apply, 'wrong-approval', expected=2)
                         self.assertEqual(files(), expected_files)

@@ -13,6 +13,13 @@ to save/resume console outcomes privately, with no invented disk inspection. Kee
 current step, completed outcomes, exact versions, approval scope and next action. Resume from evidence,
 not memory of a generic tutorial. Existing homebrew means inventory first, not reinstall everything.
 
+Raw plans and reports stay **local**, outside the checkout: they can contain source/destination paths,
+device identities, game IDs and hashes. Do not paste or transmit them to chat, remote-agent/tool transcripts,
+telemetry, issues or cloud storage. Redirect full command output directly to a new private local file before
+it enters a tool response; check the exit code. Use `plan-summary --plan PATH` for preparation totals without
+those identifiers. For exact-plan approval, have the user inspect the full local file in their local editor;
+do not upload it as a shortcut. Keep the approved digest local when invoking the copy command.
+
 Use docs/playbook.md to own the entire journey: buying → discovery → computer preparation → console
 checkpoints → Wii gameplay → optional GameCube → optional autoboot → useful handoff. Read the live
 model-specific guide before each procedure. On Windows, offer current ModMii guidance; don't silently
@@ -46,7 +53,7 @@ Family Edition, mini and vWii separately. Do not reuse original-Wii payloads acr
 
 Inspection, planning, `prepare-plan` and default package verification are read-only.
 `prepare` and `gamecube-copy` write only files/directories listed by their reviewed plans, after explicit digest approval.
-It refuses overwrites and verifies completed files when resumed. Never run it against actual user media
+They refuse overwrites and verify completed files when resumed. Never run them against actual user media
 without authorization for that specific destination and exact plan; our tests use temporary fixtures only. `rehearse` and opt-in
 `verify-package --experimental-stage` write files inside newly created private OS temporary directories.
 The backing device is not classified: TMPDIR (or the host equivalent) can point to removable media.

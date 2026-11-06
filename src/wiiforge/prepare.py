@@ -195,6 +195,28 @@ def _check_approval(plan, approval):
     require(plan.get('digest') == digest(body), 'Preparation plan changed')
 
 
+def summarize_plan(plan):
+    """Aggregate saved plan contents without revealing paths, IDs or hashes."""
+    require(isinstance(plan, dict), 'Invalid preparation plan')
+    _check_approval(plan, plan.get('digest'))  # Consistency only, never user approval.
+    require(type(plan.get('schema')) is int and plan['schema'] == 1 and
+            plan.get('model') == 'original' and plan.get('installation_supported') is False and
+            plan.get('kind') in (None, 'gamecube-copy'), 'Unsupported preparation plan')
+    files = plan.get('files')
+    require(isinstance(files, list) and all(isinstance(item, dict) and
+            item.get('action') in ('create', 'keep') and type(item.get('bytes')) is int and
+            item['bytes'] >= 0 for item in files), 'Invalid file inventory')
+    required = sum(item['bytes'] for item in files if item['action'] == 'create')
+    require(type(plan.get('required_bytes')) is int and plan['required_bytes'] == required,
+            'Inconsistent planned byte count')
+    return {'status': 'private-plan-summary',
+            'operation': 'gamecube-copy' if plan.get('kind') == 'gamecube-copy' else 'package-preparation',
+            'files_to_create': sum(item['action'] == 'create' for item in files),
+            'files_to_preserve': sum(item['action'] == 'keep' for item in files),
+            'bytes_to_write': required, 'write_authorized': False,
+            'notice': 'Saved-plan totals only; sources and destination were not rechecked. Review exact paths and digest locally before approval. Do not upload the raw plan.'}
+
+
 def _execute_files(current, destination, plan, approval, archive):
     _check_approval(plan, approval)
     # Only create -> keep transitions are accepted: completed files can be resumed after verification.

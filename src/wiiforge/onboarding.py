@@ -33,7 +33,8 @@ def start(answers=None):
     if values['model'] == 'mini' and values['storage'] == 'unknown':
         questions.append('What USB storage do you have for the Wii mini? It has no SD slot.')
     if menu == 'unknown':
-        questions.insert(1, 'What full version appears at the top right of Wii Settings (for example 4.3E)? Do not update just to match an example.')
+        primary_unknowns = sum(values[key] == 'unknown' for key in ('model', 'computer', 'homebrew'))
+        questions.insert(primary_unknowns, 'What full version appears at the top right of Wii Settings (for example 4.3E)? Do not update just to match an example.')
     route, url = 'Identify your console before choosing an exploit.', GUIDE + 'get-started'
     model = values['model']
     if values['homebrew'] == 'yes':

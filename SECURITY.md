@@ -27,7 +27,10 @@ Different-device descendants are rejected, but same-device bind mounts and same-
 Reconnections require renewed inspection and approval even if those values match. No physical-media compatibility
 testing has been completed.
 
-Game-copy plans contain private source paths, game IDs and full-file hashes; do not publish them.
+Game-copy plans contain private source paths, game IDs and full-file hashes. Keep raw plans/reports local;
+do not publish or transmit them through chats, remote-agent/tool transcripts, telemetry or cloud storage.
+`plan-summary` emits aggregate preparation counts/bytes without those fields. It does not inspect current
+sources/destinations or replace the user's local review of the exact plan before approval.
 Source files are read-only and size-bounded; keep exclusive access to both sources and destination.
 Copy hashes prove byte equality to the supplied files, not a complete/correct dump, lawful provenance or gameplay.
 Handled failures remove only a newly created partial file. Power loss or forced termination can leave a partial

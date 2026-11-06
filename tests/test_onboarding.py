@@ -18,6 +18,10 @@ class OnboardingTests(unittest.TestCase):
         self.assertFalse(result['write_authorized'])
         self.assertFalse(result['installation_supported'])
         self.assertIn('Ask next:', render(result))
+        for question, prefix in zip(result['questions'][:3], ['What console', 'Which computer', 'Does the Homebrew']):
+            self.assertTrue(question.startswith(prefix))
+        next_round = start({'model': 'original', 'computer': 'macos', 'homebrew': 'no'})
+        self.assertTrue(next_round['questions'][0].startswith('What full version'))
 
     def test_routes_and_drafts(self):
         base = {'model': 'original', 'menu': '4.3U', 'homebrew': 'no', 'sd': 'yes'}
@@ -163,7 +167,6 @@ class JourneyTests(unittest.TestCase):
         self.assertEqual(result['next_checkpoint']['id'], 'review')
         self.assertEqual(result['observations']['display'], 'unknown')
         self.assertFalse(result['write_authorized'])
-        self.assertEqual(render(start()).count('\n- What'), 2)
         self.assertEqual(len([line for line in render(start()).split('For this setup:')[0].splitlines() if line.startswith('- ')]), 3)
 
     def test_computer_and_completed_installation_progress_preserve_session(self):

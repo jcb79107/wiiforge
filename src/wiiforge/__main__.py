@@ -20,7 +20,7 @@ from .games import check_gamecube
 from .gamecopy import plan_game_copy, execute_game_copy
 from .archive import check_zip
 from .rehearsal import rehearse, _stage_zip
-from .prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation
+from .prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation, summarize_plan
 
 GUIDE = 'https://wii.hacks.guide/'
 APP_RELEASES = {
@@ -437,6 +437,8 @@ def main():
     welcome = sub.add_parser('start', help='Get beginner questions and a tailored guide route; no writes')
     welcome.add_argument('--answers', help='Private JSON intake file; omitted fields stay unknown')
     welcome.add_argument('--json', action='store_true', help='Include draft profile/evidence for your assistant')
+    summary = sub.add_parser('plan-summary', help='Show saved preparation totals without private paths, IDs or hashes; never approve writes')
+    summary.add_argument('--plan', required=True)
     session = sub.add_parser('journey', help='Resume a portable manual checklist for a confirmed original Wii 4.3U')
     session.add_argument('--answers', required=True)
     session.add_argument('--state', help='Previous successful journey JSON output, saved privately')
@@ -484,7 +486,12 @@ def main():
             p.add_argument('--level', choices=['user-confirmed', 'console-tested'])
     args = parser.parse_args()
     try:
-        if args.command == 'start':
+        if args.command == 'plan-summary':
+            try:
+                result = summarize_plan(read(args.plan, PREPARATION_PLAN_LIMIT))
+            except (ValueError, OSError) as exc:
+                raise ValueError('Cannot summarize this private plan; review the file locally') from exc
+        elif args.command == 'start':
             result = start(read(args.answers) if args.answers else None)
             print(json.dumps(result, indent=2, sort_keys=True) if args.json else render(result))
             return 0

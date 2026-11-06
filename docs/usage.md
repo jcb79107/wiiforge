@@ -9,6 +9,20 @@ python3 -m wiiforge --help
 
 Begin with `python3 -m wiiforge start`. It asks what you own and gives a guide route without inspecting hardware or writing files. `demo` is a separate invented-data example, not your setup.
 
+**Keep raw plans/reports local.** They can contain paths, device identities, game IDs and hashes.
+An agent should redirect full output to a **new private local file outside this checkout**, check the exit code,
+and avoid sending that output through chat, remote-agent/tool transcripts, telemetry or cloud storage.
+Do not overwrite an existing report or redirect onto an input file. The examples below use placeholder paths.
+For a package or GameCube preparation plan, share only aggregate totals using:
+
+```sh
+python3 -m wiiforge plan-summary --plan /private/saved-plan.json
+```
+
+This checks saved-plan consistency and reports counts/bytes without paths, IDs or hashes. It does not
+recheck the source/destination or authorize writes. Open the full plan locally to review exact paths and
+digest before approving; keep that digest local for the copy command.
+
 ## Begin with your own setup
 
 An assistant can collect answers conversationally and keep this JSON privately outside the checkout:
