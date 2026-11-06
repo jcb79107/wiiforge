@@ -17,6 +17,7 @@ from .nintendont import nintendont_bytes
 from .hackmii import hackmii_snapshot
 from .exploit import check_exploit
 from .games import check_gamecube
+from .gamecopy import plan_game_copy, execute_game_copy
 from .archive import check_zip
 from .rehearsal import rehearse, _stage_zip
 from .prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation
@@ -277,10 +278,10 @@ def checkpoint_preparation(checkpoint, wii_network, homebrew='unknown'):
         else:
             result['instruction'] = 'Ask one question now: can this Wii connect to the internet? Rerun journey with --wii-network online or offline. This selects guidance only; no download or install is authorized.'
     elif checkpoint == 'gamecube-test':
-        result['instruction'] = 'Prepare Nintendont only if needed. Use check-gamecube on the user\'s own raw ISO/GCM files to catch disc-order and layout issues; this does not verify the dump. Test Nintendont directly, controls and save/reload before GX integration.'
+        result['instruction'] = 'Prepare Nintendont only if needed. Use check-gamecube on the user\'s own raw ISO/GCM files to catch disc-order and layout issues. On POSIX, gamecube-plan hashes full files and proposes exact paths; gamecube-copy requires separate destination/digest approval. Copy verification does not establish dump integrity. Test Nintendont directly, controls and save/reload before GX integration.'
     elif checkpoint == 'wii-test':
         result['source'] = GUIDE + 'dump-games'
-        result['instruction'] = 'Already have a lawful verified dump? Skip CleanRip preparation. Otherwise prepare the reviewed Wii CleanRip package and guide the user through dumping their own disc, including checksum verification and space checks. Dumping writes storage and requires separate approval. Keep games and dump records private; WiiForge does not copy or convert games.'
+        result['instruction'] = 'Already have a lawful verified dump? Skip CleanRip preparation. Otherwise prepare the reviewed Wii CleanRip package and guide the user through dumping their own disc, including checksum verification and space checks. Dumping writes storage and requires separate approval. Keep games and dump records private; WiiForge does not dump discs or convert Wii backup formats.'
     return result
 
 
@@ -448,6 +449,14 @@ def main():
     game = sub.add_parser('check-gamecube', help='Read local ISO/GCM headers and suggest layout; no copying or full dump verification')
     game.add_argument('--disc1', required=True)
     game.add_argument('--disc2', help='Optional second disc of the same game')
+    for name in ['gamecube-plan', 'gamecube-copy']:
+        copying = sub.add_parser(name, help='Plan or explicitly approve a no-overwrite raw GameCube copy; POSIX only')
+        for arg in ['disc1', 'destination', 'model']:
+            copying.add_argument('--' + arg, required=True)
+        copying.add_argument('--disc2', help='Optional second disc of the same game')
+        if name == 'gamecube-copy':
+            copying.add_argument('--plan', required=True)
+            copying.add_argument('--approve-plan', required=True)
     sub.add_parser('rehearse', help='Copy synthetic fixtures into a temporary host directory, verify, then remove')
     sub.add_parser('demo', help='Try synthetic plans; no media or network access')
     sub.add_parser('inspect', help='Read macOS whole-disk metadata').add_argument('--device', required=True)
@@ -483,6 +492,11 @@ def main():
             result = check_exploit(args.artifact, args.model, args.menu)
         elif args.command == 'check-gamecube':
             result = check_gamecube(args.disc1, args.disc2)
+        elif args.command == 'gamecube-plan':
+            result = plan_game_copy(args.disc1, args.disc2, args.destination, args.model)
+        elif args.command == 'gamecube-copy':
+            result = execute_game_copy(args.disc1, args.disc2, args.destination, args.model,
+                                       read(args.plan, PREPARATION_PLAN_LIMIT), args.approve_plan)
         elif args.command == 'journey':
             result = journey(read(args.answers), read(args.state) if args.state else None, args.checkpoint, args.level, args.wii_network)
         elif args.command == 'demo':

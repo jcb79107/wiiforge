@@ -324,6 +324,44 @@ Header fields were checked against its [pinned format detection](https://github.
 and Dolphin's [disc metadata reader](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/DiscIO/VolumeDisc.cpp).
 No upstream code or game data was copied. Test controls and a real save/reload in Nintendont before GX integration.
 
+## Copy your own raw GameCube files
+
+On POSIX, with explicitly identified original-Wii hardware and an existing dedicated destination folder:
+
+```sh
+python3 -m wiiforge gamecube-plan --disc1 /private/own-disc.iso --model original --destination /chosen/folder
+```
+
+Add `--disc2 /private/own-disc-two.iso` for a two-disc game. The command reads and hashes each **entire**
+file, checks the limited header/disc order, inventories destination conflicts and checks free space.
+It makes no writes. Save its JSON output privately outside the destination, using a new file.
+The plan contains source paths/identity/hashes and exact writes to `games/<six-character-game-ID>/game.iso`
+and optionally `disc2.iso`. Review those paths and obtain explicit approval for that destination and digest.
+
+```sh
+python3 -m wiiforge gamecube-copy --disc1 /private/own-disc.iso --model original --destination /chosen/folder --plan /private/game-plan.json --approve-plan EXACT_APPROVED_DIGEST
+```
+
+Repeat the same `--disc2` option if planned. No files are moved, deleted or overwritten. Identical destination
+content is checked and retained; conflicts stop the operation. The copier rechecks sources/target, streams
+bounded chunks, flushes and reads back written files. Run the same approved command to resume after an
+ordinary interruption; completed content is verified before skipping it. Changed inputs require a new plan.
+After a reconnect, review/approve anew even if filesystem IDs match. Power loss can leave a conflicting
+partial file; cleanup needs separate review/approval. Keep exclusive access while planning/copying.
+
+The full-file SHA-256 verifies copy equality, **not** correctness/completeness of the original dump,
+lawful provenance, disc compatibility or gameplay. No trusted dump database is queried. Only synthetic
+files have tested this path; no physical-media validation. Windows copy, compressed/converted images,
+multi-game images and Wii backup copying/conversion are not implemented. Existing games with another
+folder name are not discovered or deduplicated; inspect your destination before approving a plan.
+
+The [current Wii layout](https://wii.hacks.guide/wii-loaders#game-folder-structure) is a `wbfs` game folder
+containing a `.wbfs` file and, when split, `.wbf1`; FAT32 requires splitting files over its limit.
+Use the [guide's backup-manager workflow](https://wii.hacks.guide/backups) with separate tool/action approval
+for that task. Renaming an ISO to WBFS is not conversion. GameCube layout follows
+[Nintendont](https://github.com/FIX94/Nintendont#quick-installation); changing a raw GCM's destination name
+to `game.iso` does not change its bytes.
+
 ## Prepare CleanRip for your own discs
 
 If you already have a lawful verified dump, skip this. Otherwise obtain your own copy of the

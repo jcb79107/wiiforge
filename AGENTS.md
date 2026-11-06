@@ -30,6 +30,9 @@ specific approval naming the destination. `check-exploit` is only a local partia
 Give one console action and its expected outcome at a time, then wait for what the user actually sees.
 Before GameCube file organization, use `check-gamecube` on the user's own raw ISO/GCM files to check
 headers, disc order and suggested naming. It neither verifies the whole dump nor authorizes a copy.
+For raw GameCube files on POSIX, use `gamecube-plan`, show the exact source/destination paths and
+hashes privately, and get specific destination/digest approval before `gamecube-copy`. Never move/delete
+original dumps or treat a copy hash as dump authenticity. Wii conversion/splitting still needs guide-specific review.
 Do not mark a checkpoint passed because files were copied. Finish with launch/save/recovery instructions
 and a private record of what was actually tested. USB Loader GX is the default; preserve video settings,
 review Nintendont when requested, and defer autoboot until recovery and gameplay work.
@@ -42,7 +45,7 @@ Unknown, conflicting or ambiguous evidence blocks model-sensitive planning. Reco
 Family Edition, mini and vWii separately. Do not reuse original-Wii payloads across them.
 
 Inspection, planning, `prepare-plan` and default package verification are read-only.
-`prepare` writes only files/directories listed by a reviewed preparation plan, after explicit digest approval.
+`prepare` and `gamecube-copy` write only files/directories listed by their reviewed plans, after explicit digest approval.
 It refuses overwrites and verifies completed files when resumed. Never run it against actual user media
 without authorization for that specific destination and exact plan; our tests use temporary fixtures only. `rehearse` and opt-in
 `verify-package --experimental-stage` write files inside newly created private OS temporary directories.

@@ -129,15 +129,21 @@ def space_check(root, required):
 def plan_preparation(data, destination, model):
     require(model == 'original', 'Only the original-Wii package path is reviewed')
     files, directories, _ = contents(data)
+    return _plan_files(files, directories, destination,
+                       {'model': model, 'source_sha256': hashlib.sha256(data).hexdigest(),
+                        'installation_supported': False,
+                        'installation_blockers': ['license-review-pending', 'console-installation-not-implemented', 'hardware-untested']})
+
+
+def _plan_files(files, directories, destination, metadata):
+    # Internal callers supply validated relative paths and bounded content hashes.
     with root_directory(destination) as (root, identity):
         dirs = [{'path': p, 'action': directory_state(root, p)} for p in directories]
         files = [dict(item, action=file_state(root, item)) for item in files]
         required = sum(item['bytes'] for item in files if item['action'] == 'create')
         space_check(root, required)
-    body = {'schema': 1, 'model': model, 'source_sha256': hashlib.sha256(data).hexdigest(),
-            'destination': identity, 'directories': dirs, 'files': files, 'required_bytes': required,
-            'installation_supported': False,
-            'installation_blockers': ['license-review-pending', 'console-installation-not-implemented', 'hardware-untested']}
+    body = {**metadata, 'schema': 1, 'destination': identity, 'directories': dirs,
+            'files': files, 'required_bytes': required}
     plan = dict(body, digest=digest(body))
     require(len(json.dumps(plan, indent=2, sort_keys=True).encode('utf-8')) + 1 <= PREPARATION_PLAN_LIMIT,
             'Preparation plan exceeds 8 MiB; reduce the package inventory')
@@ -176,11 +182,21 @@ def _copy_new(archive, item, root):
 
 
 def execute_preparation(data, destination, model, plan, approval):
+    _check_approval(plan, approval)
+    current = plan_preparation(data, destination, model)
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        return _execute_files(current, destination, plan, approval, archive)
+
+
+def _check_approval(plan, approval):
     require(isinstance(plan, dict), 'Invalid preparation plan')
     require(approval == plan.get('digest'), 'Explicit --approve-plan must match the saved plan digest')
     body = {k: v for k, v in plan.items() if k != 'digest'}
     require(plan.get('digest') == digest(body), 'Preparation plan changed')
-    current = plan_preparation(data, destination, model)
+
+
+def _execute_files(current, destination, plan, approval, archive):
+    _check_approval(plan, approval)
     # Only create -> keep transitions are accepted: completed files can be resumed after verification.
     expected = dict(current)
     for kind in ['files', 'directories']:
@@ -195,7 +211,7 @@ def execute_preparation(data, destination, model, plan, approval):
     expected['digest'] = digest({k: v for k, v in expected.items() if k != 'digest'})
     require(plan == expected, 'Source, destination, model or write plan changed; review a new plan')
     written, kept = [], []
-    with root_directory(destination) as (root, identity), zipfile.ZipFile(io.BytesIO(data)) as archive:
+    with root_directory(destination) as (root, identity):
         require(identity == plan['destination'], 'Destination identity changed')
         for entry in current['directories']:
             if directory_state(root, entry['path']) == 'create':

@@ -35,6 +35,12 @@ def _header(path, disc_number):
                 (after.st_size, after.st_mtime_ns, after.st_ctime_ns), 'Image changed while reading')
     except OSError as exc:
         raise ValueError('Cannot read the selected game image; inspect the private file locally') from exc
+    return _parse_header(header, before.st_size, disc_number)
+
+
+def _parse_header(header, size, disc_number):
+    require(len(header) == HEADER_BYTES and HEADER_BYTES <= size <= DISC_BYTES,
+            'Image size is outside this raw GameCube check')
     require(header[0x1c:0x20] == bytes.fromhex('c2339f3d') and
             header[0x18:0x1c] == bytes(4) and header[0x200:0x204] != b'NKIT',
             'Not a supported raw GameCube header; Wii, NKit and compressed images need a different workflow')
@@ -44,8 +50,8 @@ def _header(path, disc_number):
             'Multi-game compilations are outside this single-game check')
     require(header[6] == disc_number,
             'Disc number does not match the selected position; check disc order instead of renaming blindly')
-    return header[:6], {'bytes': before.st_size, 'disc': disc_number + 1,
-                       'revision': header[7], 'full_disc_size': before.st_size == DISC_BYTES}
+    return header[:6], {'bytes': size, 'disc': disc_number + 1,
+                       'revision': header[7], 'full_disc_size': size == DISC_BYTES}
 
 
 def check_gamecube(disc1, disc2=None):

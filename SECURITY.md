@@ -1,6 +1,6 @@
 # Safety and private reporting
 
-WiiForge provides read-only inspection/planning and opt-in temporary file preparation experiments. Its test suite does not certify console safety or hardware compatibility. Do not use a generated plan as approval to write to storage or a console.
+WiiForge provides read-only inspection/planning, temporary preparation experiments and explicitly approved file copying. Its test suite does not certify console safety or hardware compatibility. Do not use a generated plan as approval to write to storage or a console.
 
 ## Reporting a problem
 
@@ -18,13 +18,19 @@ normally remove them on completion or failure. The tool does not verify the back
 running either command. Forced termination or cleanup failure can leave files behind. Neither command
 accepts a destination argument. Default package verification and inspection remain read-only.
 
-`prepare` is a separate write-capable command with an explicit destination and saved plan approval.
-It never overwrites an existing file: matching content is verified and skipped; mismatches block preparation.
+`prepare` and `gamecube-copy` are write-capable commands with an explicit destination and saved plan approval.
+They never overwrite an existing file: matching content is verified and skipped; mismatches block preparation.
 Run it only after reviewing every planned path and authorizing that destination. Keep exclusive access to
 the destination while it runs; directory descriptors and no-follow opens do not protect against an adversary
 with the same account or physical device removal. Plan identity is the canonical root path plus filesystem device/inode, not persistent physical-media identity.
 Different-device descendants are rejected, but same-device bind mounts and same-account races are not excluded.
 Reconnections require renewed inspection and approval even if those values match. No physical-media compatibility
 testing has been completed.
+
+Game-copy plans contain private source paths, game IDs and full-file hashes; do not publish them.
+Source files are read-only and size-bounded; keep exclusive access to both sources and destination.
+Copy hashes prove byte equality to the supplied files, not a complete/correct dump, lawful provenance or gameplay.
+Handled failures remove only a newly created partial file. Power loss or forced termination can leave a partial
+file that blocks resume; inspect it and obtain separate approval before any cleanup. Nothing is auto-repaired.
 
 The CLI has no package execution, formatting, filesystem-repair or console-write path. Future changes that introduce these capabilities require a separate safety review and explicit target-specific approval. Unsupported or uncertain model paths must stay blocked.

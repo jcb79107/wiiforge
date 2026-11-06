@@ -120,6 +120,14 @@ class WalkthroughTests(unittest.TestCase):
                 if checkpoint['id'] == 'gamecube-test':
                     game = root / 'invented.iso'; game.write_bytes(synthetic_header())
                     self.assertFalse(check_gamecube(game)['gameplay_verified'])
+                    common = ['--disc1', game, '--destination', destination, '--model', 'original']
+                    plan = cli('gamecube-plan', *common)
+                    saved = root / 'game-plan.json'; saved.write_text(json.dumps(plan))
+                    copied = cli('gamecube-copy', *common, '--plan', saved, '--approve-plan', plan['digest'])
+                    self.assertTrue(copied['copy_bytes_verified'])
+                    self.assertFalse(copied['gameplay_verified'])
+                    self.assertEqual((destination / 'games/TEST00/game.iso').read_bytes(), game.read_bytes())
+                    self.assertEqual(journey(answers, session)['state'], before_state)
                 # These are invented console attestations, not hardware evidence.
                 session = journey(answers, session, checkpoint['id'], checkpoint['required_evidence'], wii_network='online')
             self.assertFalse((destination / 'bootmini.elf').exists())

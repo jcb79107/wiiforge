@@ -58,6 +58,7 @@ python3 -m unittest discover -s tests -v
 WiiForge includes a tested intake/router, read-only macOS metadata inspection, resumable manual checkpoints, local homebrew package verification, archive checks, and **explicitly approved no-overwrite file preparation**. It can resume completed files by checking their contents. [Commands and limits](docs/usage.md).
 
 For your own GameCube dumps, [`check-gamecube`](docs/usage.md#check-a-local-gamecube-dump-before-first-launch) checks raw ISO/GCM headers, disc order and suggested naming before first launch. It does not copy games or verify the entire dump.
+On POSIX, [`gamecube-plan` / `gamecube-copy`](docs/usage.md#copy-your-own-raw-gamecube-files) add exact-plan approval, no-overwrite copying and full-file read-back verification. Original files stay untouched; no games are supplied.
 
 It is **not a one-click exploit installer**. The guided journey uses current [Wii Hacks Guide](https://wii.hacks.guide/get-started) procedures; the CLI's checked recipe and package support are narrower. Personalized exploit generation and base-IOS acquisition still need guide-specific work. A local `check-exploit` checks ZIP structure and the bundled installer, without claiming personalization validity. GX, Nintendont, Priiloader, HackMii, NAND-dumper, d2x installer and CleanRip files have local preparation paths; console actions remain manual. `journey` resumes original-Wii 4.3U checkpoints across computers without claiming disk inspection. The agent must explain these handoffs instead of pretending automation exists.
 
