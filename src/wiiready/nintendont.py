@@ -2,6 +2,7 @@
 import hashlib
 import io
 import os
+from pathlib import Path
 import re
 import stat
 import zipfile
@@ -13,7 +14,7 @@ LAYOUT = [('loader/loader.dol', 'boot.dol', 8 * 1024 * 1024),
 
 
 def nintendont_bytes(manifest, artifact, model):
-    require(os.name == 'posix' and hasattr(os, 'O_NOFOLLOW'), 'Nintendont file verification requires a POSIX host')
+    require(os.name == 'nt' or (os.name == 'posix' and hasattr(os, 'O_NOFOLLOW')), 'Unsupported Nintendont verification host')
     require(isinstance(manifest, dict) and set(manifest) == set(
         'schema package repository commit digest_source models license_review files'.split()), 'Invalid Nintendont manifest fields')
     require(type(manifest['schema']) is int and manifest['schema'] == 1 and manifest['package'] == 'nintendont', 'Invalid Nintendont manifest')
@@ -29,15 +30,20 @@ def nintendont_bytes(manifest, artifact, model):
         require(type(item['size']) is int and 0 < item['size'] <= limit, 'Nintendont file size outside bound')
         for key, length in [('sha256', 64), ('git_blob', 40)]:
             require(isinstance(item[key], str) and re.fullmatch('[0-9a-f]{' + str(length) + '}', item[key]), 'Invalid Nintendont digest')
-    root = os.open(artifact, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    root = None if os.name == 'nt' else os.open(artifact, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     snapshot = io.BytesIO()
     try:
         with zipfile.ZipFile(snapshot, 'w', compression=zipfile.ZIP_STORED) as archive:
             for item in manifest['files']:
                 # Only these three basenames are read; extras, saves and configuration are never copied.
                 name = item['source'].rsplit('/', 1)[1]
-                fd = os.open(name, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW, dir_fd=root)
-                with os.fdopen(fd, 'rb') as stream:
+                if os.name == 'nt':
+                    from .windows import source_file
+                    source = source_file(Path(artifact) / name)
+                else:
+                    fd = os.open(name, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW, dir_fd=root)
+                    source = os.fdopen(fd, 'rb')
+                with source as stream:
                     before = os.fstat(stream.fileno())
                     require(stat.S_ISREG(before.st_mode) and before.st_size == item['size'], 'Nintendont input must be a regular file of the pinned size: ' + name)
                     data = stream.read(item['size'] + 1)
@@ -52,5 +58,6 @@ def nintendont_bytes(manifest, artifact, model):
                 entry.external_attr = (stat.S_IFREG | 0o600) << 16
                 archive.writestr(entry, data)
     finally:
-        os.close(root)
+        if root is not None:
+            os.close(root)
     return snapshot.getvalue()

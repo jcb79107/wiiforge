@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 import os
+import shutil
 from pathlib import Path
 import stat
 import zipfile
@@ -24,6 +25,14 @@ def digest(value):
 
 @contextmanager
 def root_directory(destination):
+    if os.name == 'nt':
+        from .windows import Root
+        root = Root(destination)
+        try:
+            yield root, {'path': str(root.path), 'device': root.device, 'inode': root.inode}
+        finally:
+            root.close()
+        return
     require(os.name == 'posix' and hasattr(os, 'O_NOFOLLOW'), 'Preparation requires a POSIX host')
     path = Path(destination)
     require(not path.is_symlink(), 'Destination must not be a symlink')
@@ -84,6 +93,8 @@ def contents(data):
 
 
 def file_state(root, item):
+    if os.name == 'nt':
+        return root.file_state(item)
     try:
         with parent_directory(root, item['path']) as (parent, name):
             fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
@@ -109,6 +120,8 @@ def file_state(root, item):
 
 
 def directory_state(root, path):
+    if os.name == 'nt':
+        return root.directory_state(path)
     try:
         with parent_directory(root, path) as (parent, name):
             fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
@@ -122,6 +135,9 @@ def directory_state(root, path):
 
 
 def space_check(root, required):
+    if os.name == 'nt':
+        require(shutil.disk_usage(root.path).free >= required + 1024 * 1024, 'Insufficient destination space')
+        return
     info = os.fstatvfs(root)
     require(info.f_bavail * info.f_frsize >= required + 1024 * 1024, 'Insufficient destination space (includes 1 MiB margin)')
 
@@ -151,6 +167,8 @@ def _plan_files(files, directories, destination, metadata):
 
 
 def _copy_new(archive, item, root):
+    if os.name == 'nt':
+        return root.copy_new(archive, item)
     with parent_directory(root, item['path']) as (parent, name):
         fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=parent)
         created = os.fstat(fd)
@@ -239,8 +257,11 @@ def _execute_files(current, destination, plan, approval, archive):
             if directory_state(root, entry['path']) == 'create':
                 require(next(d['action'] for d in plan['directories'] if d['path'] == entry['path']) == 'create',
                         'Preserved directory disappeared')
-                with parent_directory(root, entry['path']) as (parent, name):
-                    os.mkdir(name, mode=0o700, dir_fd=parent)
+                if os.name == 'nt':
+                    root.mkdir(entry['path'])
+                else:
+                    with parent_directory(root, entry['path']) as (parent, name):
+                        os.mkdir(name, mode=0o700, dir_fd=parent)
         for item in current['files']:
             if file_state(root, item) == 'keep':
                 kept.append(item['path'])

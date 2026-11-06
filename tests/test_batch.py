@@ -52,7 +52,6 @@ class BatchTests(unittest.TestCase):
                 data = combine_packages([emulator(name), archive({extra: b'x'})])
                 with self.assertRaises(ValueError): check_emulator_layout(data, name)
 
-    @unittest.skipUnless(os.name == 'posix', 'Preparation requires POSIX')
     def test_one_plan_preserves_saves_and_resumes(self):
         data = combine_packages([emulator('fceugx'), emulator('snes9xgx')])
         self.assertEqual(data, combine_packages([emulator('snes9xgx'), emulator('fceugx')]))
@@ -70,7 +69,6 @@ class BatchTests(unittest.TestCase):
             with self.assertRaises(ValueError): execute_preparation(changed, root, 'original', plan, plan['digest'])
             self.assertFalse((root/'other').exists())
 
-    @unittest.skipUnless(os.name == 'posix', 'Preparation requires POSIX')
     def test_conflict_preflights_whole_batch(self):
         data = combine_packages([emulator('fceugx'), emulator('snes9xgx')])
         with tempfile.TemporaryDirectory() as folder:
@@ -82,7 +80,6 @@ class BatchTests(unittest.TestCase):
             for model in ['mini', 'family', 'vwii', 'unknown']:
                 with self.assertRaises(ValueError): plan_preparation(data, root, model)
 
-    @unittest.skipUnless(os.name == 'posix', 'Preparation requires POSIX')
     def test_interrupted_batch_can_resume_completed_files(self):
         from wiiready.prepare import _copy_new
         data = combine_packages([emulator('fceugx'), emulator('snes9xgx')])
@@ -100,7 +97,6 @@ class BatchTests(unittest.TestCase):
             self.assertEqual(len(result['verified_existing']), 2)
             self.assertEqual(len(result['written']), 4)
 
-    @unittest.skipUnless(os.name == 'posix', 'Preparation requires POSIX')
     def test_cli_real_verification_with_repinned_synthetic_packages(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder); dest = root/'destination'; dest.mkdir()

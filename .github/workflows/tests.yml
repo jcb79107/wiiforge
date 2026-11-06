@@ -50,6 +50,8 @@ jobs:
         run: python -m unittest discover -s tests -p test_extras.py -v
       - name: Batch validation and platform restrictions
         run: python -m unittest discover -s tests -p test_batch.py -v
+      - name: Native Windows destination and source safeguards
+        run: python -m unittest discover -s tests -p test_windows.py -v
       - name: Windows private ZIP checks
         run: python -m unittest discover -s tests -p test_exploit.py -v
       - name: Windows game header checks

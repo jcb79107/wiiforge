@@ -382,6 +382,14 @@ def demo():
             'initial_state': resume(current)}
 
 
+def package_source(artifact):
+    if os.name == 'nt':
+        from .windows import source_file
+        return source_file(artifact)
+    fd = os.open(artifact, os.O_RDONLY | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_NOFOLLOW', 0))
+    return os.fdopen(fd, 'rb')
+
+
 def verify_package(manifest, artifact, model, check_archive=False, experimental_stage=False):
     """Check a reviewed pin; optionally stage a verified snapshot in disposable host storage."""
     if isinstance(manifest, dict) and manifest.get('package') == 'nintendont':
@@ -417,9 +425,7 @@ def verify_package(manifest, artifact, model, check_archive=False, experimental_
             'Package size must be pinned and at most 64 MiB')
     require(manifest['models'] == ['original'] and model == 'original', 'Package model path is not reviewed')
     require(manifest['license_review'] == 'pending', 'License approval is not implemented')
-    flags = os.O_RDONLY | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_NOFOLLOW', 0)
-    fd = os.open(artifact, flags)
-    with os.fdopen(fd, 'rb') as stream:
+    with package_source(artifact) as stream:
         before = os.fstat(stream.fileno())
         require(stat.S_ISREG(before.st_mode), 'Package must be a regular file')
         require(before.st_size == manifest['size'], 'Package size mismatch')
@@ -454,8 +460,7 @@ def package_bytes(manifest, artifact, model):
     if isinstance(manifest, dict) and manifest.get('package') == 'nintendont':
         return nintendont_bytes(manifest, artifact, model)
     verify_package(manifest, artifact, model)
-    fd = os.open(artifact, os.O_RDONLY | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_NOFOLLOW', 0))
-    with os.fdopen(fd, 'rb') as source:
+    with package_source(artifact) as source:
         require(stat.S_ISREG(os.fstat(source.fileno()).st_mode), 'Package must be a regular file')
         data = source.read(manifest['size'] + 1)
     require(len(data) == manifest['size'] and hashlib.sha256(data).hexdigest() == manifest['sha256'],
@@ -479,6 +484,8 @@ def main():
     selection.add_argument('--skip', action='store_true')
     extra.add_argument('--model', choices=['original', 'family', 'mini', 'vwii', 'unknown'], default='unknown')
     extra.add_argument('--json', action='store_true')
+    volume = sub.add_parser('inspect-windows', help='Read a local Windows volume; no physical identity or formatting')
+    volume.add_argument('--destination', required=True)
     summary = sub.add_parser('plan-summary', help='Show saved preparation totals without private paths, IDs or hashes; never approve writes')
     summary.add_argument('--plan', required=True)
     session = sub.add_parser('journey', help='Resume a portable manual checklist for a confirmed original Wii 4.3U')
@@ -593,6 +600,9 @@ def main():
                 result = plan_preparation(data, args.destination, args.model)
             else:
                 result = execute_preparation(data, args.destination, args.model, read(args.plan, PREPARATION_PLAN_LIMIT), args.approve_plan)
+        elif args.command == 'inspect-windows':
+            from .windows import inspect_volume
+            result = inspect_volume(args.destination)
         elif args.command == 'inspect':
             result = inspect(args.device)
         else:
