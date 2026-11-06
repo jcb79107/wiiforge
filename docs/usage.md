@@ -323,3 +323,20 @@ Layout follows [Nintendont's instructions](https://github.com/FIX94/Nintendont#q
 Header fields were checked against its [pinned format detection](https://github.com/FIX94/Nintendont/blob/c683db301c941a64e6fe5cef6ac079bd1a726074/loader/source/global.c#L407)
 and Dolphin's [disc metadata reader](https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/DiscIO/VolumeDisc.cpp).
 No upstream code or game data was copied. Test controls and a real save/reload in Nintendont before GX integration.
+
+## Prepare CleanRip for your own discs
+
+If you already have a lawful verified dump, skip this. Otherwise obtain your own copy of the
+[pinned Wii release](https://github.com/emukidid/cleanrip/releases/tag/2.4), then use the same approved preparation flow:
+
+```sh
+python3 -m wiiforge verify-package --manifest packages/cleanrip.yaml --artifact /private/CleanRip-v2.4.zip --model original --check-archive
+python3 -m wiiforge prepare-plan --manifest packages/cleanrip.yaml --artifact /private/CleanRip-v2.4.zip --model original --destination /chosen/folder
+```
+
+Successful byte verification still exits 2 for licensing/hardware blockers. Review the exact plan and use
+[controlled preparation](#controlled-file-preparation) only after destination/digest approval. This copies
+the app, never a game. On the console, follow the [dumping guide](https://wii.hacks.guide/dump-games):
+check free space, select the correct storage and enable checksum verification. Dumping writes storage;
+obtain separate approval and keep all resulting games/checksum records private. Joining split Wii dumps
+or converting formats remains a separately reviewed task; never rename extensions as conversion.

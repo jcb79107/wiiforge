@@ -64,7 +64,7 @@ For the original-Wii manual route, use the following sequence. For ModMii, follo
 | Recovery | Follow [Priiloader](https://wii.hacks.guide/priiloader) for the exact model | Recovery menu can actually be entered; user knows how to reach it again |
 | Wii loading | Review the correct model tab in [cIOS](https://wii.hacks.guide/cios); never reuse another model's IOS | Installer results match the selected current guide; no unresolved errors |
 | GX | Prepare the reviewed package; follow [USB Loader GX](https://wii.hacks.guide/wii-loaders) | Loader opens from Homebrew Channel and sees the intended storage |
-| First game | Help organize a lawful personal dump using [dumping](https://wii.hacks.guide/dump-games) and [backup management](https://wii.hacks.guide/backups) | Actual gameplay, controls, audio/video and save/reload work; loader launch alone is not success |
+| First game | Reuse a lawful verified dump, or [prepare CleanRip](usage.md#prepare-cleanrip-for-your-own-discs) and guide [disc dumping](https://wii.hacks.guide/dump-games); review [backup management](https://wii.hacks.guide/backups) | Actual gameplay, controls, audio/video and save/reload work; loader launch alone is not success |
 
 BootMii as boot2 is only offered on eligible hardware. BootMii as IOS plus Priiloader is not a guarantee against every brick. Backing up is not the same as proving restoration works; Family Edition and mini have additional restore constraints. Do not test a NAND restore as a routine checkpoint. No backups or keys belong in issues, chat uploads or public commits.
 

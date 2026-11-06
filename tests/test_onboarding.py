@@ -216,6 +216,24 @@ class JourneyTests(unittest.TestCase):
 
 
 class CheckpointPreparationTests(unittest.TestCase):
+    def test_working_homebrew_skips_installer_and_first_game_offers_optional_dumper(self):
+        from wiiforge.__main__ import checkpoint_preparation, journey
+        self.assertEqual(checkpoint_preparation('homebrew', 'unknown', 'yes')['manifests'], [])
+        self.assertEqual(checkpoint_preparation('homebrew', 'unknown', 'no')['manifests'], ['packages/hackmii.yaml'])
+        first_game = checkpoint_preparation('wii-test', 'online')
+        self.assertEqual(first_game['manifests'], ['packages/cleanrip.yaml'])
+        self.assertIn('Skip CleanRip', first_game['instruction'])
+        answers = dict(model='original', menu='4.3U', computer='macos', homebrew='yes', sd='yes', storage='sd', gamecube='no')
+        session = journey(answers)
+        for checkpoint in ['review', 'storage-review']:
+            session = journey(answers, session, checkpoint, 'user-confirmed')
+        self.assertEqual(session['next_checkpoint']['computer_preparation']['manifests'], [])
+        while session['next_checkpoint']:
+            next_step = session['next_checkpoint']
+            self.assertNotEqual(next_step['id'], 'gamecube-test')
+            session = journey(answers, session, next_step['id'], next_step['required_evidence'])
+        self.assertEqual(session['status'], 'manual-checkpoints-complete')
+
     def test_cios_guidance_only_requests_offline_files_when_needed(self):
         from wiiforge.__main__ import checkpoint_preparation
         unknown = checkpoint_preparation('cios', 'unknown')
@@ -231,7 +249,7 @@ class CheckpointPreparationTests(unittest.TestCase):
     def test_current_checkpoint_points_to_real_manifests_without_advancing(self):
         from wiiforge.__main__ import checkpoint_preparation, journey
         root = Path(__file__).resolve().parents[1]
-        for checkpoint in ['homebrew', 'backup', 'recovery', 'cios', 'loader', 'gamecube-test']:
+        for checkpoint in ['homebrew', 'backup', 'recovery', 'cios', 'loader', 'wii-test', 'gamecube-test']:
             for manifest in checkpoint_preparation(checkpoint, 'unknown')['manifests']:
                 self.assertTrue((root / manifest).is_file())
         answers = {

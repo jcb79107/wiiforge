@@ -14,7 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 class RecoveryPackageTests(unittest.TestCase):
     def test_recovery_pins_verify_prepare_resume_and_keep_notices(self):
         for package, app in [('priiloader', 'priiloader'), ('loadpriiloader', 'LoadPriiloader'),
-                             ('nanddumper-ios', 'nanddumper_ios'), ('d2x-cios-installer', 'd2x-cios-installer')]:
+                             ('nanddumper-ios', 'nanddumper_ios'), ('d2x-cios-installer', 'd2x-cios-installer'),
+                             ('cleanrip', 'CleanRip')]:
             with self.subTest(package=package), tempfile.TemporaryDirectory() as folder:
                 root = Path(folder)
                 stream = io.BytesIO()
@@ -43,6 +44,9 @@ class RecoveryPackageTests(unittest.TestCase):
                         verify_package(dict(manifest, **{field: value}), artifact, 'original')
                 for model in ['family', 'mini', 'vwii', 'unknown']:
                     with self.assertRaises(ValueError): verify_package(manifest, artifact, model)
+                if package == 'cleanrip':
+                    with self.assertRaises(ValueError):
+                        verify_package(dict(manifest, asset='CleanRip-v2.4-gc.zip'), artifact, 'original')
                 artifact.write_bytes(data[:-1])
                 with self.assertRaises(ValueError): verify_package(manifest, artifact, 'original')
 

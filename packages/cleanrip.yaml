@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "package": "cleanrip",
+  "version": "2.4",
+  "asset": "CleanRip-v2.4.zip",
+  "url": "https://github.com/emukidid/cleanrip/releases/download/2.4/CleanRip-v2.4.zip",
+  "size": 552682,
+  "sha256": "95e02c5e5d4c06334853d0f46a412634059c083fe73a5a35e48f5b2de82db8a5",
+  "digest_source": "github-release-api",
+  "models": ["original"],
+  "license_review": "pending"
+}

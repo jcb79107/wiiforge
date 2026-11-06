@@ -146,3 +146,14 @@ The [NAND guide](https://wii.hacks.guide/nand-backup) and [cIOS guide](https://w
 HackMii's publisher forbids redistribution. WiiForge neither bundles nor hosts it: users obtain their own copy from the publisher. The preparation snapshot excludes `bootmini.elf` and all `wiiload` PC executables, preserves selected files byte-for-byte, and leaves the private source ZIP untouched. This does not generate a personalized exploit or establish BootMii eligibility. The local-use workflow is not a legal clearance; redistribution remains prohibited.
 
 The d2x ZIP contains installer code, configuration and d2x modules; it supplies no Nintendo base-IOS WADs. Original-Wii selection is mandatory; the differently named vWii package is rejected. Preparing files does not install cIOS or select slots. NAND-dumper preparation supplies an app, not a backup: actual backups and unique keys stay private. Complete component licensing and real hardware validation remain outstanding for these paths.
+
+## CleanRip Wii app — 2026-11-06
+
+The [disc-dumping guide](https://wii.hacks.guide/dump-games) links CleanRip through Open Shop Channel.
+`cleanrip.yaml` pins the author's [2.4 Wii release](https://github.com/emukidid/cleanrip/releases/tag/2.4):
+`CleanRip-v2.4.zip`, 552,682 bytes. Its bytes matched GitHub's published SHA-256; bounded archive/CRC
+inspection found only `apps/CleanRip/boot.dol`, `icon.png` and `meta.xml`, without extraction or execution.
+The separate `-gc.zip` build is rejected. The upstream repository has a [GPL-2.0 license](https://github.com/emukidid/cleanrip/blob/master/LICENSE),
+but the app ZIP contains no license file; complete distribution review remains pending. No binaries are bundled.
+WiiForge prepares only an explicitly selected original-Wii app. It does not dump discs, obtain games or
+authorize console/storage operations. Skip this package when a lawful verified dump already exists.
