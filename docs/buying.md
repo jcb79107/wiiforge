@@ -1,5 +1,7 @@
 # What to buy (and what to keep)
 
+No console yet? Your assistant can run `python3 -m wiiforge start --shopping` from the configured checkout (add `--json` for structured output). This asks three shopping questions without requesting a console label/menu or creating installation evidence.
+
 First tell your assistant your country, budget, TV inputs, what you already own, and whether you want GameCube discs/controllers. Ask it to check current listings and returns before recommending an exact product. No model of card, enclosure or HDMI adapter has been hardware-certified by WiiForge. Avoid paying for a seller's preloaded game library.
 
 ## A practical starting basket

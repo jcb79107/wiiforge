@@ -6,6 +6,8 @@ three related questions at a time: what Wii they have, what computer they use, a
 have homebrew. Follow with menu/region, TV/cable, storage, controllers and Wii/GameCube goals. If they
 are shopping, ask country/budget and reuse what they own. Never invent observations to get past a check.
 
+If they do not own a console yet, use `start --shopping`: ask budget/country, existing gear and game goals before console observations. Read docs/buying.md, compare current listings and obtain purchase approval separately. Do not invent a menu or draft installation evidence for a shopping choice.
+
 Run `PYTHONPATH=src python3 -m wiiforge start` for the intake questions. Optional private JSON answers
 produce a tailored route and profile/evidence drafts with `start --answers PATH --json`. You manage these
 files; the beginner should not need to edit JSON. For original-Wii 4.3U with computer/homebrew/storage observations, use `journey`

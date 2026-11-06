@@ -6,11 +6,38 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from wiiforge.onboarding import start, render
+from wiiforge.onboarding import start, render, shopping
 from wiiforge.__main__ import profile, evidence
 
 
 class OnboardingTests(unittest.TestCase):
+    def test_shopping_does_not_ask_for_unowned_console_or_create_evidence(self):
+        result = shopping()
+        self.assertEqual(result['status'], 'shopping')
+        self.assertEqual(len(result['questions']), 3)
+        self.assertNotIn('profile_draft', result)
+        self.assertNotIn('evidence_draft', result)
+        self.assertNotIn('observations', result)
+        self.assertFalse(result['reference_plan_scope'])
+        self.assertFalse(result['write_authorized'])
+        self.assertFalse(result['installation_supported'])
+        self.assertIn('budget', render(result))
+        self.assertNotIn('Homebrew Channel open', render(result))
+
+    def test_cli_shopping_plain_json_and_conflicting_mode(self):
+        with tempfile.TemporaryDirectory() as folder:
+            env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / 'src'))
+            command = [sys.executable, '-m', 'wiiforge', 'start', '--shopping']
+            for extra in [[], ['--json']]:
+                result = subprocess.run(command + extra, cwd=folder, env=env, capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                if extra: self.assertEqual(json.loads(result.stdout)['status'], 'shopping')
+                else: self.assertIn('budget', result.stdout)
+            rejected = subprocess.run(command + ['--answers', 'missing.json'], cwd=folder, env=env, capture_output=True, text=True)
+            self.assertEqual(rejected.returncode, 2)
+            self.assertIn('not allowed with argument', rejected.stderr)
+            self.assertEqual(list(Path(folder).iterdir()), [])
+
     def test_empty_intake_does_not_invent_console_or_test_evidence(self):
         result = start()
         self.assertEqual(len(result['questions']), 9)

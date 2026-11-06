@@ -45,9 +45,27 @@ export PYTHONPATH="$PWD/src"
 python3 -m wiiforge start
 ```
 
+No Wii yet? Run `python3 -m wiiforge start --shopping` for budget, existing gear and game goals instead of console questions.
+
 `start` prints beginner questions and a next step. It makes no changes. Your assistant can supply private observations with `--answers PATH` and request draft profiles with `--json`. Unknowns stay unknown.
 
-Windows users can read the playbook immediately. For the Python intake in PowerShell, set `$env:PYTHONPATH="$PWD/src"` and run `py -3 -m wiiforge start`. CI includes Windows intake, private ZIP and smoke checks; the destination-writing tool requires POSIX. The official guide's **ModMii** route is the Windows preparation option to review with your assistant.
+On Windows, with Git and Python 3.10+ installed, use PowerShell:
+
+```powershell
+git clone --branch feature/gamer-onboarding --single-branch https://github.com/jcb79107/wiiforge.git
+cd wiiforge
+$env:PYTHONPATH="$PWD/src"
+py -3 -m wiiforge start
+```
+
+Add `--shopping` if you do not own the console yet. These commands run directly from the checkout: no
+`pip install`, virtual environment or third-party Python packages are needed. If Git/Python is missing,
+the assistant can still use the playbook and buying guide immediately; review any tool installation
+separately. Check `python3 --version` (or `py -3 --version`) before running; Python must be 3.10 or newer.
+If Python reports `No module named wiiforge`, return to the repository folder and repeat the `PYTHONPATH`
+line in that same terminal. This variable must be set again in a new terminal.
+
+ CI includes Windows intake, private ZIP and smoke checks; the destination-writing tool requires POSIX. The official guide's **ModMii** route is the Windows preparation option to review with your assistant.
 
 For a hardware-free demonstration or developer check:
 

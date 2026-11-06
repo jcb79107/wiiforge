@@ -12,7 +12,7 @@ import subprocess
 import sys
 import zipfile
 
-from .onboarding import start, render
+from .onboarding import start, render, shopping
 from .nintendont import nintendont_bytes
 from .hackmii import hackmii_snapshot
 from .exploit import check_exploit
@@ -458,7 +458,9 @@ def main():
     parser = argparse.ArgumentParser(prog='wiiforge', description='Wii homebrew inspection, planning and explicitly approved file preparation.')
     sub = parser.add_subparsers(dest='command', required=True)
     welcome = sub.add_parser('start', help='Get beginner questions and a tailored guide route; no writes')
-    welcome.add_argument('--answers', help='Private JSON intake file; omitted fields stay unknown')
+    intake_mode = welcome.add_mutually_exclusive_group()
+    intake_mode.add_argument('--answers', help='Private JSON intake file; omitted fields stay unknown')
+    intake_mode.add_argument('--shopping', action='store_true', help='No console yet: start with budget, existing gear and game goals')
     welcome.add_argument('--json', action='store_true', help='Include draft profile/evidence for your assistant')
     summary = sub.add_parser('plan-summary', help='Show saved preparation totals without private paths, IDs or hashes; never approve writes')
     summary.add_argument('--plan', required=True)
@@ -523,7 +525,7 @@ def main():
             except (ValueError, OSError) as exc:
                 raise ValueError('Cannot summarize this private plan; review the file locally') from exc
         elif args.command == 'start':
-            result = start(read(args.answers) if args.answers else None)
+            result = shopping() if args.shopping else start(read(args.answers) if args.answers else None)
             print(json.dumps(result, indent=2, sort_keys=True) if args.json else render(result))
             return 0
         elif args.command == 'check-exploit':

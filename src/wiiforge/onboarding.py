@@ -92,6 +92,23 @@ def start(answers=None):
             'next': 'Read docs/playbook.md with your assistant; answer only from observation. Drafts are not inspection or test evidence.'}
 
 
+
+def shopping():
+    """Start before a console exists, without manufacturing installation evidence."""
+    return {'status': 'shopping',
+            'route': {'instruction': 'Choose gear before choosing an exploit. Reuse what you own.',
+                      'source': GUIDE + 'get-started'},
+            'questions': ['What country are you buying in, and what is your total budget?',
+                          'What computer, TV inputs, controllers, cables and storage do you already have?',
+                          'Do you want Wii games only, or GameCube too, including your own discs and controllers?'],
+            'notes': ['Use docs/buying.md for the basket and tradeoffs; check current listings and return policies before naming products.',
+                      'An original RVL-001 with a working disc drive and matching power supply is the starting suggestion, not an observed console or compatibility guarantee.',
+                      'Confirm included Wii Remote, Nunchuk, sensor bar, cables and storage before buying duplicates. Avoid paying for preloaded games.',
+                      'Once you have the console, run start without --shopping and identify its actual model/menu before setup.'],
+            'reference_plan_scope': False, 'write_authorized': False, 'installation_supported': False,
+            'next': 'Your assistant should compare a short list against your budget and existing gear. No purchase, exploit or installation is authorized.'}
+
+
 def render(result):
     lines = ['WiiForge — start here', '', result['route']['instruction'], result['route']['source']]
     if result['questions']:
