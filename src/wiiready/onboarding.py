@@ -72,7 +72,7 @@ def start(answers=None):
     if values['storage'] == 'sd' and model != 'mini':
         notes.append('Current USB Loader GX supports Wii games on SD. The existing disk planner is USB-oriented; do not fabricate a passing inspection for SD.')
     if values['computer'] == 'windows':
-        notes.append('WiiReady destination preparation requires POSIX; Windows users use the reviewed guide/ModMii workflow, not a guessed drive mapping.')
+        notes.append('WiiReady supports native Windows file preparation with explicit original-Wii selection, destination and exact plan approval. Console steps remain manual; use the reviewed guide/ModMii workflow.')
     if values['gamecube'] == 'yes':
         notes.append('Review Nintendont, controller support and saves separately. A stock Family Edition, mini or vWii cannot dump GameCube discs.')
     if values['cable'] == 'adapter':

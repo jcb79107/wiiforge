@@ -23,7 +23,7 @@ from .gamecopy import plan_game_copy, execute_game_copy
 from .wiijoin import plan_wii_join, execute_wii_join
 from .archive import check_zip
 from .rehearsal import rehearse, _stage_zip
-from .prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation, summarize_plan
+from .prepare import PREPARATION_PLAN_LIMIT, plan_preparation, execute_preparation, summarize_plan, require, digest
 
 GUIDE = 'https://wii.hacks.guide/'
 APP_RELEASES = {
@@ -36,15 +36,6 @@ APP_RELEASES = {
     'd2x-cios-installer': ('wiidev/d2x-cios', 'd2x-v11-beta3', 'd2x-v11-beta3.zip', 'local-sha256-official-release'),
     'cleanrip': ('emukidid/cleanrip', '2.4', 'CleanRip-v2.4.zip', 'github-release-api'),
 }
-
-
-def require(ok, message):
-    if not ok:
-        raise ValueError(message)
-
-
-def digest(value):
-    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
 
 def read(path, max_bytes=1048576):

@@ -64,6 +64,19 @@ class OnboardingTests(unittest.TestCase):
                 self.assertEqual(result['profile_draft']['output'], 'preserve')
                 self.assertFalse(result['installation_supported'])
 
+    def test_windows_guidance_preserves_model_and_approval_limits(self):
+        for model in ['original', 'family', 'mini', 'vwii', 'unknown']:
+            with self.subTest(model=model):
+                result = start({'model': model, 'computer': 'windows'})
+                text = render(result)
+                self.assertNotIn('requires POSIX', text)
+                self.assertIn('native Windows file preparation', text)
+                self.assertIn('original-Wii selection', text)
+                self.assertIn('destination and exact plan approval', text)
+                self.assertIn('Console steps remain manual', text)
+                self.assertFalse(result['write_authorized'])
+                self.assertFalse(result['installation_supported'])
+
     def test_other_models_never_receive_original_wii_route(self):
         for model in ['family', 'mini', 'vwii', 'unknown']:
             result = start({'model': model, 'computer': 'windows', 'menu': '4.3U', 'homebrew': 'no'})
